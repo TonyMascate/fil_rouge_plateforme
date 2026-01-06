@@ -103,5 +103,5 @@ jobs:
             
             # 3. PULL & RESTART
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            docker compose up -d --no-deps --build ${{ env.SERVICE_NAME }}
+            docker compose up -d --no-deps ${{ env.SERVICE_NAME }}
             docker image prune -f
