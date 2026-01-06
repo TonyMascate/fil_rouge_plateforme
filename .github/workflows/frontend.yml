@@ -73,6 +73,7 @@ jobs:
     needs: build-push
     runs-on: ubuntu-latest
     steps:
+      # Conversion minuscule indispensable pour la variable IMAGE_NAME
       - name: Lowercase Variables for Deploy
         run: |
           echo "IMAGE_NAME=$(echo ${{ env.IMAGE_NAME }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
@@ -82,9 +83,20 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_KEY }}
+          # On injecte le secret ENV_PROD (qui contient tout le .env)
+          envs: GITHUB_TOKEN
           script: |
             cd /var/www/html/fil_rouge
+            
+            # 1. CRÉATION AUTOMATIQUE DU .ENV
+            # On écrase l'ancien fichier avec le contenu du secret GitHub
+            echo "${{ secrets.ENV_PROD }}" > .env
+            
+            # 2. LOGIN (Correction de l'erreur "denied")
+            # On utilise le secret TOKEN (ton PAT)
             echo ${{ secrets.TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # 3. PULL & RESTART
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             docker compose up -d --no-deps --build ${{ env.SERVICE_NAME }}
             docker image prune -f
