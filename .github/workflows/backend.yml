@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/mon-projet-backend
+  IMAGE_NAME: ${{ github.repository_owner }}/fil-rouge-backend
   SERVICE_NAME: backend
 
 jobs:
@@ -20,32 +20,16 @@ jobs:
         working-directory: ./backend
     steps:
       - uses: actions/checkout@v4
-
-      # INSTALLATION DE BUN
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
-
-      # INSTALLATION DES DÉPENDANCES
-      # --frozen-lockfile assure qu'on utilise exactement les versions du bun.lockb
       - name: Install dependencies
         run: bun install --frozen-lockfile
-
       - name: Lint
         run: bun run lint
-
       - name: Unit Tests
-        # [cite_start]Exigence du sujet : Tests unitaires [cite: 59, 62]
+        [cite_start]# [cite: 59, 62]
         run: bun run test
-
-      # - name: SonarQube Scan
-      #   uses: sonarsource/sonarqube-scan-action@master
-      #   env:
-      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      #     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-      #   with:
-      #     projectBaseDir: backend
 
   build-push:
     needs: quality
@@ -56,12 +40,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # CORRECTION : On cible bien IMAGE_NAME (qui contient fil-rouge-backend)
+      - name: Lowercase Variables
+        run: |
+          echo "REGISTRY=ghcr.io" >> $GITHUB_ENV
+          echo "IMAGE_NAME=$(echo ${{ env.IMAGE_NAME }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata
         id: meta
@@ -74,7 +64,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./backend
-          # ATTENTION: Ton Dockerfile doit utiliser une image de base compatible Bun (ex: oven/bun)
           file: ./backend/Dockerfile 
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -83,6 +72,11 @@ jobs:
     needs: build-push
     runs-on: ubuntu-latest
     steps:
+      # CORRECTION : Répétition indispensable pour le job deploy
+      - name: Lowercase Variables for Deploy
+        run: |
+          echo "IMAGE_NAME=$(echo ${{ env.IMAGE_NAME }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
