@@ -5,7 +5,7 @@ WORKDIR /usr/src/app
 # --- Stage 2: Dépendances ---
 FROM base AS deps
 # On copie uniquement les fichiers de gestion de paquets pour profiter du cache Docker
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 # Installation propre et rapide
 RUN bun install --frozen-lockfile
 
