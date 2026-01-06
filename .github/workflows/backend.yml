@@ -9,6 +9,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  # Sera écrasé par le script de mise en minuscule, mais sert de référence
   IMAGE_NAME: ${{ github.repository_owner }}/fil-rouge-backend
   SERVICE_NAME: backend
 
@@ -20,15 +21,18 @@ jobs:
         working-directory: ./backend
     steps:
       - uses: actions/checkout@v4
+      
       - uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
+      
       - name: Install dependencies
         run: bun install --frozen-lockfile
+      
       - name: Lint
         run: bun run lint
+      
       - name: Unit Tests
-        [cite_start]# [cite: 59, 62]
         run: bun run test
 
   build-push:
@@ -40,7 +44,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # CORRECTION : On cible bien IMAGE_NAME (qui contient fil-rouge-backend)
+      # Étape CRITIQUE pour convertir "TonyMascate" en "tonymascate"
       - name: Lowercase Variables
         run: |
           echo "REGISTRY=ghcr.io" >> $GITHUB_ENV
@@ -72,7 +76,7 @@ jobs:
     needs: build-push
     runs-on: ubuntu-latest
     steps:
-      # CORRECTION : Répétition indispensable pour le job deploy
+      # On doit refaire la conversion minuscule ici car c'est un nouveau job
       - name: Lowercase Variables for Deploy
         run: |
           echo "IMAGE_NAME=$(echo ${{ env.IMAGE_NAME }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
@@ -83,8 +87,17 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_KEY }}
           script: |
+            # On va dans le dossier créé précédemment
             cd /var/www/html/fil_rouge
+            
+            # Login Docker (avec le PAT 'TOKEN' si besoin, sinon GITHUB_TOKEN peut suffire parfois)
             echo ${{ secrets.TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Pull de la nouvelle image (en minuscules)
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            
+            # Redémarrage du service ciblé uniquement
             docker compose up -d --no-deps --build ${{ env.SERVICE_NAME }}
+            
+            # Nettoyage
             docker image prune -f
