@@ -4,6 +4,7 @@ WORKDIR /app
 
 # --- Stage 2: Dépendances ---
 FROM base AS deps
+# Correction: bun.lock (sans 'b')
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
@@ -12,12 +13,8 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Désactivation de la télémétrie Next.js pour le build
-ENV NEXT_TELEMETRY_DISABLED 1
-
-# Si tu as besoin d'URLs d'API au build, déclare-les ici
-# ARG NEXT_PUBLIC_API_URL
-# ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+# Correction Warning: Ajout du '='
+ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN bun run build
 
@@ -25,24 +22,21 @@ RUN bun run build
 FROM base AS runner
 WORKDIR /app
 
+# Correction Warning: Ajout du '=' partout
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED 1
-ENV PORT 3000
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# On supprime addgroup/adduser et on utilise 'bun'
+USER bun
 
-# Copie des assets publics
 COPY --from=builder /app/public ./public
 
-# Copie du mode Standalone (le serveur minimal généré par Next.js)
-# Assure-toi d'avoir mis output: 'standalone' dans next.config.mjs
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-USER nextjs
+# On change le propriétaire pour 'bun'
+# Assure-toi d'avoir output: "standalone" dans next.config.ts/mjs
+COPY --from=builder --chown=bun:bun /app/.next/standalone ./
+COPY --from=builder --chown=bun:bun /app/.next/static ./.next/static
 
 EXPOSE 3000
 
-# NextJS en mode standalone génère un server.js à la racine
 CMD ["bun", "server.js"]
