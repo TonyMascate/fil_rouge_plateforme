@@ -146,7 +146,7 @@ jobs:
       - uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }} 
+          username: ${{ secrets.VPS_USER }}  
           key: ${{ secrets.VPS_KEY }}
           envs: GITHUB_TOKEN
           script: |
