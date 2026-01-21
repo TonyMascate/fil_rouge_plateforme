@@ -106,7 +106,7 @@
 #             docker compose up -d --no-deps ${{ env.SERVICE_NAME }}
 #             docker image prune -f
 
-#  VERSION 2 avec SWARM
+#  VERSION 2 avec SWARM 
 
 name: API CI/CD
 on:
