@@ -1,0 +1,174 @@
+# name: Backend CI/CD (Bun)
+
+# on:
+#   push:
+#     branches: [ "main" ]
+#     paths:
+#       - 'backend/**'
+#       - '.github/workflows/backend.yml'
+
+# env:
+#   REGISTRY: ghcr.io
+#   # Sera écrasé par le script de mise en minuscule, mais sert de référence
+#   IMAGE_NAME: ${{ github.repository_owner }}/fil-rouge-backend
+#   SERVICE_NAME: backend
+
+# jobs:
+#   quality:
+#     runs-on: ubuntu-latest
+#     defaults:
+#       run:
+#         working-directory: ./backend
+#     steps:
+#       - uses: actions/checkout@v4
+      
+#       - uses: oven-sh/setup-bun@v1
+#         with:
+#           bun-version: latest
+      
+#       - name: Install dependencies
+#         run: bun install --frozen-lockfile
+      
+#       - name: Lint
+#         run: bun run lint
+      
+#       - name: Unit Tests
+#         run: bun run test
+
+#   build-push:
+#     needs: quality
+#     runs-on: ubuntu-latest
+#     permissions:
+#       contents: read
+#       packages: write
+#     steps:
+#       - uses: actions/checkout@v4
+
+#       # Étape CRITIQUE pour convertir "TonyMascate" en "tonymascate"
+#       - name: Lowercase Variables
+#         run: |
+#           echo "REGISTRY=ghcr.io" >> $GITHUB_ENV
+#           echo "IMAGE_NAME=$(echo ${{ env.IMAGE_NAME }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+#       - name: Log in to GitHub Container Registry
+#         uses: docker/login-action@v3
+#         with:
+#           registry: ${{ env.REGISTRY }}
+#           username: ${{ github.actor }}
+#           password: ${{ secrets.GITHUB_TOKEN }}
+
+#       - name: Extract metadata
+#         id: meta
+#         uses: docker/metadata-action@v5
+#         with:
+#           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+#           tags: |
+#             type=raw,value=latest,enable={{is_default_branch}}
+#             type=sha
+
+#       - name: Build and push
+#         uses: docker/build-push-action@v5
+#         with:
+#           context: ./backend
+#           file: ./backend/Dockerfile 
+#           push: true
+#           tags: ${{ steps.meta.outputs.tags }}
+
+#   deploy:
+#     needs: build-push
+#     runs-on: ubuntu-latest
+#     steps:
+#       # Conversion minuscule indispensable pour la variable IMAGE_NAME
+#       - name: Lowercase Variables for Deploy
+#         run: |
+#           echo "IMAGE_NAME=$(echo ${{ env.IMAGE_NAME }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+#       - uses: appleboy/ssh-action@master
+#         with:
+#           host: ${{ secrets.VPS_HOST }}
+#           username: ${{ secrets.VPS_USER }}
+#           key: ${{ secrets.VPS_KEY }}
+#           # On injecte le secret ENV_PROD (qui contient tout le .env)
+#           envs: GITHUB_TOKEN
+#           script: |
+#             cd /var/www/html/fil_rouge
+            
+#             # 1. CRÉATION AUTOMATIQUE DU .ENV
+#             # On écrase l'ancien fichier avec le contenu du secret GitHub
+#             echo "${{ secrets.ENV_PROD }}" > .env
+            
+#             # 2. LOGIN (Correction de l'erreur "denied")
+#             # On utilise le secret TOKEN (ton PAT)
+#             echo ${{ secrets.TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+#             # 3. PULL & RESTART
+#             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+#             docker compose up -d --no-deps ${{ env.SERVICE_NAME }}
+#             docker image prune -f
+
+#  VERSION 2 avec SWARM
+
+name: API CI/CD
+on:
+  push:
+    branches: ["main"]
+    paths: ["apps/api/**", "packages/**"]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/fil-rouge-api
+
+jobs:
+  build-push:
+    runs-on: ubuntu:latest
+    permissions: { contents: read, packages: write }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lowercase Variables
+        run: |
+          echo "REGISTRY=ghcr.io" >> $GITHUB_ENV
+          echo "IMAGE_NAME=$(echo ${{ env.IMAGE_NAME }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY}}
+          username: ${{github.actor}}
+          password: ${{secrets.TOKEN}}
+
+        # Build avec contexte racine pour Turborepo
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/api/Dockerfile
+          push: true
+          tags: ${{env.REGISTRY}}/${{env.IMAGE_NAME}}:latest
+  
+  deploy:
+    needs: build-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_KEY }}          
+          # On injecte le secret ENV_PROD (qui contient tout le .env)
+          script: |
+            cd /var/www/html/fil_rouge
+            
+            # 1. Login Docker sur le VPS
+            # ON UTILISE BIEN 'TOKEN' (Ton PAT) et pas GITHUB_TOKEN
+            echo "${{ secrets.TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # 2. Injection Ninja
+            while read -r line; do
+              if [[ -n "$line" && "$line" != \#* ]]; then
+                 export "$line"
+              fi
+            done <<< "${{ secrets.ENV_PROD }}"
+            
+            # 3. Déploiement
+            docker compose config | docker stack deploy --with-registry-auth -c - mon-app
+            
+            docker image prune -f
+          
+        

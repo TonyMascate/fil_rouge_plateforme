@@ -57,7 +57,7 @@ FROM oven/bun:1 AS builder
 WORKDIR /app
 
 COPY --from=pruner /app/out/json/ .
-COPY --from=pruner /app/out/bun.lockb ./bun.lockb
+COPY --from=pruner /app/out/bun.lock ./bun.lock
 RUN bun install --frozen-lockfile
 
 COPY --from=pruner /app/out/full/ .

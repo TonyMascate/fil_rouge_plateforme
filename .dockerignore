@@ -1,0 +1,26 @@
+# Dépendances (On laisse Docker les installer proprement)
+node_modules
+**/node_modules
+
+# Git
+.git
+.gitignore
+
+# Turbo
+.turbo
+
+# Builds locaux (Ne pas envoyer les versions compilées locales)
+dist
+.next
+out
+build
+
+# Fichiers d'environnement (Sécurité !)
+.env
+.env*.local
+
+# Logs
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+bun.lockb
