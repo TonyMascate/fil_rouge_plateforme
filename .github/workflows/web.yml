@@ -166,7 +166,7 @@ jobs:
             # 'docker compose config' résout les ${VAR} en mémoire
             # 'docker stack deploy' applique la config au cluster
             # '--with-registry-auth' partage les identifiants avec le VPS B
-            docker compose -f stack.yml config | docker stack deploy --with-registry-auth -c - mon-app
+            docker stack deploy --with-registry-auth -c stack.yml mon-app
             
             # 4. Nettoyage
             docker image prune -f

@@ -167,7 +167,7 @@ jobs:
             done <<< "${{ secrets.ENV_PROD }}"
             
             # 3. Déploiement
-            docker compose -f stack.yml config | docker stack deploy --with-registry-auth -c - mon-app
+            docker stack deploy --with-registry-auth -c stack.yml mon-app
             
             docker image prune -f
           
