@@ -109,7 +109,7 @@ name: WEB CI/CD
 on:
   push:
     branches: ["main"]
-    paths: ["apps/web/**", "packages/**", ".github/workflows/web.yml"] 
+    paths: ["apps/web/**", "packages/**", ".github/workflows/web.yml"]
 
 env:
   REGISTRY: ghcr.io

@@ -112,7 +112,7 @@ name: API CI/CD
 on:
   push:
     branches: ["main"]
-    paths: ["apps/api/**", "packages/**", ".github/workflows/api.yml"] 
+    paths: ["apps/api/**", "packages/**", ".github/workflows/api.yml"]
 
 env:
   REGISTRY: ghcr.io
