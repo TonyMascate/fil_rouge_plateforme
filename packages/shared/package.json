@@ -1,0 +1,21 @@
+{
+    "name": "@repo/shared",
+    "type": "module",
+    "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc"
+  },
+    "exports": {
+        "./user": {
+            "types": "./src/schemas/users.schema.ts",
+            "default": "./dist/schemas/users.schema.js"
+        }
+    },
+    "dependencies": {
+        "zod": "^4.3.6"
+    },
+    "devDependencies": {
+        "@repo/typescript-config": "workspace:*",
+        "typescript": "latest"
+    }
+}

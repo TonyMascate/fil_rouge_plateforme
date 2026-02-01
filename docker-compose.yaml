@@ -1,68 +1,23 @@
+version: '3.8'
+
 services:
-  # --- SERVICE BACKEND (NestJS) ---
-  backend:
-    container_name: backend_app
-    # EN PROD (VPS) : Docker utilisera cette image téléchargée depuis GitHub
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-ton-user}/mon-projet-backend:latest
-    
-    # EN LOCAL : Docker ignorera l'image ci-dessus s'il doit construire, 
-    # mais pour être sûr en local, utilise : docker compose up --build
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    
-    restart: always
-    ports:
-      - "3000:3000" # NestJS écoute souvent sur 3000 par défaut
-    environment:
-      # En prod, ces variables seront lues depuis le fichier .env sur le VPS
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      - NODE_ENV=${NODE_ENV:-development}
-    depends_on:
-      - db
-    networks:
-      - app-network
-
-  # --- SERVICE FRONTEND (NextJS) ---
-  frontend:
-    container_name: frontend_app
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-ton-user}/mon-projet-frontend:latest
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      # Pour passer des variables au moment du build en local
-      args:
-        NEXT_PUBLIC_API_URL: http://backend:3000
-    
-    restart: always
-    ports:
-      - "80:3000" # Mappe le port 80 du VPS vers le 3000 du conteneur NextJS
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-    depends_on:
-      - backend
-    networks:
-      - app-network
-
-  # --- BASE DE DONNÉES (PostgreSQL) ---
-  # Indispensable pour la "persistance" demandée dans le sujet
-  db:
-    container_name: postgres_db
+  postgres:
     image: postgres:15-alpine
-    restart: always
+    container_name: my_project_db
+    ports:
+      - "5432:5432"
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
-      POSTGRES_DB: ${POSTGRES_DB:-mydb}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: app_db
     volumes:
-      - db_data:/var/lib/postgresql/data # Persistance des données
-    networks:
-      - app-network
+      - postgres_data:/var/lib/postgresql/data
 
-# --- VOLUMES & RÉSEAUX ---
+  redis:
+    image: redis:alpine
+    container_name: my_project_redis
+    ports:
+      - "6379:6379"
+
 volumes:
-  db_data: # Ce volume garde tes données même si tu détruis les conteneurs
-
-networks:
-  app-network:
-    driver: bridge
+  postgres_data:

@@ -1,15 +1,24 @@
 {
-  "name": "mon-super-projet",
+  "name": "fil-rouge-plateforme",
   "private": true,
   "packageManager": "bun@1.3.1",
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
+    "build": "turbo run build",
     "dev": "turbo run dev",
-    "build": "turbo run build"
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types"
   },
   "devDependencies": {
-    "turbo": "latest"
+    "prettier": "^3.7.4",
+    "turbo": "^2.7.6",
+    "typescript": "5.9.2"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
