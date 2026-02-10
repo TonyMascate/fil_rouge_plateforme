@@ -8,7 +8,6 @@ export class UsersController {
 
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
-    // La validation Zod a DÉJÀ eu lieu grâce au Pipe Global
     console.log('Données reçues valides :', createUserDto);
     return this.usersService.create(createUserDto);
   }
