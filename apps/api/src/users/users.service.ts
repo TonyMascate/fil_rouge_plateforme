@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
+import * as argon2 from 'argon2';
 
 @Injectable()
 export class UsersService {
@@ -15,14 +16,17 @@ export class UsersService {
       email: createUserDto.email,
     });
     if (existingUser) {
-      throw new Error('User already exists');
+      throw new ConflictException('Cet email est déjà utilisé.');
     }
-    const user = this.usersRepository.create(createUserDto);
+    const hashedPassword = await argon2.hash(createUserDto.password);
+    const user = this.usersRepository.create({
+      ...createUserDto,
+      password: hashedPassword,
+    });
     return this.usersRepository.save(user);
-
   }
 
   findAll() {
-    return `This action returns all users`;
+    return this.usersRepository.find();
   }
 }
