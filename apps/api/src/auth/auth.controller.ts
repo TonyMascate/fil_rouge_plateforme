@@ -32,7 +32,7 @@ export class AuthController {
 
     res.cookie('refresh_token', refreshToken, {
       ...opts,
-      path: '/auth/refresh',
+      path: '/auth',
       maxAge: ms(this.configService.getOrThrow<StringValue>('JWT_REFRESH_EXPIRES_IN')),
     });
 
