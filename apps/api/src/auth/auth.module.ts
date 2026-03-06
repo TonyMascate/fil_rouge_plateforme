@@ -4,9 +4,9 @@ import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RefreshToken } from './entities/refresh-token.entity';
-import { User } from 'src/users/entities/user.entity';
+import { User } from '@app/users/entities/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersModule } from 'src/users/users.module';
+import { UsersModule } from '@app/users/users.module';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
 

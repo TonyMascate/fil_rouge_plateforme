@@ -1,16 +1,16 @@
 import { Body, Controller, HttpStatus, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
-import { UsersService } from 'src/users/users.service';
 import type { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import ms, { StringValue } from 'ms';
 import { v4 as uuidv4 } from 'uuid';
 import { SkipCsrf } from './decorators/skip-csrf.decorator';
-import { CreateUserDto } from 'src/users/dto/create-user.dto';
-import { LoginUserDto } from 'src/users/dto/login-user.dto';
+import { LoginUserDto } from '@app/users/dto/login-user.dto';
 import { ErrorCode } from '@repo/shared';
-import { ApiException } from 'src/common/api.exception';
+import { ApiException } from '@app/common/api.exception';
+import { CreateUserDto } from '@app/users/dto/create-user.dto';
+import { UsersService } from '@app/users/users.service';
 
 @Controller('auth')
 export class AuthController {

@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { Roles } from 'src/auth/decorators/roles.decorator';
+import { JwtAuthGuard } from '@app/auth/guards/jwt-auth.guard';
+import { RolesGuard } from '@app/auth/guards/roles.guard';
+import { Roles } from '@app/auth/decorators/roles.decorator';
 import type { Request } from 'express';
-import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { CurrentUser } from '@app/auth/decorators/current-user.decorator';
 import { Role } from '@repo/shared';
 
 @Controller('users')
