@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-const secretEnv = process.env.JWT_ACCESS_SECRET;
-if (!secretEnv) throw new Error("JWT_ACCESS_SECRET manquant dans le .env");
-const JWT_SECRET = new TextEncoder().encode(secretEnv);
-
 const PUBLIC_ROUTES = ["/login", "/register"];
 
 export async function proxy(req: NextRequest) {
@@ -12,6 +8,7 @@ export async function proxy(req: NextRequest) {
   const accessToken = req.cookies.get("access_token")?.value;
   const refreshToken = req.cookies.get("refresh_token")?.value;
   const isPublic = PUBLIC_ROUTES.includes(pathname);
+  const JWT_SECRET = new TextEncoder().encode(process.env.JWT_ACCESS_SECRET ?? "");
 
   // --- Routes publiques sans tokens : laisser passer ---
   if (isPublic && !accessToken && !refreshToken) {
