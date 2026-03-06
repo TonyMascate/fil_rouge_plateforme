@@ -1,4 +1,5 @@
-import { Body, Controller, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, HttpStatus, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { UsersService } from 'src/users/users.service';
 import type { Request, Response } from 'express';
@@ -8,6 +9,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { SkipCsrf } from './decorators/skip-csrf.decorator';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { LoginUserDto } from 'src/users/dto/login-user.dto';
+import { ErrorCode } from '@repo/shared';
+import { ApiException } from 'src/common/api.exception';
 
 @Controller('auth')
 export class AuthController {
@@ -20,7 +23,7 @@ export class AuthController {
   private setCookies(res: Response, accesToken: string, refreshToken: string) {
     const opts = {
       httpOnly: true,
-      secure: false,
+      secure: this.configService.get('NODE_ENV') === 'production',
       sameSite: 'lax' as const,
       path: '/',
     };
@@ -32,15 +35,12 @@ export class AuthController {
 
     res.cookie('refresh_token', refreshToken, {
       ...opts,
-      path: '/auth',
       maxAge: ms(this.configService.getOrThrow<StringValue>('JWT_REFRESH_EXPIRES_IN')),
     });
 
     res.cookie('XSRF-TOKEN', uuidv4(), {
+      ...opts,
       httpOnly: false,
-      secure: false,
-      sameSite: 'lax' as const,
-      path: '/',
     });
   }
 
@@ -55,10 +55,16 @@ export class AuthController {
 
   @Post('login')
   @SkipCsrf()
+  @Throttle({ short: { ttl: 60000, limit: 5 } })
   async login(@Body() loginUserDto: LoginUserDto, @Res({ passthrough: true }) res: Response) {
     const user = await this.authService.validateUser(loginUserDto);
     if (!user) {
-      throw new UnauthorizedException('Utilisateur non trouvé');
+      throw new ApiException(
+        ErrorCode.AUTH_INVALID_CREDENTIALS,
+        HttpStatus.UNAUTHORIZED,
+        'Email ou mot de passe invalide',
+        [],
+      );
     }
     const { accessToken, refreshToken } = await this.authService.login(user);
     this.setCookies(res, accessToken, refreshToken);
@@ -80,9 +86,9 @@ export class AuthController {
   @Post('logout')
   @SkipCsrf()
   async logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('access_token');
-    res.clearCookie('refresh_token');
-    res.clearCookie('XSRF-TOKEN');
+    res.clearCookie('access_token', { path: '/' });
+    res.clearCookie('refresh_token', { path: '/' });
+    res.clearCookie('XSRF-TOKEN', { path: '/' });
     return { message: 'Logged out' };
   }
 }

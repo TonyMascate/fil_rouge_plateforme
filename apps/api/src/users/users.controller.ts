@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
-import { Role } from './enum/role.enum';
+import type { Request } from 'express';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { Role } from '@repo/shared';
 
 @Controller('users')
 export class UsersController {
@@ -19,8 +20,8 @@ export class UsersController {
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  getProfile() {
-    return { message: 'Tu es bien connecté' };
+  getProfile(@CurrentUser() user: { userId: string; role: string; email: string }) {
+    return this.usersService.getProfile(user.userId);
   }
 
   findAll() {
