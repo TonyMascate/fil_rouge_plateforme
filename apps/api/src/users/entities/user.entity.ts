@@ -1,15 +1,9 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  OneToMany,
-} from 'typeorm';
-import { User as UserInterface } from '@repo/shared/user';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
+import { User as UserInterface } from '@repo/shared';
 import { Role } from '../enum/role.enum';
 import { RefreshToken } from 'src/auth/entities/refresh-token.entity';
 
-@Entity()
+@Entity('users')
 export class User implements UserInterface {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -17,14 +11,14 @@ export class User implements UserInterface {
   @Column({ unique: true })
   email: string;
 
-  @Column({select:false})
+  @Column({ select: false })
   password: string;
 
-  @Column({type: 'enum', enum: Role, default: Role.USER})
-  role: Role; 
+  @Column({ type: 'enum', enum: Role, default: Role.USER })
+  role: Role;
 
   @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user)
-  refreshTokens: RefreshToken[];
+  refreshTokens!: RefreshToken[];
 
   @Column()
   firstName: string;
