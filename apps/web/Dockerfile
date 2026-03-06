@@ -64,6 +64,8 @@ COPY --from=pruner /app/out/full/ .
 
 # Build Next.js
 ENV NEXT_TELEMETRY_DISABLED=1
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN bun run turbo run build --filter=web
 
 # --- 3. L'IMAGE FINALE ---

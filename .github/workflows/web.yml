@@ -134,10 +134,12 @@ jobs:
       # Build avec contexte racine pour Turborepo
       - uses: docker/build-push-action@v5
         with:
-          context: . 
+          context: .
           file: ./apps/web/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
 
   deploy:
     needs: build-push
