@@ -2,11 +2,11 @@ import { jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import "server-only";
 
-const secretEnv = process.env.JWT_ACCESS_SECRET;
-if (!secretEnv) throw new Error("JWT_ACCESS_SECRET manquant dans le .env");
-const JWT_SECRET = new TextEncoder().encode(secretEnv);
-
 export async function GetSession() {
+  const secretEnv = process.env.JWT_ACCESS_SECRET;
+  if (!secretEnv) throw new Error("JWT_ACCESS_SECRET manquant dans le .env");
+  const JWT_SECRET = new TextEncoder().encode(secretEnv);
+
   const cookieStore = await cookies();
   const token = cookieStore.get("access_token")?.value;
   if (!token) return null;
