@@ -6,7 +6,7 @@ import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { RefreshToken } from './entities/refresh-token.entity';
-import { UserLoginDto } from '@repo/shared/user';
+import { UserLoginDto } from '@repo/shared';
 import * as argon2 from 'argon2';
 
 @Injectable()
