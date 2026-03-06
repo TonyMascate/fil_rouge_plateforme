@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { UsersModule } from './users/users.module';
 import { getDbConfig } from './config/database.config';
 import { AuthModule } from './auth/auth.module';
@@ -25,6 +26,12 @@ import { CsrfMiddleware } from './middlewares/csrf.middleware';
       useFactory: getDbConfig,
     }),
     AuthModule,
+    ThrottlerModule.forRoot({
+      throttlers: [
+        { name: 'short', ttl: 60000, limit: 100 },
+        { name: 'long', ttl: 600000, limit: 500 },
+      ],
+    }),
   ],
   controllers: [AppController],
   providers: [
@@ -32,6 +39,10 @@ import { CsrfMiddleware } from './middlewares/csrf.middleware';
     {
       provide: APP_GUARD,
       useClass: CsrfGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
   ],
 })

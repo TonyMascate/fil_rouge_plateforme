@@ -1,16 +1,71 @@
 import { NextRequest, NextResponse } from "next/server";
+import { jwtVerify } from "jose";
 
-export function proxy(req: NextRequest) {
-  const token = req.cookies.get("access_token")?.value;
+const secretEnv = process.env.JWT_ACCESS_SECRET;
+if (!secretEnv) throw new Error("JWT_ACCESS_SECRET manquant dans le .env");
+const JWT_SECRET = new TextEncoder().encode(secretEnv);
 
-  // Redirection vers le dashboard si l'utilisateur est déjà connecté
-  if (token) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+const PUBLIC_ROUTES = ["/login", "/register"];
+
+export async function proxy(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+  const accessToken = req.cookies.get("access_token")?.value;
+  const refreshToken = req.cookies.get("refresh_token")?.value;
+  const isPublic = PUBLIC_ROUTES.includes(pathname);
+
+  // --- Routes publiques sans tokens : laisser passer ---
+  if (isPublic && !accessToken && !refreshToken) {
+    return NextResponse.next();
   }
 
-  return NextResponse.next();
+  // --- Vérifier si l'access token est encore valide ---
+  if (accessToken) {
+    try {
+      await jwtVerify(accessToken, JWT_SECRET);
+      // Token valide : rediriger si route publique, sinon laisser passer
+      if (isPublic) return NextResponse.redirect(new URL("/dashboard", req.url));
+      return NextResponse.next();
+    } catch {
+      // Token expiré, on continue vers le refresh
+    }
+  }
+
+  // --- Tenter le refresh ---
+  if (refreshToken) {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const refreshResponse = await fetch(`${apiUrl}/auth/refresh`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `refresh_token=${refreshToken}`,
+        },
+      });
+
+      if (refreshResponse.ok) {
+        // Rediriger vers dashboard si route publique, sinon laisser passer
+        const response = isPublic
+          ? NextResponse.redirect(new URL("/dashboard", req.url))
+          : NextResponse.next();
+
+        // Recopier les Set-Cookie de l'API vers le navigateur
+        const setCookies = refreshResponse.headers.getSetCookie();
+        for (const cookie of setCookies) {
+          response.headers.append("Set-Cookie", cookie);
+        }
+
+        return response;
+      }
+    } catch {
+      // Refresh échoué
+    }
+  }
+
+  // --- Pas de session valide ---
+  if (isPublic) return NextResponse.next();
+  return NextResponse.redirect(new URL("/login", req.url));
 }
 
 export const config = {
-  matcher: ["/login", "/register"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api).*)"],
 };

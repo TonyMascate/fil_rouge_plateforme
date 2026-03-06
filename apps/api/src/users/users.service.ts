@@ -26,6 +26,10 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
+  getProfile(userId: string) {
+    return this.usersRepository.findOneBy({ id: userId });
+  }
+
   findAll() {
     return this.usersRepository.find();
   }

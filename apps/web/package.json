@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@repo/shared": "workspace:*",
     "@tanstack/react-query": "^5.90.21",
     "axios": "^1.13.6",

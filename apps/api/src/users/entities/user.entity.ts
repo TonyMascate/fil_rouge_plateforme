@@ -1,6 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
-import { User as UserInterface } from '@repo/shared';
-import { Role } from '../enum/role.enum';
+import { Role, User as UserInterface } from '@repo/shared';
 import { RefreshToken } from 'src/auth/entities/refresh-token.entity';
 
 @Entity('users')
