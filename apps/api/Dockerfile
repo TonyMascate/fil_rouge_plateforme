@@ -60,6 +60,9 @@ COPY --from=pruner /app/out/full/ .
 # On build l'API
 RUN bun run turbo run build --filter=api
 
+# Compile data-source.ts pour les migrations (hors Turborepo)
+RUN cd apps/api && node_modules/.bin/tsc -p tsconfig.datasource.json
+
 # --- 3. L'IMAGE FINALE ---
 FROM oven/bun:1 AS runner
 WORKDIR /app
