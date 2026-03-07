@@ -142,7 +142,7 @@ jobs:
           push: true
           tags: ${{env.REGISTRY}}/${{env.IMAGE_NAME}}:latest
   
-  deploy:
+  migrate:
     needs: build-push
     runs-on: ubuntu-latest
     steps:
@@ -150,25 +150,45 @@ jobs:
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_KEY }}          
-          # On injecte le secret ENV_PROD (qui contient tout le .env)
+          key: ${{ secrets.VPS_KEY }}
+          script: |
+            echo "${{ secrets.TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            docker run --rm \
+              --network mon-app_app-net \
+              -e DB_HOST=pgbouncer \
+              -e DB_PORT=5432 \
+              -e DB_USER=$(echo "${{ secrets.ENV_PROD }}" | grep '^DB_USER=' | cut -d= -f2-) \
+              -e DB_PASSWORD=$(echo "${{ secrets.ENV_PROD }}" | grep '^DB_PASSWORD=' | cut -d= -f2-) \
+              -e DB_NAME=$(echo "${{ secrets.ENV_PROD }}" | grep '^DB_NAME=' | cut -d= -f2-) \
+              ghcr.io/tonymascate/fil-rouge-api:latest \
+              node node_modules/.bin/typeorm migration:run -d dist/database/data-source.js
+
+  deploy:
+    needs: migrate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_KEY }}
           script: |
             cd /var/www/html/fil_rouge
-            
+
             # 1. Login Docker sur le VPS
-            # ON UTILISE BIEN 'TOKEN' (Ton PAT) et pas GITHUB_TOKEN
             echo "${{ secrets.TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
+
             # 2. Injection Ninja
             while read -r line; do
               if [[ -n "$line" && "$line" != \#* ]]; then
                  export "$line"
               fi
             done <<< "${{ secrets.ENV_PROD }}"
-            
+
             # 3. Déploiement
-            docker stack deploy --with-registry-auth -c stack.yml mon-app 
-            
+            docker stack deploy --with-registry-auth -c stack.yml mon-app
+
             docker image prune -f
           
         

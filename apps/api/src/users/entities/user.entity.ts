@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
 import { Role, User as UserInterface } from '@repo/shared';
-import { RefreshToken } from '@app/auth/entities/refresh-token.entity';
+import { RefreshToken } from '../../auth/entities/refresh-token.entity';
 
 @Entity('users')
 export class User implements UserInterface {
