@@ -4,6 +4,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "resolvePackageJsonExports": false,
+    "rootDir": "./src",
     "outDir": "./dist"
   },
   "files": ["src/database/data-source.ts"]
