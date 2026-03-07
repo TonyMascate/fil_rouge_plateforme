@@ -153,6 +153,7 @@ jobs:
           key: ${{ secrets.VPS_KEY }}
           script: |
             echo "${{ secrets.TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker pull ghcr.io/tonymascate/fil-rouge-api:latest
 
             docker run --rm ghcr.io/tonymascate/fil-rouge-api:latest ls -la dist/database/ || echo "dist/database/ ABSENT"
 
