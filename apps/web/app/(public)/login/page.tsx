@@ -2,15 +2,12 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { UserLoginDto, UserLoginSchema } from "@repo/shared";
 import api from "../../../lib/axios";
 import { useFormMutation } from "../../../lib/useFormMutation";
 
 export default function LoginPage() {
-  const router = useRouter();
-
   // Configuration du formulaire
   const {
     register,
@@ -30,9 +27,7 @@ export default function LoginPage() {
     setError,
     successMessage: "Connexion réussie !",
     onSuccess: () => {
-      // Redirection et rafraîchissement
-      router.push("/dashboard");
-      router.refresh();
+      window.location.href = "/dashboard";
     },
   });
 
