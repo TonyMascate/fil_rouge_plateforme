@@ -21,11 +21,13 @@ export class AuthController {
   ) {}
 
   private setCookies(res: Response, accesToken: string, refreshToken: string) {
+    const isProduction = this.configService.get('NODE_ENV') === 'production';
     const opts = {
       httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production',
+      secure: isProduction,
       sameSite: 'lax' as const,
       path: '/',
+      ...(isProduction && { domain: this.configService.get('COOKIE_DOMAIN') }),
     };
 
     res.cookie('access_token', accesToken, {
@@ -86,9 +88,14 @@ export class AuthController {
   @Post('logout')
   @SkipCsrf()
   async logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('access_token', { path: '/' });
-    res.clearCookie('refresh_token', { path: '/' });
-    res.clearCookie('XSRF-TOKEN', { path: '/' });
+    const isProduction = this.configService.get('NODE_ENV') === 'production';
+    const clearOpts = {
+      path: '/',
+      ...(isProduction && { domain: this.configService.get('COOKIE_DOMAIN') }),
+    };
+    res.clearCookie('access_token', clearOpts);
+    res.clearCookie('refresh_token', clearOpts);
+    res.clearCookie('XSRF-TOKEN', clearOpts);
     return { message: 'Logged out' };
   }
 }

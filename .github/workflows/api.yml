@@ -142,33 +142,8 @@ jobs:
           push: true
           tags: ${{env.REGISTRY}}/${{env.IMAGE_NAME}}:latest
   
-  migrate:
-    needs: build-push
-    runs-on: ubuntu-latest
-    steps:
-      - uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_KEY }}
-          script: |
-            echo "${{ secrets.TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker pull ghcr.io/tonymascate/fil-rouge-api:latest
-
-            docker run --rm ghcr.io/tonymascate/fil-rouge-api:latest ls -la dist/database/ || echo "dist/database/ ABSENT"
-
-            docker run --rm \
-              --network mon-app_app-net \
-              -e DB_HOST=pgbouncer \
-              -e DB_PORT=5432 \
-              -e DB_USER=$(echo "${{ secrets.ENV_PROD }}" | grep '^DB_USER=' | cut -d= -f2-) \
-              -e DB_PASSWORD=$(echo "${{ secrets.ENV_PROD }}" | grep '^DB_PASSWORD=' | cut -d= -f2-) \
-              -e DB_NAME=$(echo "${{ secrets.ENV_PROD }}" | grep '^DB_NAME=' | cut -d= -f2-) \
-              ghcr.io/tonymascate/fil-rouge-api:latest \
-              node node_modules/.bin/typeorm migration:run -d dist/database/data-source.js
-
   deploy:
-    needs: migrate
+    needs: build-push
     runs-on: ubuntu-latest
     steps:
       - uses: appleboy/ssh-action@master
@@ -181,9 +156,10 @@ jobs:
 
             # 1. Login Docker sur le VPS
             echo "${{ secrets.TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker pull ghcr.io/tonymascate/fil-rouge-api:latest
 
             # 2. Injection Ninja
-            while read -r line; do
+            while IFS= read -r line || [[ -n "$line" ]]; do
               if [[ -n "$line" && "$line" != \#* ]]; then
                  export "$line"
               fi
@@ -193,5 +169,30 @@ jobs:
             docker stack deploy --with-registry-auth -c stack.yml mon-app
 
             docker image prune -f
+
+  migrate:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_KEY }}
+          script: |
+            echo "${{ secrets.TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # Attendre que pgbouncer soit prêt
+            sleep 15
+
+            docker run --rm \
+              --network mon-app_app-net \
+              -e DB_HOST=pgbouncer \
+              -e DB_PORT=5432 \
+              -e DB_USER=$(echo "${{ secrets.ENV_PROD }}" | grep '^DB_USER=' | cut -d= -f2-) \
+              -e DB_PASSWORD=$(echo "${{ secrets.ENV_PROD }}" | grep '^DB_PASSWORD=' | cut -d= -f2-) \
+              -e DB_NAME=$(echo "${{ secrets.ENV_PROD }}" | grep '^DB_NAME=' | cut -d= -f2-) \
+              ghcr.io/tonymascate/fil-rouge-api:latest \
+              node node_modules/.bin/typeorm migration:run -d dist/database/data-source.js
           
         
