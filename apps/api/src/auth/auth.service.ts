@@ -75,7 +75,7 @@ export class AuthService {
     });
     await this.refreshTokenRepository.save(refreshTokenEntity);
 
-    this.logger.log('Utilisateur connecté.', { user });
+    this.logger.log(`Login ${user.email} (${user.id})`);
 
     return tokens;
   }
