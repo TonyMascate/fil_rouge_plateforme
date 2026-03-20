@@ -11,6 +11,8 @@ import * as argon2 from 'argon2';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
@@ -18,7 +20,6 @@ export class AuthService {
     private refreshTokenRepository: Repository<RefreshToken>,
     private jwtService: JwtService,
     private configService: ConfigService,
-    private readonly logger = new Logger(AuthService.name),
   ) {}
 
   async validateUser(dto: UserLoginDto): Promise<User | null> {
