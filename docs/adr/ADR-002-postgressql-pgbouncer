@@ -8,7 +8,7 @@
  
 ## Contexte
  
-Mon application de gestion de photos nécessite une base de données relationnelle pour stocker les utilisateurs, les photos, les albums et les liens de partage. Avec Docker Swarm, je dispose de plusieurs réplicas de mon API NestJS qui vont toutes ouvrir des connexions vers la base de données simultanément. Sans gestion, cela peut rapidement saturer PostgreSQL qui a une limite de connexions concurrentes.
+Mon application de gestion de photos nécessite une base de données relationnelle pour stocker les utilisateurs, les photos, les albums et les liens de partage. Avec Docker Swarm, je dispose de plusieurs réplicas de mon API NestJS qui vont toutes ouvrir des connexions vers la base de données simultanément. Sans gestion, cela peut rapidement saturer PostgreSQL qui a une limite de connexions simultanées.
  
 ---
  
@@ -46,11 +46,11 @@ Mon application de gestion de photos nécessite une base de données relationnel
  
 ### PostgreSQL
  
-1. **Modèle relationnel adapté :** Mes données (utilisateurs, photos, albums, partages) ont des relations claires et des contraintes d'intégrité importantes. Un modèle relationnel est plus naturel qu'un modèle document.
+1. **Modèle relationnel adapté :** Mes données (utilisateurs, photos, albums, partages) ont des relations claires et des contraintes d'intégrité importantes. Un modèle relationnel est donc privilégié.
  
 2. **Intégration TypeORM :** PostgreSQL est le SGBD de référence pour TypeORM avec NestJS. Le support est complet : migrations, relations, transactions, types natifs.
  
-3. **Types avancés :** PostgreSQL supporte nativement les UUID (pour les identifiants de partage public), les types JSON (pour les métadonnées EXIF) et les tableaux — sans contournement.
+3. **Types avancés :** PostgreSQL supporte nativement les UUID (pour les identifiants de partage public), les types JSON (pour les métadonnées EXIF) et les tableaux.
  
 4. **Fiabilité et maturité :** PostgreSQL est battle-tested depuis plus de 30 ans, open source, sans dépendance commerciale (contrairement à MySQL/Oracle).
  
