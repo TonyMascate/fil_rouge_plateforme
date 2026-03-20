@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -18,6 +18,7 @@ export class AuthService {
     private refreshTokenRepository: Repository<RefreshToken>,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private readonly logger = new Logger(AuthService.name),
   ) {}
 
   async validateUser(dto: UserLoginDto): Promise<User | null> {
@@ -72,6 +73,8 @@ export class AuthService {
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
     await this.refreshTokenRepository.save(refreshTokenEntity);
+
+    this.logger.log('Utilisateur connecté.', { user });
 
     return tokens;
   }

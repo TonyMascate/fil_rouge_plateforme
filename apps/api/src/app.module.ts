@@ -11,6 +11,7 @@ import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { CsrfGuard } from './auth/guards/csrf.guard';
 import { CsrfMiddleware } from './middlewares/csrf.middleware';
+import { LoggerModule } from 'nestjs-pino';
 
 @Module({
   imports: [
@@ -19,6 +20,11 @@ import { CsrfMiddleware } from './middlewares/csrf.middleware';
     }),
     PrometheusModule.register({
       path: '/metrics',
+    }),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        transport: process.env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined,
+      },
     }),
     UsersModule,
     // Connexion de la base de donnée
