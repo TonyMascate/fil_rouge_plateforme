@@ -2,9 +2,10 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { BullModule } from '@nestjs/bullmq';
 import { UsersModule } from './users/users.module';
 import { getDbConfig } from './config/database.config';
 import { AuthModule } from './auth/auth.module';
@@ -12,6 +13,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { CsrfGuard } from './auth/guards/csrf.guard';
 import { CsrfMiddleware } from './middlewares/csrf.middleware';
 import { LoggerModule } from 'nestjs-pino';
+import { AwsModule } from './aws/aws.module';
+import { PhotoModule } from './photo/photo.module';
 
 @Module({
   imports: [
@@ -48,6 +51,17 @@ import { LoggerModule } from 'nestjs-pino';
         { name: 'long', ttl: 600000, limit: 500 },
       ],
     }),
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        connection: {
+          host: config.getOrThrow<string>('REDIS_HOST'),
+          port: parseInt(config.getOrThrow<string>('REDIS_PORT'), 10),
+        },
+      }),
+    }),
+    AwsModule,
+    PhotoModule,
   ],
   controllers: [AppController],
   providers: [

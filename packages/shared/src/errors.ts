@@ -8,6 +8,9 @@ export enum ErrorCode {
   INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR",
   UNAUTHORIZED = "UNAUTHORIZED",
   FORBIDDEN = "FORBIDDEN",
+
+  PHOTO_NOT_FOUND = "PHOTO_NOT_FOUND",
+  PHOTO_S3_MISSING = "PHOTO_S3_MISSING",
 }
 
 // 2. format des erreurs de champs formulaires
