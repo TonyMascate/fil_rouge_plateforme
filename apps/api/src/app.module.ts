@@ -15,6 +15,7 @@ import { CsrfMiddleware } from './middlewares/csrf.middleware';
 import { LoggerModule } from 'nestjs-pino';
 import { AwsModule } from './aws/aws.module';
 import { PhotoModule } from './photo/photo.module';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { PhotoModule } from './photo/photo.module';
       }),
     }),
     AwsModule,
+    RedisModule,
     PhotoModule,
   ],
   controllers: [AppController],

@@ -23,9 +23,21 @@ export class PhotoService {
     private readonly aws: AwsService,
   ) {}
 
+  async storageUsedForUser(userId: string): Promise<number> {
+    const result = await this.photoRepo
+      .createQueryBuilder('photo')
+      .select('COALESCE(SUM(photo.fileSizeBytes), 0)', 'total')
+      .where('photo.userId = :userId', { userId })
+      .andWhere('photo.status = :status', { status: PhotoStatus.COMPLETED })
+      .getRawOne<{ total: string }>();
+    return parseInt(result?.total ?? '0', 10);
+  }
+
   async registerUpload(input: { key: string; originalName: string }, userId: string) {
+    let fileSizeBytes: number | null = null;
     try {
-      await this.aws.headObject(input.key);
+      const head = await this.aws.headObject(input.key);
+      fileSizeBytes = head.ContentLength ?? null;
     } catch {
       throw new ApiException(
         ErrorCode.PHOTO_S3_MISSING,
@@ -39,6 +51,7 @@ export class PhotoService {
       s3Key: input.key,
       originalName: input.originalName,
       status: PhotoStatus.PENDING,
+      fileSizeBytes,
       userId,
     });
 
@@ -59,17 +72,13 @@ export class PhotoService {
   async getStatus(id: string, userId: string) {
     const photo = await this.photoRepo.findOne({ where: { id } });
 
-    if (!photo) {
+    if (!photo || photo.userId !== userId) {
       throw new ApiException(
         ErrorCode.PHOTO_NOT_FOUND,
         HttpStatus.NOT_FOUND,
         'Photo introuvable',
         [],
       );
-    }
-
-    if (photo.userId !== userId) {
-      throw new ApiException(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN, 'Accès refusé', []);
     }
 
     return {

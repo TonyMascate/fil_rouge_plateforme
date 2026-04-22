@@ -15,8 +15,14 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Upload } from '@aws-sdk/lib-storage';
 import { randomUUID } from 'crypto';
-import { extname } from 'path';
 import { Readable } from 'stream';
+
+const EXT_FROM_CONTENT_TYPE: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+  'image/heic': '.heic',
+};
 
 @Injectable()
 export class AwsService {
@@ -68,8 +74,8 @@ export class AwsService {
   // -------- Multipart upload presigned (remplace Companion) --------
 
   // Génère la key côté serveur → l'user ne peut pas injecter de chemin arbitraire
-  async createMultipartUpload(originalName: string, contentType: string) {
-    const ext = extname(originalName).toLowerCase() || '.bin';
+  async createMultipartUpload(contentType: string) {
+    const ext = EXT_FROM_CONTENT_TYPE[contentType] ?? '.bin';
     const key = `raw/${randomUUID()}${ext}`;
 
     const { UploadId } = await this.s3.send(

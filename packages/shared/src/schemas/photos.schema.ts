@@ -50,9 +50,12 @@ export type PhotoListResponseDto = z.infer<typeof PhotoListResponseSchema>;
 
 // --- Multipart upload (presigned URLs via NestJS, remplace Companion) ---
 
+export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'] as const;
+
 export const CreateMultipartSchema = z.object({
   filename: z.string().trim().min(1).max(255),
-  contentType: z.string().trim().min(1).max(127),
+  contentType: z.enum(ALLOWED_IMAGE_TYPES),
+  fileSize: z.number().int().min(1).max(50 * 1024 * 1024),
 });
 export type CreateMultipartDto = z.infer<typeof CreateMultipartSchema>;
 

@@ -46,10 +46,13 @@ export class PhotoProcessor extends WorkerHost {
 
     await this.aws.deleteObject(rawKey);
 
+    const optimizedHead = await this.aws.headObject(optimizedKey).catch(() => null);
+
     await this.photoRepo.update(photoId, {
       status: PhotoStatus.COMPLETED,
       s3Key: optimizedKey,
       cloudFrontUrl: this.aws.getPublicUrl(optimizedKey),
+      fileSizeBytes: optimizedHead?.ContentLength ?? null,
     });
 
     this.logger.log(`Photo ${photoId} optimized → ${optimizedKey}`);
@@ -62,5 +65,8 @@ export class PhotoProcessor extends WorkerHost {
       `Job failed for photo ${job.data.photoId}`,
     );
     await this.photoRepo.update(job.data.photoId, { status: PhotoStatus.FAILED });
+    await this.aws
+      .deleteObject(job.data.rawKey)
+      .catch((e) => this.logger.error({ key: job.data.rawKey, err: e }, 'Failed to delete raw object after job failure'));
   }
 }
