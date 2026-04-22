@@ -36,6 +36,7 @@ export function PhotoUploader({ onUploadComplete }: Props) {
           {
             filename: file.name,
             contentType: file.type || "application/octet-stream",
+            fileSize: file.size,
           },
         );
         return data;

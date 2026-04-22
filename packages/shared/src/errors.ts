@@ -11,6 +11,7 @@ export enum ErrorCode {
 
   PHOTO_NOT_FOUND = "PHOTO_NOT_FOUND",
   PHOTO_S3_MISSING = "PHOTO_S3_MISSING",
+  QUOTA_EXCEEDED = "QUOTA_EXCEEDED",
 }
 
 // 2. format des erreurs de champs formulaires

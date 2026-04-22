@@ -436,16 +436,24 @@ Hook React Query qui poll `/photos/:id/status` toutes les 2 secondes, **sauf** s
 - **Isolation par user** : `getStatus` et `list` filtrent systématiquement par `user_id`
 - **Key générée côté serveur** : empêche path traversal et collision
 - **IAM least privilege** : le user `fil-rouge-backend` n'a que les actions S3 strictement nécessaires (`PutObject`, `GetObject`, `DeleteObject`, `AbortMultipartUpload`, `ListMultipartUploadParts`, `ListBucket`) sur le seul bucket applicatif
+- **Ownership des uploads multipart via Redis** : à la création d'un multipart, on stocke `upload:${uploadId} → userId` dans Redis avec TTL 1h. Chaque endpoint (`sign-part`, `list-parts`, `complete`, `abort`) appelle `assertUploadOwner` qui vérifie la correspondance. La clé est supprimée après `complete` ou `abort`. Un user ne peut donc pas interférer avec l'upload d'un autre même s'il connaît l'`uploadId`.
+- **Allowlist stricte du contentType** : `CreateMultipartSchema` utilise `z.enum(['image/jpeg', 'image/png', 'image/webp', 'image/heic'])`. L'extension du fichier S3 est dérivée du contentType validé (via `EXT_FROM_CONTENT_TYPE`), jamais du filename fourni par l'user → impossible d'uploader un `.svg` ou `.html` qui serait servi tel quel par CloudFront.
+- **Cleanup S3 onFailed** : si Sharp plante, `@OnWorkerEvent('failed')` appelle `aws.deleteObject(rawKey)` en plus de marquer la photo FAILED → pas d'orphelin S3.
+- **Protection contre l'info disclosure** : `getStatus` retourne **404** aussi bien si la photo n'existe pas que si elle appartient à un autre user → un attaquant ne peut pas deviner l'existence d'un UUID via la différence entre 403 et 404.
+- **Quota de stockage par utilisateur** : avant toute création de multipart upload, on vérifie que `stockage_utilisé + taille_nouveau_fichier ≤ quota`. Le calcul est intentionnellement asymétrique :
+  - **Photos existantes** → on somme leurs `file_size_bytes` optimisées (taille après Sharp, stockée par le worker via `HeadObject` post-upload). C'est ce qui est réellement stocké et facturé sur S3.
+  - **Nouveau fichier** → on utilise la taille raw envoyée par le front (`file.size` Uppy). On ne connaît pas encore la taille optimisée, donc on est conservateur.
+  - **Résultat** : `SELECT COALESCE(SUM(file_size_bytes), 0) FROM photos WHERE user_id = ? AND status = 'COMPLETED'` + `dto.fileSize > MAX_STORAGE_PER_USER_BYTES` (défaut 500 MB, configurable via env). Si dépassement → 403 `QUOTA_EXCEEDED` **avant** de toucher S3 — aucun coût engagé.
+
+- **Lifecycle rules S3** (AWS console, bucket `fil-rouge-bucket-s3`) :
+  - `abort-incomplete-multipart` : annule les multipart uploads non terminés au bout de 24h → pas de parts orphelines facturées si un user ferme son navigateur en plein upload.
+  - `expire-raw-after-7-days` (préfixe `raw/`) : dernier filet de sécurité qui supprime les objets `raw/` au bout de 7 jours si le worker crash entre `PutObject optimized` et `DeleteObject raw`.
 
 ### 6.2 Points d'amélioration identifiés (non corrigés, assumés pour la V1)
 
 À présenter comme une **roadmap sécurité** :
 
-1. **Ownership des uploads en cours** : rien ne lie `uploadId` → `userId` pendant la phase multipart. Un user authentifié pourrait théoriquement interférer avec l'upload d'un autre s'il connaît son `uploadId`. Fix prévu : stocker `upload:${uploadId} → userId` dans Redis avec TTL 1h, checker sur chaque endpoint multipart.
-2. **Allowlist stricte du contentType** : actuellement tout `image/*` passe. À restreindre à `image/jpeg|png|webp|heic` avec extension dérivée du contentType validé, pas du filename user.
-3. **Lifecycle S3** : les multipart uploads abandonnés restent facturés. À configurer côté AWS console (abort après 24h, expiration raw/ après 7j).
-4. **Cleanup onFailed** : si Sharp plante, le fichier raw/ n'est pas supprimé. À gérer dans `@OnWorkerEvent('failed')` via `aws.deleteObject(rawKey)`.
-5. **Info disclosure** : `getStatus` renvoie 403 si la photo existe mais appartient à un autre user → confirme l'existence de l'UUID. À remplacer par 404 systématique.
+1. **URLs CloudFront signées** : les URLs stockées en DB sont publiques — si une URL leake, n'importe qui peut accéder à la photo. Fix prévu : générer des URLs CloudFront signées (cookie ou query string) avec une expiration courte, validées via la clé publique CloudFront.
 
 ## 7. Trade-offs assumés
 

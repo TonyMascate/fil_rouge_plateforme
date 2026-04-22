@@ -33,6 +33,9 @@ export class Photo {
   status: PhotoStatus;
 
   @Index()
+  @Column({ name: 'file_size_bytes', type: 'int', nullable: true })
+  fileSizeBytes: number | null;
+
   @Column({ name: 'user_id' })
   userId: string;
 
