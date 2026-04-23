@@ -1,70 +1,45 @@
 # Architecture des pages — PhotoApp
 
-## Diagramme
+## Arborescence
 
 ```mermaid
 flowchart TD
-    subgraph PUBLIC["🌐 Zone publique (sans compte)"]
-        LANDING["/ — Landing page"]
-        LOGIN["/login — Connexion"]
-        REGISTER["/register — Inscription"]
-        SHARED["/s/[token] — Album partagé"]
-    end
+    LANDING["🏠 Landing  /"]
 
-    subgraph AUTH["🔐 Zone authentifiée (user)"]
-        GALLERY["/gallery — Galerie principale\n(vue par date, défaut)"]
+    LANDING --> LOGIN["Connexion  /login"]
+    LANDING --> REGISTER["Inscription  /register"]
 
-        subgraph EXPLORE["✦ Killer Feature"]
-            CHROMATIC["/explore — Exploration chromatique\n(vue par couleur / ambiance)"]
-        end
-
-        UPLOAD["/upload — Upload de photos"]
-        PHOTO["/photos/[id] — Détail d'une photo"]
-
-        subgraph ALBUMS["Albums"]
-            ALBUMS_LIST["/albums — Liste des albums"]
-            ALBUM_DETAIL["/albums/[id] — Détail d'un album"]
-        end
-
-        subgraph SETTINGS["Compte"]
-            PROFILE["/settings — Paramètres du compte"]
-        end
-    end
-
-    subgraph ADMIN["🛡️ Zone admin"]
-        ADMIN_DASH["/admin — Dashboard admin"]
-        ADMIN_USERS["/admin/users — Gestion utilisateurs"]
-    end
-
-    %% Navigation publique
-    LANDING --> LOGIN
-    LANDING --> REGISTER
-    LOGIN --> GALLERY
+    LOGIN --> GALLERY["Galerie  /gallery"]
     REGISTER --> GALLERY
 
-    %% Lien public vers album partagé
-    SHARED -.->|"sans compte"| ALBUM_DETAIL
+    GALLERY --> CHROMATIC["Exploration chromatique  /explore"]
+    GALLERY --> UPLOAD["Upload  /upload"]
+    GALLERY --> ALBUMS_LIST["Albums  /albums"]
+    GALLERY --> PHOTO_G["Détail photo  /photos/id"]
+    GALLERY --> SETTINGS["Paramètres  /settings"]
 
-    %% Navigation app
-    GALLERY --> CHROMATIC
-    GALLERY --> PHOTO
-    GALLERY --> UPLOAD
-    GALLERY --> ALBUMS_LIST
-    ALBUMS_LIST --> ALBUM_DETAIL
-    ALBUM_DETAIL --> PHOTO
-    ALBUM_DETAIL -->|"génère"| SHARED
+    CHROMATIC --> PHOTO_C["Détail photo  /photos/id"]
 
-    %% Admin
-    ADMIN_DASH --> ADMIN_USERS
+    ALBUMS_LIST --> ALBUM_DETAIL["Détail album  /albums/id"]
+    ALBUM_DETAIL --> PHOTO_A["Détail photo  /photos/id"]
+    ALBUM_DETAIL --> SHARED["🔗 Album partagé  /s/token  —  public"]
+
+    ADMIN["🛡️ Dashboard admin  /admin"] --> ADMIN_USERS["Utilisateurs  /admin/users"]
+
+    style LANDING fill:#6d28d9,color:#fff,stroke:none
+    style GALLERY fill:#6d28d9,color:#fff,stroke:none
+    style ADMIN fill:#374151,color:#fff,stroke:none
+    style SHARED fill:#0369a1,color:#fff,stroke:none
+    style CHROMATIC fill:#7c3aed,color:#fff,stroke:none
 ```
 
 ---
 
 ## Pages à maquetter — priorités
 
-### P1 — MVP (à faire en premier)
-| Page | Route | Statut maquette |
-|------|--------|-----------------|
+### P1 — MVP
+| Page | Route | Statut |
+|------|--------|--------|
 | Landing | `/` | ✅ V4 / V5 en cours |
 | Connexion | `/login` | ❌ À faire |
 | Inscription | `/register` | ❌ À faire |
@@ -73,16 +48,16 @@ flowchart TD
 | Détail d'une photo | `/photos/[id]` | ❌ À faire |
 
 ### P2 — Core features
-| Page | Route | Statut maquette |
-|------|--------|-----------------|
+| Page | Route | Statut |
+|------|--------|--------|
 | Exploration chromatique | `/explore` | ❌ À faire |
 | Liste des albums | `/albums` | ❌ À faire |
 | Détail d'un album | `/albums/[id]` | ❌ À faire |
 | Album partagé (public) | `/s/[token]` | ❌ À faire |
 
 ### P3 — Secondaire
-| Page | Route | Statut maquette |
-|------|--------|-----------------|
+| Page | Route | Statut |
+|------|--------|--------|
 | Paramètres du compte | `/settings` | ❌ À faire |
 | Dashboard admin | `/admin` | ❌ À faire |
 | Gestion utilisateurs | `/admin/users` | ❌ À faire |
@@ -91,8 +66,7 @@ flowchart TD
 
 ## Notes
 
-- La **galerie** (`/gallery`) est la page centrale de l'app — c'est depuis là qu'on accède à tout.
-- L'**exploration chromatique** (`/explore`) est une vue alternative à la galerie, pas une page séparée dans la navigation principale — penser à un toggle ou un onglet dans la galerie.
-- La page **album partagé** (`/s/[token]`) est publique mais ressemble visuellement à la page album authentifiée — une seule maquette peut couvrir les deux avec des variantes.
-- Les pages **admin** peuvent partager un layout commun distinct du layout user.
-```
+- La **galerie** est le hub central — toutes les pages app en partent.
+- L'**exploration chromatique** est un toggle dans la galerie, pas une entrée de nav séparée.
+- **Détail photo** apparaît à plusieurs niveaux (galerie, exploration, album) — même page, contexte de retour différent.
+- **Album partagé** (`/s/[token]`) est accessible sans compte — même UI que détail album en lecture seule.
