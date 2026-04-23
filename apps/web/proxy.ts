@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-const PUBLIC_ROUTES = ["/login", "/register"];
+const PUBLIC_PREFIXES = ["/login", "/register", "/mockups"];
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const accessToken = req.cookies.get("access_token")?.value;
   const refreshToken = req.cookies.get("refresh_token")?.value;
-  const isPublic = PUBLIC_ROUTES.includes(pathname);
+  const isPublic = PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"));
   const JWT_SECRET = new TextEncoder().encode(process.env.JWT_ACCESS_SECRET ?? "");
 
   // --- Routes publiques sans tokens : laisser passer ---
@@ -41,9 +41,7 @@ export async function proxy(req: NextRequest) {
 
       if (refreshResponse.ok) {
         // Rediriger vers dashboard si route publique, sinon laisser passer
-        const response = isPublic
-          ? NextResponse.redirect(new URL("/dashboard", req.url))
-          : NextResponse.next();
+        const response = isPublic ? NextResponse.redirect(new URL("/dashboard", req.url)) : NextResponse.next();
 
         // Recopier les Set-Cookie de l'API vers le navigateur
         const setCookies = refreshResponse.headers.getSetCookie();
