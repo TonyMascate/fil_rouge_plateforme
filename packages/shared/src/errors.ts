@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 //  1. Codes erreurs uniques
 export enum ErrorCode {
   AUTH_INVALID_CREDENTIALS = "AUTH_INVALID_CREDENTIALS",
@@ -27,3 +29,14 @@ export interface ApiErrorResponse {
   message: string;
   details?: ValidationErrorDetail[];
 }
+
+// 4. Schéma Zod du format d'erreur (utilisé pour la doc Swagger)
+export const ApiErrorSchema = z.object({
+  code: z.string().describe('Code d\'erreur applicatif (ex: AUTH_INVALID_CREDENTIALS)'),
+  statusCode: z.number().int().describe('Code HTTP'),
+  message: z.string().describe('Message lisible'),
+  details: z.array(z.object({
+    field: z.string(),
+    message: z.string(),
+  })).optional().describe('Détails de validation par champ'),
+});
