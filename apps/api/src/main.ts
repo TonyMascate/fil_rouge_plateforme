@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ZodValidationPipe } from 'nestjs-zod';
+import { ZodValidationPipe, cleanupOpenApiDoc } from 'nestjs-zod';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { Logger } from 'nestjs-pino';
 
@@ -17,6 +18,17 @@ async function bootstrap() {
   });
 
   app.useGlobalPipes(new ZodValidationPipe());
+
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Fil Rouge API')
+      .setVersion('1.0')
+      .setDescription('API de la plateforme Fil Rouge — auth par cookies HttpOnly + CSRF (X-XSRF-TOKEN)')
+      .addCookieAuth('access_token')
+      .build();
+    const document = cleanupOpenApiDoc(SwaggerModule.createDocument(app, config));
+    SwaggerModule.setup('docs', app, document);
+  }
 
   await app.listen(process.env.PORT ?? 3001);
 

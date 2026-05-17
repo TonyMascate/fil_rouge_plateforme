@@ -1,4 +1,7 @@
 import { Body, Controller, HttpStatus, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
+import { ApiBody, ApiExtraModels, ApiOperation, ApiResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
+import { UserResponseDto } from '@app/users/dto/user-response.dto';
+import { ApiErrorDto } from '@app/common/dto/api-error.dto';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import type { Request, Response } from 'express';
@@ -12,6 +15,8 @@ import { ApiException } from '@app/common/api.exception';
 import { CreateUserDto } from '@app/users/dto/create-user.dto';
 import { UsersService } from '@app/users/users.service';
 
+@ApiTags('Auth')
+@ApiExtraModels(UserResponseDto, ApiErrorDto)
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -48,6 +53,11 @@ export class AuthController {
 
   @Post('register')
   @SkipCsrf()
+  @ApiOperation({ summary: 'Créer un compte' })
+  @ApiBody({ type: CreateUserDto, examples: { default: { value: { email: 'user@example.com', password: 'Password123', firstName: 'Jean', lastName: 'Dupont' } } } })
+  @ApiResponse({ status: 201, schema: { properties: { user: { $ref: getSchemaPath(UserResponseDto) } } } })
+  @ApiResponse({ status: 400, description: 'Données invalides', type: ApiErrorDto })
+  @ApiResponse({ status: 409, description: 'Email déjà utilisé', type: ApiErrorDto })
   async register(@Body() createUserDto: CreateUserDto, @Res({ passthrough: true }) res: Response) {
     const user = await this.usersService.create(createUserDto);
     const { accessToken, refreshToken } = await this.authService.login(user);
@@ -58,6 +68,11 @@ export class AuthController {
   @Post('login')
   @SkipCsrf()
   @Throttle({ short: { ttl: 60000, limit: 5 } })
+  @ApiOperation({ summary: 'Se connecter' })
+  @ApiBody({ type: LoginUserDto, examples: { default: { value: { email: 'user@example.com', password: 'Password123' } } } })
+  @ApiResponse({ status: 200, schema: { properties: { user: { $ref: getSchemaPath(UserResponseDto) } } } })
+  @ApiResponse({ status: 401, description: 'Email ou mot de passe invalide', type: ApiErrorDto })
+  @ApiResponse({ status: 429, description: 'Trop de tentatives', type: ApiErrorDto })
   async login(@Body() loginUserDto: LoginUserDto, @Res({ passthrough: true }) res: Response) {
     const user = await this.authService.validateUser(loginUserDto);
     if (!user) {
@@ -75,6 +90,9 @@ export class AuthController {
 
   @Post('refresh')
   @SkipCsrf()
+  @ApiOperation({ summary: 'Renouveler les tokens via cookie refresh_token' })
+  @ApiResponse({ status: 200, schema: { properties: { message: { type: 'string', example: 'Refreshed' } } } })
+  @ApiResponse({ status: 401, description: 'Refresh token absent ou invalide', type: ApiErrorDto })
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const refreshToken = req.cookies['refresh_token'];
     if (!refreshToken) {
@@ -87,6 +105,8 @@ export class AuthController {
 
   @Post('logout')
   @SkipCsrf()
+  @ApiOperation({ summary: 'Se déconnecter' })
+  @ApiResponse({ status: 200, schema: { properties: { message: { type: 'string', example: 'Logged out' } } } })
   async logout(@Res({ passthrough: true }) res: Response) {
     const isProduction = this.configService.get('NODE_ENV') === 'production';
     const clearOpts = {
