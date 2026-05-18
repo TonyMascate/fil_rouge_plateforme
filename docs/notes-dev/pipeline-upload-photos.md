@@ -47,6 +47,8 @@ sequenceDiagram
 
 ### 2.2 Diagramme 2 — Phase traitement (asynchrone, côté worker)
 
+Faire le traitement sur le serveur pendant l'upload ( à vérifier )
+
 ```mermaid
 sequenceDiagram
     autonumber
