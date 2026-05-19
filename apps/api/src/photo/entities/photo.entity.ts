@@ -43,6 +43,9 @@ export class Photo {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
+  @Column({ name: 'dominant_color', type: 'varchar', length: 7, nullable: true })
+  dominantColor: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

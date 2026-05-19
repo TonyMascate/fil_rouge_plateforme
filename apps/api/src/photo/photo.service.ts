@@ -15,6 +15,98 @@ export interface OptimizeJobData {
   rawKey: string;
 }
 
+// ─── K-means clustering RGB ───────────────────────────────────────────────────
+
+interface ColorPoint { red: number; green: number; blue: number }
+
+function convertHexToColorPoint(hex: string): ColorPoint {
+  return {
+    red:   parseInt(hex.slice(1, 3), 16),
+    green: parseInt(hex.slice(3, 5), 16),
+    blue:  parseInt(hex.slice(5, 7), 16),
+  };
+}
+
+function convertColorPointToHex({ red, green, blue }: ColorPoint): string {
+  return `#${Math.round(red).toString(16).padStart(2, '0')}${Math.round(green).toString(16).padStart(2, '0')}${Math.round(blue).toString(16).padStart(2, '0')}`;
+}
+
+function squaredDistanceBetweenColors(colorA: ColorPoint, colorB: ColorPoint): number {
+  return (colorA.red - colorB.red) ** 2 + (colorA.green - colorB.green) ** 2 + (colorA.blue - colorB.blue) ** 2;
+}
+
+function findNearestCentroidIndex(color: ColorPoint, centroids: ColorPoint[]): number {
+  return centroids.reduce(
+    (nearestIndex, candidate, candidateIndex) =>
+      squaredDistanceBetweenColors(color, candidate) < squaredDistanceBetweenColors(color, centroids[nearestIndex])
+        ? candidateIndex
+        : nearestIndex,
+    0,
+  );
+}
+
+function clusterColorsByKmeans(
+  colorPoints: ColorPoint[],
+  numberOfClusters: number,
+  maxIterations = 20,
+): { centroid: ColorPoint; photoIndices: number[] }[] {
+  if (colorPoints.length <= numberOfClusters) {
+    return colorPoints.map((point, index) => ({ centroid: point, photoIndices: [index] }));
+  }
+
+  // Initialisation k-means++ : choisir des centroïdes de départ bien espacés
+  // (évite que tous les centroïdes se retrouvent dans la même zone de couleur)
+  const centroids: ColorPoint[] = [colorPoints[Math.floor(Math.random() * colorPoints.length)]];
+
+  while (centroids.length < numberOfClusters) {
+    const distanceToNearestCentroid = colorPoints.map(
+      (point) => Math.min(...centroids.map((centroid) => squaredDistanceBetweenColors(point, centroid))),
+    );
+    const totalDistance = distanceToNearestCentroid.reduce((sum, distance) => sum + distance, 0);
+
+    // Sélection probabiliste : plus un point est loin des centroïdes existants, plus il a de chances d'être choisi
+    let remainingDistance = Math.random() * totalDistance;
+    let selectedPoint = colorPoints[colorPoints.length - 1];
+    for (let i = 0; i < colorPoints.length; i++) {
+      remainingDistance -= distanceToNearestCentroid[i];
+      if (remainingDistance <= 0) { selectedPoint = colorPoints[i]; break; }
+    }
+    centroids.push(selectedPoint);
+  }
+
+  // Chaque photo reçoit l'index du centroïde dont elle est la plus proche
+  let clusterAssignments = colorPoints.map((point) => findNearestCentroidIndex(point, centroids));
+
+  for (let iteration = 0; iteration < maxIterations; iteration++) {
+    // Déplacer chaque centroïde au barycentre de ses membres
+    for (let clusterIndex = 0; clusterIndex < numberOfClusters; clusterIndex++) {
+      const membersOfCluster = colorPoints.filter((_, photoIndex) => clusterAssignments[photoIndex] === clusterIndex);
+      if (membersOfCluster.length === 0) continue;
+      centroids[clusterIndex] = {
+        red:   membersOfCluster.reduce((sum, point) => sum + point.red,   0) / membersOfCluster.length,
+        green: membersOfCluster.reduce((sum, point) => sum + point.green, 0) / membersOfCluster.length,
+        blue:  membersOfCluster.reduce((sum, point) => sum + point.blue,  0) / membersOfCluster.length,
+      };
+    }
+
+    // Réassigner chaque photo au centroïde le plus proche après déplacement
+    const newAssignments = colorPoints.map((point) => findNearestCentroidIndex(point, centroids));
+
+    // Si aucune photo n'a changé de cluster : l'algorithme a convergé
+    if (newAssignments.every((assignment, index) => assignment === clusterAssignments[index])) break;
+    clusterAssignments = newAssignments;
+  }
+
+  return Array.from({ length: numberOfClusters }, (_, clusterIndex) => ({
+    centroid: centroids[clusterIndex],
+    photoIndices: clusterAssignments
+      .map((assignment, photoIndex) => (assignment === clusterIndex ? photoIndex : -1))
+      .filter((index) => index >= 0),
+  })).filter((cluster) => cluster.photoIndices.length > 0);
+}
+
+// ─── Service ──────────────────────────────────────────────────────────────────
+
 @Injectable()
 export class PhotoService {
   constructor(
@@ -88,6 +180,40 @@ export class PhotoService {
     };
   }
 
+  async listByColors(userId: string) {
+    const photos = await this.photoRepo.find({
+      where: { userId, status: PhotoStatus.COMPLETED },
+      order: { createdAt: 'DESC' },
+    });
+
+    const photosWithDominantColor = photos.filter((photo) => photo.dominantColor);
+    if (photosWithDominantColor.length === 0) return [];
+
+    const dominantColorPoints = photosWithDominantColor.map((photo) =>
+      convertHexToColorPoint(photo.dominantColor!),
+    );
+
+    // k augmente avec le nombre de photos : 3 clusters pour 18 photos, 7 pour 98, 10 max
+    const numberOfClusters = Math.max(3, Math.min(10, Math.round(Math.sqrt(photosWithDominantColor.length / 2))));
+    const colorClusters = clusterColorsByKmeans(dominantColorPoints, numberOfClusters);
+
+    return colorClusters.map(({ centroid, photoIndices }) => {
+      const photosInCluster = photoIndices.map((index) => photosWithDominantColor[index]);
+      const representativeColor = convertColorPointToHex(centroid);
+      return {
+        family: representativeColor,
+        representativeColor,
+        count: photosInCluster.length,
+        photos: photosInCluster.slice(0, 50).map((photo) => ({
+          id: photo.id,
+          url: photo.cloudFrontUrl,
+          originalName: photo.originalName,
+          dominantColor: photo.dominantColor,
+        })),
+      };
+    });
+  }
+
   async listForUser(userId: string, query: PhotoListQueryDto) {
     const { page, limit } = query;
 
@@ -99,11 +225,11 @@ export class PhotoService {
     });
 
     return {
-      items: photos.map((p) => ({
-        id: p.id,
-        url: p.cloudFrontUrl,
-        originalName: p.originalName,
-        createdAt: p.createdAt,
+      items: photos.map((photo) => ({
+        id: photo.id,
+        url: photo.cloudFrontUrl,
+        originalName: photo.originalName,
+        createdAt: photo.createdAt,
       })),
       page,
       limit,
