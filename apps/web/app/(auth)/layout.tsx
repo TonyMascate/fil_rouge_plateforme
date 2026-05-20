@@ -1,3 +1,4 @@
+import Navbar from "@/components/ui/Navbar";
 import { GetSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
@@ -10,5 +11,10 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
     redirect("/login");
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <Navbar />
+      {children}
+    </>
+  );
 }
