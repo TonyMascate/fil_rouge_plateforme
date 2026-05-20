@@ -217,7 +217,7 @@ graph TB
 
 > **Méthode :** `RISQUE = Probabilité × Impact`
 > Probabilité : 1 (faible) → 3 (élevée) · Impact : 1 (faible) → 3 (critique)
-> Score : 🟢 1-2 · 🟡 3-4 · 🔴 6-9
+> Score : 1-2 · 3-4 · 6-9
 
 ### 3.1 Actifs critiques identifiés
 
@@ -233,27 +233,26 @@ graph TB
 
 > Probabilité et impact évalués **avant mitigation** · Score résiduel **après mitigation**
 > Échelle : 1 (faible) → 3 (élevé) · Score = Probabilité × Impact
-> 🟢 1-2 · 🟡 3-4 · 🔴 6-9
 
 | #   | Actif         | Menace                                      | Prob. brute | Impact | Score brut | Mitigation                                                                | Score résiduel |
 | --- | ------------- | ------------------------------------------- | :---------: | :----: | :--------: | ------------------------------------------------------------------------- | :------------: |
-| R1  | Service Auth  | Brute force sur login                       |      3      |   3    |  🔴 **9**  | Throttler (100 req/min), Argon2id, refresh token révocable                |    🟢 **2**    |
-| R2  | PostgreSQL    | Panne / indisponibilité (nœud unique, SPOF) |      3      |   3    |  🔴 **9**  | Backups quotidiens, restart policy Swarm, monitoring + alerting Grafana   |    🔴 **6**    |
-| R3  | Photos        | Accès non autorisé à des photos privées     |      2      |   3    |  🔴 **6**  | RBAC + Ownership guard (`resource.userId`), HTTPS, JWT HTTP-only cookie   |    🟢 **2**    |
-| R4  | Tokens JWT    | Vol de token (XSS)                          |      2      |   3    |  🔴 **6**  | HTTP-only cookie (non accessible par JS), durée 15 min, HTTPS obligatoire |    🟢 **2**    |
-| R5  | VPS           | Indisponibilité totale (panne matérielle)   |      2      |   3    |  🔴 **6**  | Rolling updates Swarm, snapshot VPS régulier, alerting Grafana            |    🟡 **3**    |
-| R6  | Redis         | Indisponibilité (SPOF)                      |      2      |   2    |  🟡 **4**  | Restart policy Swarm, graceful degradation (cache miss → BDD)             |    🟢 **2**    |
-| R7  | API NestJS    | Injection SQL                               |      1      |   3    |  🟡 **3**  | TypeORM (requêtes paramétrées), validation Zod en entrée                  |    🟢 **1**    |
-| R8  | S3 / AWS      | Cloud Act — accès données par autorités US  |      1      |   2    |  🟢 **2**  | Région EU (eu-west-3 Paris), données perso non stockées sur S3            |    🟢 **1**    |
-| R9  | Logs (Loki)   | Fuite de données sensibles dans les logs    |      1      |   2    |  🟢 **2**  | Pino sans données perso (pas de MDP, token ou PII en clair)               |    🟢 **1**    |
-| R10 | Images Docker | Supply chain attack                         |      1      |   2    |  🟢 **2**  | Build en CI contrôlé, ghcr.io privé, GITHUB_TOKEN éphémère                |    🟢 **1**    |
+| R1  | Service Auth  | Brute force sur login                       |      3      |   3    |   **9**  | Throttler (100 req/min), Argon2id, refresh token révocable                |     **2**    |
+| R2  | PostgreSQL    | Panne / indisponibilité (nœud unique, SPOF) |      3      |   3    |   **9**  | Backups quotidiens, restart policy Swarm, monitoring + alerting Grafana   |     **6**    |
+| R3  | Photos        | Accès non autorisé à des photos privées     |      2      |   3    |   **6**  | RBAC + Ownership guard (`resource.userId`), HTTPS, JWT HTTP-only cookie   |     **2**    |
+| R4  | Tokens JWT    | Vol de token (XSS)                          |      2      |   3    |   **6**  | HTTP-only cookie (non accessible par JS), durée 15 min, HTTPS obligatoire |     **2**    |
+| R5  | VPS           | Indisponibilité totale (panne matérielle)   |      2      |   3    |   **6**  | Rolling updates Swarm, snapshot VPS régulier, alerting Grafana            |     **3**    |
+| R6  | Redis         | Indisponibilité (SPOF)                      |      2      |   2    |   **4**  | Restart policy Swarm, graceful degradation (cache miss → BDD)             |     **2**    |
+| R7  | API NestJS    | Injection SQL                               |      1      |   3    |   **3**  | TypeORM (requêtes paramétrées), validation Zod en entrée                  |     **1**    |
+| R8  | S3 / AWS      | Cloud Act — accès données par autorités US  |      1      |   2    |   **2**  | Région EU (eu-west-3 Paris), données perso non stockées sur S3            |     **1**    |
+| R9  | Logs (Loki)   | Fuite de données sensibles dans les logs    |      1      |   2    |   **2**  | Pino sans données perso (pas de MDP, token ou PII en clair)               |     **1**    |
+| R10 | Images Docker | Supply chain attack                         |      1      |   2    |   **2**  | Build en CI contrôlé, ghcr.io privé, GITHUB_TOKEN éphémère                |     **1**    |
 
 ### 3.3 Risques résiduels acceptés
 
 Les risques suivants restent **partiellement ouverts** et sont acceptés dans le contexte du projet :
 
-- **PostgreSQL single node (R2, score résiduel 🟡 4) :** La réplication primaire/secondaire dépasse la charge du projet solo. Mitigation retenue : backup quotidien automatisé + alerting immédiat sur panne.
-- **VPS unique (R5, score résiduel 🟡 3) :** Un second VPS de failover n'est pas justifié économiquement à cette échelle. Le restart automatique Docker Swarm couvre les pannes applicatives.
+- **PostgreSQL single node (R2, score résiduel 4) :** La réplication primaire/secondaire dépasse la charge du projet solo. Mitigation retenue : backup quotidien automatisé + alerting immédiat sur panne.
+- **VPS unique (R5, score résiduel 3) :** Un second VPS de failover n'est pas justifié économiquement à cette échelle. Le restart automatique Docker Swarm couvre les pannes applicatives.
 - **Pas de WAF :** Le rate limiting applicatif (Throttler) et le pare-feu réseau du VPS constituent la protection en place.
 
 ---
