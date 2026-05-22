@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 
 const links = [
-  { label: "Fonctionnalités", href: "#" },
-  { label: "Explorer", href: "#" },
-  { label: "Tarifs", href: "#" },
+  { label: "Fonctionnalités", href: "/fonctionnalites" },
+  { label: "Explorer", href: "/explore" },
+  { label: "Tarifs", href: "/tarifs" },
 ];
 
 export default function Navbar() {
