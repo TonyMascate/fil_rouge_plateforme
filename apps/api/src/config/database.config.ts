@@ -15,20 +15,22 @@ export const getDbConfig = (): TypeOrmModuleOptions => {
 
     // DANGER : True en dev (pratique), STRICTEMENT false en prod
     // En prod, tu utiliseras les Migrations TypeORM.
-    synchronize: process.env.DB_SYNC === 'true',
+    synchronize: false,
 
     // --- CONFIGURATION SPÉCIFIQUE PGBOUNCER ---
     // Si on est en prod (donc derrière PgBouncer), il faut ajuster le pool
-    poolSize: isProduction ? 5 : 20, 
-    
-    // Si PgBouncer est en mode "Transaction" (recommandé), 
+    poolSize: isProduction ? 5 : 20,
+
+    // Si PgBouncer est en mode "Transaction" (recommandé),
     // les "prepared statements" peuvent causer des erreurs.
     // On les désactive souvent en prod pour la stabilité.
-    ...(isProduction ? {
-      extra: {
-        max: 5, // Limite max de connexions physiques
-        statement_timeout: 10000, // Timeout de sécurité
-      }
-    } : {}),
+    ...(isProduction
+      ? {
+          extra: {
+            max: 5, // Limite max de connexions physiques
+            statement_timeout: 10000, // Timeout de sécurité
+          },
+        }
+      : {}),
   };
 };
