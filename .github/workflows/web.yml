@@ -140,6 +140,7 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           build-args: |
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_CLOUDFRONT_DOMAIN=${{ secrets.NEXT_PUBLIC_CLOUDFRONT_DOMAIN }}
 
   deploy:
     needs: build-push
