@@ -52,7 +52,7 @@ WORKDIR /app
 # On copie les fichiers de config isolés par le découpeur
 COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/bun.lock ./bun.lock
-RUN bun install --frozen-lockfile
+RUN bun install
 
 # On copie le code source
 COPY --from=pruner /app/out/full/ .
