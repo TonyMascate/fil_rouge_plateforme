@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-const PUBLIC_PREFIXES = ["/login", "/register", "/mockups"];
+// Pages accessibles à tous (connecté ou non) — jamais redirigées
+const OPEN_PREFIXES = ["/fonctionnalites", "/tarifs", "/mockups"];
+
+// Pages réservées aux non-connectés — redirigent vers /dashboard si connecté
+const AUTH_ONLY_PREFIXES = ["/login", "/register", "/"];
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const accessToken = req.cookies.get("access_token")?.value;
   const refreshToken = req.cookies.get("refresh_token")?.value;
-  const isPublic = PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"));
+  const isOpen = OPEN_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"));
+  const isAuthOnly = AUTH_ONLY_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"));
+  const isPublic = isOpen || isAuthOnly;
   const JWT_SECRET = new TextEncoder().encode(process.env.JWT_ACCESS_SECRET ?? "");
 
   // --- Routes publiques sans tokens : laisser passer ---
@@ -19,8 +25,8 @@ export async function proxy(req: NextRequest) {
   if (accessToken) {
     try {
       await jwtVerify(accessToken, JWT_SECRET);
-      // Token valide : rediriger si route publique, sinon laisser passer
-      if (isPublic) return NextResponse.redirect(new URL("/dashboard", req.url));
+      // Token valide : rediriger vers dashboard uniquement pour les pages auth-only (login, register)
+      if (isAuthOnly) return NextResponse.redirect(new URL("/dashboard", req.url));
       return NextResponse.next();
     } catch {
       // Token expiré, on continue vers le refresh
@@ -40,10 +46,8 @@ export async function proxy(req: NextRequest) {
       });
 
       if (refreshResponse.ok) {
-        // Rediriger vers dashboard si route publique, sinon laisser passer
-        const response = isPublic ? NextResponse.redirect(new URL("/dashboard", req.url)) : NextResponse.next();
+        const response = isAuthOnly ? NextResponse.redirect(new URL("/dashboard", req.url)) : NextResponse.next();
 
-        // Recopier les Set-Cookie de l'API vers le navigateur
         const setCookies = refreshResponse.headers.getSetCookie();
         for (const cookie of setCookies) {
           response.headers.append("Set-Cookie", cookie);

@@ -17,14 +17,19 @@ function MacWindow({ children, className = "" }: { children: React.ReactNode; cl
 export default function LandingMockupV4() {
   return (
     <div className="min-h-screen bg-[#f8f8f6] text-foreground font-sans">
-
       {/* Navbar */}
       <nav className="flex items-center justify-between px-10 h-16 bg-white/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
         <span className="text-lg font-semibold text-foreground">PhotoApp</span>
         <div className="flex items-center gap-8 text-sm text-muted-foreground">
-          <Link href="#" className="hover:text-foreground transition-colors">Fonctionnalités</Link>
-          <Link href="#" className="hover:text-foreground transition-colors">Explorer</Link>
-          <Link href="#" className="hover:text-foreground transition-colors">Tarifs</Link>
+          <Link href="#" className="hover:text-foreground transition-colors">
+            Fonctionnalités
+          </Link>
+          <Link href="#" className="hover:text-foreground transition-colors">
+            Explorer
+          </Link>
+          <Link href="#" className="hover:text-foreground transition-colors">
+            Tarifs
+          </Link>
         </div>
         <div className="flex items-center gap-3">
           <Link href="#" className="px-4 py-2 text-sm font-medium hover:text-primary transition-colors">
@@ -38,7 +43,6 @@ export default function LandingMockupV4() {
 
       {/* Hero */}
       <section className="relative overflow-hidden min-h-[calc(100vh-4rem)] flex flex-col">
-
         {/* Fond pointillé */}
         <div
           className="absolute inset-0 opacity-40"
@@ -50,16 +54,13 @@ export default function LandingMockupV4() {
 
         {/* Contenu texte */}
         <div className="relative z-10 flex flex-col items-center text-center gap-6 pt-16 pb-12 px-8">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-border text-sm text-muted-foreground shadow-sm">
-            ✦ Explorez vos souvenirs autrement
-          </span>
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-border text-sm text-muted-foreground shadow-sm">✦ Explorez vos souvenirs autrement</span>
           <h1 className="text-7xl font-bold leading-[1.05] tracking-tight max-w-3xl">
-            Vos photos,<br />
+            Vos photos,
+            <br />
             <span className="text-primary">par ambiance.</span>
           </h1>
-          <p className="text-lg text-muted-foreground max-w-lg">
-            Uploadez, organisez et explorez vos photos par couleur. Partagez vos meilleurs moments en un clic.
-          </p>
+          <p className="text-lg text-muted-foreground max-w-lg">Uploadez, organisez et explorez vos photos par couleur. Partagez vos meilleurs moments en un clic.</p>
           <div className="flex items-center gap-4">
             <Link href="#" className="px-8 py-3.5 text-sm font-semibold rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-opacity shadow-lg shadow-primary/30">
               Commencer gratuitement
@@ -81,11 +82,7 @@ export default function LandingMockupV4() {
         <div className="relative z-10 flex-1 flex items-end justify-center px-16 pb-0">
           <MacWindow className="w-full max-w-5xl rounded-b-none shadow-2xl">
             <div className="p-4 grid grid-cols-6 gap-2 h-72 content-start">
-              {[
-                "bg-violet-300","bg-rose-300","bg-indigo-400","bg-pink-300","bg-violet-500","bg-amber-300",
-                "bg-rose-400","bg-violet-400","bg-pink-400","bg-indigo-300","bg-amber-400","bg-rose-300",
-                "bg-violet-300","bg-indigo-400","bg-pink-300","bg-rose-400","bg-violet-400","bg-amber-300",
-              ].map((c, i) => (
+              {["bg-violet-300", "bg-rose-300", "bg-indigo-400", "bg-pink-300", "bg-violet-500", "bg-amber-300", "bg-rose-400", "bg-violet-400", "bg-pink-400", "bg-indigo-300", "bg-amber-400", "bg-rose-300", "bg-violet-300", "bg-indigo-400", "bg-pink-300", "bg-rose-400", "bg-violet-400", "bg-amber-300"].map((c, i) => (
                 <div key={i} className={`${c} rounded-xl h-20`} />
               ))}
             </div>
@@ -95,7 +92,6 @@ export default function LandingMockupV4() {
 
       {/* Wrapper features */}
       <div className="relative overflow-hidden bg-[#f8f8f6]">
-
         {/* Glows ambiants continus — violet uniquement */}
         <div className="absolute top-[0%] right-[5%] w-[1300px] h-[1300px] bg-violet-300/10 rounded-full blur-[200px] pointer-events-none" />
         <div className="absolute top-[40%] left-[0%] w-[1300px] h-[1300px] bg-violet-200/8 rounded-full blur-[200px] pointer-events-none" />
@@ -104,14 +100,15 @@ export default function LandingMockupV4() {
         {/* Feature 1 — Upload */}
         <section className="py-28 px-20 relative z-10">
           <div className="max-w-6xl mx-auto flex items-center gap-16">
-
             {/* Texte */}
             <div className="flex-1 flex flex-col gap-5 max-w-sm">
               <span className="text-xs font-semibold tracking-widest text-primary uppercase">Upload</span>
-              <h2 className="text-4xl font-bold leading-tight">Glissez, déposez,<br />c'est fait.</h2>
-              <p className="text-muted-foreground leading-relaxed text-sm">
-                Upload jusqu'à 50 MB par fichier avec reprise automatique. Vos photos sont optimisées en quelques secondes.
-              </p>
+              <h2 className="text-4xl font-bold leading-tight">
+                Glissez, déposez,
+                <br />
+                c'est fait.
+              </h2>
+              <p className="text-muted-foreground leading-relaxed text-sm">Upload jusqu'à 50 MB par fichier avec reprise automatique. Vos photos sont optimisées en quelques secondes.</p>
               <ul className="flex flex-col gap-2.5">
                 {["Drag & drop natif", "Progression en temps réel", "Optimisation WebP auto"].map((item) => (
                   <li key={item} className="flex items-center gap-2.5 text-sm text-muted-foreground">
@@ -131,7 +128,11 @@ export default function LandingMockupV4() {
                     <div className="flex items-center justify-center py-8 rounded-xl border-2 border-dashed border-violet-200 bg-violet-50/40">
                       <div className="flex flex-col items-center gap-2">
                         <div className="w-12 h-12 rounded-xl bg-white shadow border border-violet-100 flex items-center justify-center text-xl text-violet-500">↑</div>
-                        <p className="text-xs text-muted-foreground text-center">Glissez vos photos ici<br /><span className="text-primary font-medium">ou cliquez pour sélectionner</span></p>
+                        <p className="text-xs text-muted-foreground text-center">
+                          Glissez vos photos ici
+                          <br />
+                          <span className="text-primary font-medium">ou cliquez pour sélectionner</span>
+                        </p>
                       </div>
                     </div>
                     <p className="text-xs text-center text-muted-foreground">JPG, PNG, WEBP, HEIC · Max 50 MB</p>
@@ -161,24 +162,26 @@ export default function LandingMockupV4() {
               {/* Badge flottant */}
               <div className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-md border border-border px-4 py-2.5 flex items-center gap-2.5">
                 <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs">✓</div>
-                <span className="text-xs font-medium">portrait.png optimisé · <span className="text-primary">−62%</span></span>
+                <span className="text-xs font-medium">
+                  portrait.png optimisé · <span className="text-primary">−62%</span>
+                </span>
               </div>
             </div>
-
           </div>
         </section>
 
         {/* Feature 2 — Killer Feature */}
         <section className="py-28 px-20 relative z-10">
           <div className="max-w-6xl mx-auto flex items-center gap-16 flex-row-reverse">
-
             {/* Texte */}
             <div className="flex-1 flex flex-col gap-5 max-w-sm">
               <span className="text-xs font-semibold tracking-widest text-primary uppercase">Killer Feature</span>
-              <h2 className="text-4xl font-bold leading-tight">Une nouvelle façon<br />d'explorer vos photos.</h2>
-              <p className="text-muted-foreground leading-relaxed text-sm">
-                En plus de la navigation classique par date, notre moteur chromatique regroupe vos photos par ambiance visuelle. Cliquez sur une couleur, laissez-vous surprendre.
-              </p>
+              <h2 className="text-4xl font-bold leading-tight">
+                Une nouvelle façon
+                <br />
+                d'explorer vos photos.
+              </h2>
+              <p className="text-muted-foreground leading-relaxed text-sm">En plus de la navigation classique par date, notre moteur chromatique regroupe vos photos par ambiance visuelle. Cliquez sur une couleur, laissez-vous surprendre.</p>
               <Link href="#" className="w-fit px-6 py-3 text-sm font-medium rounded-full bg-foreground text-background hover:opacity-80 transition-opacity">
                 Découvrir la feature →
               </Link>
@@ -211,9 +214,11 @@ export default function LandingMockupV4() {
                     </div>
                   </div>
                   <div className="flex-1 p-4 flex flex-col gap-2 overflow-hidden">
-                    <p className="text-xs text-muted-foreground">12 photos · Tonalité <span className="text-violet-500 font-semibold">violette</span></p>
+                    <p className="text-xs text-muted-foreground">
+                      12 photos · Tonalité <span className="text-violet-500 font-semibold">violette</span>
+                    </p>
                     <div className="grid grid-cols-4 gap-2">
-                      {["bg-violet-300","bg-violet-500","bg-violet-400","bg-indigo-400","bg-purple-400","bg-violet-300","bg-violet-600","bg-indigo-300"].map((c, i) => (
+                      {["bg-violet-300", "bg-violet-500", "bg-violet-400", "bg-indigo-400", "bg-purple-400", "bg-violet-300", "bg-violet-600", "bg-indigo-300"].map((c, i) => (
                         <div key={i} className={`${c} rounded-xl h-14`} />
                       ))}
                     </div>
@@ -221,21 +226,21 @@ export default function LandingMockupV4() {
                 </div>
               </MacWindow>
             </div>
-
           </div>
         </section>
 
         {/* Feature 3 — Partage */}
         <section className="py-28 px-20 relative z-10">
           <div className="max-w-6xl mx-auto flex items-center gap-16">
-
             {/* Texte */}
             <div className="flex-1 flex flex-col gap-5 max-w-sm">
               <span className="text-xs font-semibold tracking-widest text-primary uppercase">Albums & Partage</span>
-              <h2 className="text-4xl font-bold leading-tight">Partagez<br />en un lien.</h2>
-              <p className="text-muted-foreground leading-relaxed text-sm">
-                Créez des albums, partagez-les via un lien public. Vos proches voient vos photos sans créer de compte.
-              </p>
+              <h2 className="text-4xl font-bold leading-tight">
+                Partagez
+                <br />
+                en un lien.
+              </h2>
+              <p className="text-muted-foreground leading-relaxed text-sm">Créez des albums, partagez-les via un lien public. Vos proches voient vos photos sans créer de compte.</p>
               <ul className="flex flex-col gap-2.5">
                 {["Albums illimités", "Lien public sans compte", "Vue détaillée de chaque photo"].map((item) => (
                   <li key={item} className="flex items-center gap-2.5 text-sm text-muted-foreground">
@@ -252,7 +257,7 @@ export default function LandingMockupV4() {
                 <div className="flex h-72">
                   {/* Galerie album */}
                   <div className="flex-1 p-4 grid grid-cols-3 gap-2 content-start">
-                    {["bg-violet-300","bg-rose-300","bg-amber-300","bg-pink-400","bg-indigo-300","bg-rose-400","bg-violet-400","bg-amber-400","bg-pink-300"].map((c, i) => (
+                    {["bg-violet-300", "bg-rose-300", "bg-amber-300", "bg-pink-400", "bg-indigo-300", "bg-rose-400", "bg-violet-400", "bg-amber-400", "bg-pink-300"].map((c, i) => (
                       <div key={i} className={`${c} rounded-xl h-16`} />
                     ))}
                   </div>
@@ -277,38 +282,40 @@ export default function LandingMockupV4() {
                 </div>
               </MacWindow>
             </div>
-
           </div>
         </section>
 
         {/* CTA final — dans le wrapper pour hériter du fond sans coupure */}
         <section className="px-20 py-36 flex flex-col items-center gap-6 text-center relative z-10">
-        <h2 className="text-5xl font-bold tracking-tight">
-          Prêt à voir vos photos<br />
-          <span className="text-primary">autrement ?</span>
-        </h2>
-        <p className="text-muted-foreground max-w-md">
-          Rejoignez des milliers d'utilisateurs qui explorent leur galerie par ambiance et couleur.
-        </p>
-        <Link href="#" className="px-10 py-4 text-sm font-semibold rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-opacity shadow-lg shadow-primary/30">
-          Créer un compte gratuit
-        </Link>
-        <p className="text-xs text-muted-foreground">Gratuit · 500 MB inclus · Sans carte bancaire</p>
+          <h2 className="text-5xl font-bold tracking-tight">
+            Prêt à voir vos photos
+            <br />
+            <span className="text-primary">autrement ?</span>
+          </h2>
+          <p className="text-muted-foreground max-w-md">Rejoignez des milliers d'utilisateurs qui explorent leur galerie par ambiance et couleur.</p>
+          <Link href="#" className="px-10 py-4 text-sm font-semibold rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-opacity shadow-lg shadow-primary/30">
+            Créer un compte gratuit
+          </Link>
+          <p className="text-xs text-muted-foreground">Gratuit · 500 MB inclus · Sans carte bancaire</p>
         </section>
-
       </div>
 
       {/* Footer */}
       <footer className="px-20 py-8 border-t border-border flex items-center justify-between text-sm text-muted-foreground bg-white">
         <span className="font-semibold text-foreground">PhotoApp</span>
         <div className="flex gap-6">
-          <Link href="#" className="hover:text-foreground transition-colors">Confidentialité</Link>
-          <Link href="#" className="hover:text-foreground transition-colors">Conditions</Link>
-          <Link href="#" className="hover:text-foreground transition-colors">Contact</Link>
+          <Link href="#" className="hover:text-foreground transition-colors">
+            Confidentialité
+          </Link>
+          <Link href="#" className="hover:text-foreground transition-colors">
+            Conditions
+          </Link>
+          <Link href="#" className="hover:text-foreground transition-colors">
+            Contact
+          </Link>
         </div>
         <span>© 2026 PhotoApp</span>
       </footer>
-
     </div>
   );
 }

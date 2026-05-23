@@ -142,6 +142,14 @@ export class PhotoController {
     await this.redis.del(`upload:${dto.uploadId}`);
   }
 
+  @Get('colors')
+  @ApiOperation({ summary: 'Exploration chromatique — photos groupées par famille de couleur' })
+  @ApiResponse({ status: 200, description: 'Tableau de groupes couleur avec photos' })
+  @ApiResponse({ status: 401, description: 'Non authentifié', type: ApiErrorDto })
+  getColorGroups(@CurrentUser() user: { userId: string }) {
+    return this.photoService.listByColors(user.userId);
+  }
+
   @Get(':id/status')
   @ApiOperation({ summary: 'Statut de traitement d\'une photo' })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })
