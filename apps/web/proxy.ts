@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
 // Pages accessibles à tous (connecté ou non) — jamais redirigées
-const OPEN_PREFIXES = ["/fonctionnalites", "/tarifs", "/mockups"];
+const OPEN_PREFIXES = ["/fonctionnalites", "/tarifs", "/mockups", "/"];
 
 // Pages réservées aux non-connectés — redirigent vers /dashboard si connecté
-const AUTH_ONLY_PREFIXES = ["/login", "/register", "/"];
+const AUTH_ONLY_PREFIXES = ["/login", "/register"];
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -66,5 +66,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|avif)$).*)"],
 };

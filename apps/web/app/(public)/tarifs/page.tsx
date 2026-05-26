@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 export default function TarifsPage() {
   return (
     <>
-      <Navbar />
       <main className="relative flex flex-col items-center overflow-hidden">
         {/* Glows */}
         <div className="absolute top-0 right-[5%] w-[1000px] h-[1000px] bg-violet-300/20 rounded-full blur-[200px] pointer-events-none" />

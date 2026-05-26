@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 import Footer from "@/components/Footer";
+import Navbar from "@/components/ui/Navbar";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -23,6 +24,7 @@ export default function RootLayout({
       <body className={`min-h-screen flex flex-col antialiased`}>
         <Toaster position="top-center" />
         <Providers>
+          <Navbar />
           {children}
           <Footer />
         </Providers>
