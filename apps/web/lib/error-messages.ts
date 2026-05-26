@@ -8,4 +8,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.INTERNAL_SERVER_ERROR]: "Une erreur interne est survenue. Veuillez réessayer.",
   [ErrorCode.UNAUTHORIZED]: "Vous devez être connecté pour effectuer cette action.",
   [ErrorCode.FORBIDDEN]: "Vous n'avez pas les droits pour effectuer cette action.",
+  [ErrorCode.PHOTO_NOT_FOUND]: "Photo introuvable.",
+  [ErrorCode.PHOTO_S3_MISSING]: "Le fichier de la photo est introuvable sur le serveur de stockage.",
+  [ErrorCode.QUOTA_EXCEEDED]: "Quota de stockage dépassé. Supprimez des photos avant d'en ajouter de nouvelles.",
 };
