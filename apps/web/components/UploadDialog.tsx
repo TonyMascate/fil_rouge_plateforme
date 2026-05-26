@@ -214,6 +214,7 @@ export function UploadDialog({ open, onOpenChange }: UploadDialogProps) {
             : `${files.length} photos importées`,
         );
         queryClient.invalidateQueries({ queryKey: ["photos"] });
+        reset();
         onOpenChange(false);
       }
     } catch {
