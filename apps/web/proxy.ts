@@ -4,7 +4,7 @@ import { jwtVerify } from "jose";
 // Pages accessibles à tous (connecté ou non) — jamais redirigées
 const OPEN_PREFIXES = ["/fonctionnalites", "/tarifs", "/mockups", "/"];
 
-// Pages réservées aux non-connectés — redirigent vers /dashboard si connecté
+// Pages réservées aux non-connectés — redirigent vers /galerie si connecté
 const AUTH_ONLY_PREFIXES = ["/login", "/register"];
 
 export async function proxy(req: NextRequest) {
@@ -26,7 +26,7 @@ export async function proxy(req: NextRequest) {
     try {
       await jwtVerify(accessToken, JWT_SECRET);
       // Token valide : rediriger vers dashboard uniquement pour les pages auth-only (login, register)
-      if (isAuthOnly) return NextResponse.redirect(new URL("/dashboard", req.url));
+      if (isAuthOnly) return NextResponse.redirect(new URL("/galerie", req.url));
       return NextResponse.next();
     } catch {
       // Token expiré, on continue vers le refresh
@@ -46,7 +46,7 @@ export async function proxy(req: NextRequest) {
       });
 
       if (refreshResponse.ok) {
-        const response = isAuthOnly ? NextResponse.redirect(new URL("/dashboard", req.url)) : NextResponse.next();
+        const response = isAuthOnly ? NextResponse.redirect(new URL("/galerie", req.url)) : NextResponse.next();
 
         const setCookies = refreshResponse.headers.getSetCookie();
         for (const cookie of setCookies) {

@@ -8,7 +8,6 @@ import Link from "next/link";
 export default function Home() {
   return (
     <>
-      <Navbar />
       <main className="relative flex flex-col justify-start items-center gap-35 pb-35 px-8 overflow-hidden">
         {/* Glows */}
         <GlowBoxes />

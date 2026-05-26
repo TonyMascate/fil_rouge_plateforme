@@ -35,7 +35,7 @@ export default function LoginPage() {
     setError,
     successMessage: "Connexion réussie !",
     onSuccess: () => {
-      window.location.href = "/dashboard";
+      window.location.href = "/galerie";
     },
   });
 
