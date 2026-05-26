@@ -5,6 +5,7 @@ import {
   SignPartResponseSchema,
   UploadRegisteredResponseSchema,
   PhotoStatusResponseSchema,
+  QuotaResponseSchema,
 } from '@repo/shared';
 
 // Schemas sans dates → import direct depuis @repo/shared
@@ -12,6 +13,7 @@ export class CreateMultipartResponseDto extends createZodDto(CreateMultipartResp
 export class SignPartResponseDto extends createZodDto(SignPartResponseSchema) {}
 export class UploadRegisteredResponseDto extends createZodDto(UploadRegisteredResponseSchema) {}
 export class PhotoStatusResponseDto extends createZodDto(PhotoStatusResponseSchema) {}
+export class QuotaResponseDto extends createZodDto(QuotaResponseSchema) {}
 
 // Schemas avec dates → redéfinis localement avec z.string() pour Swagger
 // (z.date() non représentable en JSON Schema — bug ouvert nestjs-zod#184)

@@ -1,24 +1,32 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import Image from "next/image";
+import { Eye, EyeOff } from "lucide-react";
 import { UserLoginDto, UserLoginSchema } from "@repo/shared";
 import api from "../../../lib/axios";
 import { useFormMutation } from "../../../lib/useFormMutation";
+import { MacWindow } from "@/components/ui/MacWindow";
+import { DotBackground } from "@/components/ui/FeatureSection";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
-  // Configuration du formulaire
+  const [showPassword, setShowPassword] = useState(false);
+
   const {
     register,
     handleSubmit,
-    setError, // 🚩 Nécessaire pour injecter les erreurs du serveur
+    setError,
     formState: { errors },
   } = useForm<UserLoginDto>({
     resolver: zodResolver(UserLoginSchema),
   });
 
-  // 🚩 Utilisation de ton Hook personnalisé avec TanStack Query
   const loginMutation = useFormMutation({
     mutationFn: async (data: UserLoginDto) => {
       const response = await api.post("/auth/login", data);
@@ -27,73 +35,92 @@ export default function LoginPage() {
     setError,
     successMessage: "Connexion réussie !",
     onSuccess: () => {
-      window.location.href = "/dashboard";
+      window.location.href = "/galerie";
     },
   });
 
-  // Soumission
   const onSubmit = (data: UserLoginDto) => {
     loginMutation.mutate(data);
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-md">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900">Connexion</h2>
-          <p className="mt-2 text-sm text-gray-600">Accédez à votre espace sécurisé</p>
+    <div className="grid flex-1 md:grid-cols-2 bg-background">
+      {/* ── Left panel (hidden on mobile) ── */}
+      <div className="relative hidden md:flex flex-col border-r border-border overflow-hidden">
+        <DotBackground />
+
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[115%] max-w-[680px] rotate-[-8deg] translate-x-[12%] translate-y-[2%] shrink-0">
+            <MacWindow className="shadow-2xl">
+              <Image src="/boilerplate.png" alt="Aperçu de PhotoApp" width={1902} height={915} priority className="w-full h-auto block" />
+            </MacWindow>
+          </div>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-4 rounded-md shadow-sm">
+        <div className="relative z-20 flex items-center gap-6 px-10 py-8 mt-auto text-xs text-muted-foreground">
+          <span>⭐ 4,9/5</span>
+          <span className="w-px h-3.5 bg-border" />
+          <span>+2 000 utilisateurs</span>
+          <span className="w-px h-3.5 bg-border" />
+          <span>500 MB gratuits</span>
+        </div>
+      </div>
+
+      {/* ── Right panel ── */}
+      <div className="flex flex-col items-center justify-center px-6 py-12 md:px-8">
+        <div className="w-full max-w-[420px] flex flex-col gap-8">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-2xl font-bold tracking-tight">Bon retour 👋</h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Pas encore de compte ?{" "}
+              <Link href="/register" className="text-primary font-medium hover:underline">
+                Créer un compte gratuit
+              </Link>
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
             {/* Email */}
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                placeholder="Adresse email"
-                disabled={loginMutation.isPending} // 🚩 Utilise l'état de la mutation
-                className={`relative block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 ${errors.email ? "ring-red-500" : ""}`}
-                {...register("email")}
-              />
-              {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="email">Adresse e-mail</Label>
+              <Input id="email" type="email" placeholder="vous@exemple.fr" autoComplete="email" disabled={loginMutation.isPending} aria-invalid={!!errors.email} className="h-11 bg-white rounded-xl" {...register("email")} />
+              {errors.email && <span className="text-xs text-destructive">{errors.email.message}</span>}
             </div>
 
             {/* Password */}
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Mot de passe
-              </label>
-              <input
-                id="password"
-                type="password"
-                placeholder="Mot de passe"
-                disabled={loginMutation.isPending} // 🚩 Utilise l'état de la mutation
-                className={`relative block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 ${errors.password ? "ring-red-500" : ""}`}
-                {...register("password")}
-              />
-              {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="password">Mot de passe</Label>
+              <div className="relative">
+                <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••" autoComplete="current-password" disabled={loginMutation.isPending} aria-invalid={!!errors.password} className="h-11 bg-white rounded-xl pr-11" {...register("password")} />
+                <button type="button" tabIndex={-1} onClick={() => setShowPassword((visible) => !visible)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}>
+                  {showPassword ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                </button>
+              </div>
+              {errors.password && <span className="text-xs text-destructive">{errors.password.message}</span>}
             </div>
-          </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loginMutation.isPending} // 🚩 Utilise l'état de la mutation
-              className="group relative flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-indigo-400">
+            <div className="flex justify-end -mt-1">
+              <Link href="#" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+                Mot de passe oublié ?
+              </Link>
+            </div>
+
+            <Button type="submit" size="lg" disabled={loginMutation.isPending} className="w-full rounded-full shadow-lg shadow-primary/30 mt-2">
               {loginMutation.isPending ? "Connexion..." : "Se connecter"}
-            </button>
-          </div>
-        </form>
+            </Button>
+          </form>
 
-        <div className="text-center text-sm">
-          Pas encore de compte ?{" "}
-          <Link href="/register" className="font-semibold text-indigo-600 hover:text-indigo-500">
-            S'inscrire
-          </Link>
+          <p className="text-xs text-muted-foreground text-center leading-relaxed">
+            En vous connectant, vous acceptez nos{" "}
+            <Link href="#" className="underline hover:text-foreground">
+              Conditions d'utilisation
+            </Link>{" "}
+            et notre{" "}
+            <Link href="#" className="underline hover:text-foreground">
+              Politique de confidentialité
+            </Link>
+            .
+          </p>
         </div>
       </div>
     </div>

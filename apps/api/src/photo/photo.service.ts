@@ -1,9 +1,10 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Repository } from 'typeorm';
-import { ErrorCode, PhotoStatus } from '@repo/shared';
+import { ErrorCode, PhotoStatus, QuotaResponseDto } from '@repo/shared';
 
 import { AwsService } from '@app/aws/aws.service';
 import { ApiException } from '@app/common/api.exception';
@@ -113,7 +114,15 @@ export class PhotoService {
     @InjectRepository(Photo) private readonly photoRepo: Repository<Photo>,
     @InjectQueue('image-queue') private readonly imageQueue: Queue<OptimizeJobData>,
     private readonly aws: AwsService,
+    private readonly config: ConfigService,
   ) {}
+
+  private getMaxStorageBytes(): number {
+    return parseInt(
+      this.config.get<string>('MAX_STORAGE_PER_USER_BYTES') ?? String(500 * 1024 * 1024),
+      10,
+    );
+  }
 
   async storageUsedForUser(userId: string): Promise<number> {
     const result = await this.photoRepo
@@ -123,6 +132,11 @@ export class PhotoService {
       .andWhere('photo.status = :status', { status: PhotoStatus.COMPLETED })
       .getRawOne<{ total: string }>();
     return parseInt(result?.total ?? '0', 10);
+  }
+
+  async getQuotaForUser(userId: string): Promise<QuotaResponseDto> {
+    const usedBytes = await this.storageUsedForUser(userId);
+    return { usedBytes, maxBytes: this.getMaxStorageBytes() };
   }
 
   async registerUpload(input: { key: string; originalName: string }, userId: string) {

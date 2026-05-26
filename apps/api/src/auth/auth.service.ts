@@ -25,7 +25,7 @@ export class AuthService {
   async validateUser(dto: UserLoginDto): Promise<User | null> {
     const user = await this.userRepository.findOne({
       where: { email: dto.email },
-      select: ['id', 'email', 'password', 'role'],
+      select: ['id', 'email', 'password', 'role', 'firstName', 'lastName'],
     });
     if (user && (await argon2.verify(user.password, dto.password))) {
       const { password, ...result } = user;
@@ -34,7 +34,7 @@ export class AuthService {
     return null;
   }
 
-  private async generateTokens(userId: string, role: string, email: string) {
+  private async generateTokens(userId: string, role: string, email: string, firstName: string, lastName: string) {
     const tokenId = uuidv4();
 
     const [accessToken, refreshToken] = await Promise.all([
@@ -43,6 +43,8 @@ export class AuthService {
           sub: userId,
           role,
           email,
+          firstName,
+          lastName,
         },
         {
           secret: this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
@@ -65,7 +67,7 @@ export class AuthService {
   }
 
   async login(user: User) {
-    const tokens = await this.generateTokens(user.id, user.role, user.email);
+    const tokens = await this.generateTokens(user.id, user.role, user.email, user.firstName, user.lastName);
 
     const refreshTokenEntity = this.refreshTokenRepository.create({
       id: tokens.tokenId,
@@ -100,7 +102,7 @@ export class AuthService {
 
       // Suppresion de l'ancien refresh token et création du nouveau
       await this.refreshTokenRepository.delete(storedToken.id);
-      const tokens = await this.generateTokens(storedToken.user.id, storedToken.user.role, storedToken.user.email);
+      const tokens = await this.generateTokens(storedToken.user.id, storedToken.user.role, storedToken.user.email, storedToken.user.firstName, storedToken.user.lastName);
       await this.refreshTokenRepository.save({
         id: tokens.tokenId,
         user: storedToken.user,

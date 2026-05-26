@@ -13,7 +13,7 @@ export async function GetSession() {
 
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
-    return payload as { sub: string; email: string; role: string };
+    return payload as { sub: string; email: string; role: string; firstName: string; lastName: string };
   } catch (error) {
     console.error("Erreur lors de la vérification du token JWT:", error);
     return null;

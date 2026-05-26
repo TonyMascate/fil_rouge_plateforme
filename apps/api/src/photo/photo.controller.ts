@@ -7,9 +7,8 @@ import {
   UploadRegisteredResponseDto,
   PhotoStatusResponseDto,
   PhotoListResponseDto,
+  QuotaResponseDto,
 } from './dto/photo-response.dto';
-import { ConfigService } from '@nestjs/config';
-
 import { CurrentUser } from '@app/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@app/auth/guards/jwt-auth.guard';
 import { AwsService } from '@app/aws/aws.service';
@@ -38,7 +37,6 @@ export class PhotoController {
     private readonly photoService: PhotoService,
     private readonly aws: AwsService,
     private readonly redis: RedisService,
-    private readonly config: ConfigService,
   ) {}
 
   private async assertUploadOwner(uploadId: string, userId: string) {
@@ -58,12 +56,8 @@ export class PhotoController {
     @Body() dto: CreateMultipartDto,
     @CurrentUser() user: { userId: string },
   ) {
-    const maxBytes = parseInt(
-      this.config.get<string>('MAX_STORAGE_PER_USER_BYTES') ?? String(500 * 1024 * 1024),
-      10,
-    );
-    const used = await this.photoService.storageUsedForUser(user.userId);
-    if (used + dto.fileSize > maxBytes) {
+    const { usedBytes, maxBytes } = await this.photoService.getQuotaForUser(user.userId);
+    if (usedBytes + dto.fileSize > maxBytes) {
       throw new ApiException(ErrorCode.QUOTA_EXCEEDED, HttpStatus.FORBIDDEN, 'Quota de stockage atteint', []);
     }
 
@@ -140,6 +134,14 @@ export class PhotoController {
     await this.assertUploadOwner(dto.uploadId, user.userId);
     await this.aws.abortMultipartUpload(dto.key, dto.uploadId);
     await this.redis.del(`upload:${dto.uploadId}`);
+  }
+
+  @Get('quota')
+  @ApiOperation({ summary: 'Quota de stockage de l\'utilisateur connecté' })
+  @ApiResponse({ status: 200, type: QuotaResponseDto })
+  @ApiResponse({ status: 401, description: 'Non authentifié', type: ApiErrorDto })
+  getQuota(@CurrentUser() user: { userId: string }): Promise<QuotaResponseDto> {
+    return this.photoService.getQuotaForUser(user.userId);
   }
 
   @Get('colors')

@@ -48,6 +48,13 @@ export const PhotoListResponseSchema = z.object({
 
 export type PhotoListResponseDto = z.infer<typeof PhotoListResponseSchema>;
 
+export const QuotaResponseSchema = z.object({
+  usedBytes: z.number().int().min(0),
+  maxBytes: z.number().int().min(0),
+});
+
+export type QuotaResponseDto = z.infer<typeof QuotaResponseSchema>;
+
 // --- Multipart upload (presigned URLs via NestJS, remplace Companion) ---
 
 export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'] as const;
