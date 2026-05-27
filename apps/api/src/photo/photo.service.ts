@@ -190,7 +190,7 @@ export class PhotoService {
     return {
       id: photo.id,
       status: photo.status,
-      url: photo.status === PhotoStatus.COMPLETED ? photo.cloudFrontUrl : null,
+      url: photo.status === PhotoStatus.COMPLETED ? this.aws.getSignedImageUrl(photo.s3Key) : null,
     };
   }
 
@@ -220,7 +220,7 @@ export class PhotoService {
         count: photosInCluster.length,
         photos: photosInCluster.slice(0, 50).map((photo) => ({
           id: photo.id,
-          url: photo.cloudFrontUrl,
+          url: this.aws.getSignedImageUrl(photo.s3Key),
           originalName: photo.originalName,
           dominantColor: photo.dominantColor,
         })),
@@ -241,7 +241,7 @@ export class PhotoService {
     return {
       items: photos.map((photo) => ({
         id: photo.id,
-        url: photo.cloudFrontUrl,
+        url: this.aws.getSignedImageUrl(photo.s3Key),
         originalName: photo.originalName,
         createdAt: photo.createdAt,
       })),

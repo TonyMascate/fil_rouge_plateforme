@@ -19,9 +19,6 @@ export class Photo {
   @Column({ name: 's3_key' })
   s3Key: string;
 
-  @Column({ name: 'cloudfront_url', type: 'text', nullable: true })
-  cloudFrontUrl: string | null;
-
   @Column({ name: 'original_name' })
   originalName: string;
 
