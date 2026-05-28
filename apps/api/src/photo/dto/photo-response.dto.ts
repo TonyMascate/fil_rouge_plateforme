@@ -6,6 +6,7 @@ import {
   UploadRegisteredResponseSchema,
   PhotoStatusResponseSchema,
   QuotaResponseSchema,
+  ShareResponseSchema,
 } from '@repo/shared';
 
 // Schemas sans dates → import direct depuis @repo/shared
@@ -14,6 +15,7 @@ export class SignPartResponseDto extends createZodDto(SignPartResponseSchema) {}
 export class UploadRegisteredResponseDto extends createZodDto(UploadRegisteredResponseSchema) {}
 export class PhotoStatusResponseDto extends createZodDto(PhotoStatusResponseSchema) {}
 export class QuotaResponseDto extends createZodDto(QuotaResponseSchema) {}
+export class ShareResponseDto extends createZodDto(ShareResponseSchema) {}
 
 // Schemas avec dates → redéfinis localement avec z.string() pour Swagger
 // (z.date() non représentable en JSON Schema — bug ouvert nestjs-zod#184)
@@ -23,6 +25,7 @@ const PhotoListResponseSwaggerSchema = z.object({
     url: z.string().url(),
     originalName: z.string(),
     createdAt: z.string().describe('ISO 8601 datetime'),
+    shareToken: z.string().nullable(),
   })),
   page: z.number().int(),
   limit: z.number().int(),
@@ -30,3 +33,10 @@ const PhotoListResponseSwaggerSchema = z.object({
   totalPages: z.number().int(),
 });
 export class PhotoListResponseDto extends createZodDto(PhotoListResponseSwaggerSchema) {}
+
+const PublicPhotoResponseSwaggerSchema = z.object({
+  url: z.string().url(),
+  originalName: z.string(),
+  createdAt: z.string().describe('ISO 8601 datetime'),
+});
+export class PublicPhotoResponseDto extends createZodDto(PublicPhotoResponseSwaggerSchema) {}

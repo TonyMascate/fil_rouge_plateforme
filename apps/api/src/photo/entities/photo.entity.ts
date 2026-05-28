@@ -43,6 +43,9 @@ export class Photo {
   @Column({ name: 'dominant_color', type: 'varchar', length: 7, nullable: true })
   dominantColor: string | null;
 
+  @Column({ name: 'share_token', type: 'varchar', length: 32, nullable: true, unique: true })
+  shareToken: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

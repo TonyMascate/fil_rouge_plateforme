@@ -1,4 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { randomBytes } from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -229,11 +230,11 @@ export class PhotoService {
   }
 
   async listForUser(userId: string, query: PhotoListQueryDto) {
-    const { page, limit } = query;
+    const { page, limit, order } = query;
 
     const [photos, total] = await this.photoRepo.findAndCount({
       where: { userId, status: PhotoStatus.COMPLETED },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: order === 'asc' ? 'ASC' : 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
     });
@@ -244,11 +245,63 @@ export class PhotoService {
         url: this.aws.getSignedImageUrl(photo.s3Key),
         originalName: photo.originalName,
         createdAt: photo.createdAt,
+        shareToken: photo.shareToken,
       })),
       page,
       limit,
       total,
       totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  private async findOwnedOrThrow(id: string, userId: string): Promise<Photo> {
+    const photo = await this.photoRepo.findOne({ where: { id } });
+    if (!photo || photo.userId !== userId) {
+      throw new ApiException(ErrorCode.PHOTO_NOT_FOUND, HttpStatus.NOT_FOUND, 'Photo introuvable', []);
+    }
+    return photo;
+  }
+
+  async deletePhoto(id: string, userId: string): Promise<void> {
+    const photo = await this.findOwnedOrThrow(id, userId);
+    // On supprime la ligne DB d'abord : si l'appel S3 échoue ensuite, on aura un objet
+    // orphelin dans le bucket — mais plus aucune référence côté app, donc aucun 404
+    // utilisateur. Le cas inverse (S3 supprimé puis DB qui échoue) laisserait une ligne
+    // pointant vers un objet inexistant, plus problématique.
+    await this.photoRepo.delete(photo.id);
+    await this.aws.deleteObject(photo.s3Key).catch(() => undefined);
+  }
+
+  async sharePhoto(id: string, userId: string): Promise<{ shareToken: string }> {
+    const photo = await this.findOwnedOrThrow(id, userId);
+    let token = photo.shareToken;
+    if (!token) {
+      token = randomBytes(16).toString('base64url');
+      photo.shareToken = token;
+      await this.photoRepo.save(photo);
+    }
+    return { shareToken: token };
+  }
+
+  async unsharePhoto(id: string, userId: string): Promise<void> {
+    const photo = await this.findOwnedOrThrow(id, userId);
+    if (photo.shareToken) {
+      photo.shareToken = null;
+      await this.photoRepo.save(photo);
+    }
+  }
+
+  async getPublicByToken(token: string) {
+    const photo = await this.photoRepo.findOne({
+      where: { shareToken: token, status: PhotoStatus.COMPLETED },
+    });
+    if (!photo) {
+      throw new ApiException(ErrorCode.PHOTO_NOT_FOUND, HttpStatus.NOT_FOUND, 'Photo introuvable', []);
+    }
+    return {
+      url: this.aws.getSignedImageUrl(photo.s3Key),
+      originalName: photo.originalName,
+      createdAt: photo.createdAt,
     };
   }
 }
