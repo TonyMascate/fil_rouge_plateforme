@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "fil-rouge-plateforme",
@@ -2347,7 +2348,7 @@
 
     "reusify": ["reusify@1.1.0", "", {}, "sha512-g6QUff04oZpHs0eG5p83rFLhHeV00ug/Yf9nZM6fLeUrPguBTkTQOdpAWWspMh55TZfVQDPaN3NQJfbVRAxdIw=="],
 
-    "root": ["root@github:tanstack/react-query#3daac67", {}, "TanStack-query-3daac67"],
+    "root": ["root@github:tanstack/react-query#d5630c9", {}, "TanStack-query-d5630c9", "sha512-DRch56MsHz/x0/Jr6jeatcFjcDbwWy1EL0nsyCUPDzbub2ineP7kWe9B30ml4aSTYidGoxponuz6ud4EbxvUnA=="],
 
     "router": ["router@2.2.0", "", { "dependencies": { "debug": "^4.4.0", "depd": "^2.0.0", "is-promise": "^4.0.0", "parseurl": "^1.3.3", "path-to-regexp": "^8.0.0" } }, "sha512-nLTrUKm2UyiL7rlhapu/Zl45FwNgkZGaCpZbIHajDYgwlJCOzLSk+cIPAnsEqV955GjILJnKbdQC1nVPz+gAYQ=="],
 

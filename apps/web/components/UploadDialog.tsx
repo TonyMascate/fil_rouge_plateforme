@@ -121,9 +121,28 @@ export function UploadDialog({ open, onOpenChange }: UploadDialogProps) {
   const exceedsQuota = projectedBytes > maxBytes;
   const projectedPct = Math.min(100, (projectedBytes / maxBytes) * 100);
 
+  const pollUntilCompleted = (photoIds: string[]) => {
+    if (!photoIds.length) return;
+    let attempts = 0;
+    const interval = setInterval(async () => {
+      attempts++;
+      const statuses = await Promise.all(
+        photoIds.map((id) =>
+          api.get<{ status: string }>(`/photos/${id}/status`).then((r) => r.data.status).catch(() => "FAILED"),
+        ),
+      );
+      const allDone = statuses.every((s) => s === "COMPLETED" || s === "FAILED");
+      if (allDone || attempts >= 15) {
+        clearInterval(interval);
+        queryClient.invalidateQueries({ queryKey: ["photos"] });
+      }
+    }, 2000);
+  };
+
   const handleUpload = async () => {
     if (!files.length || exceedsQuota) return;
     setIsUploading(true);
+    const collectedPhotoIds: string[] = [];
 
     const uppy = new UppyCore({
       autoProceed: false,
@@ -168,10 +187,11 @@ export function UploadDialog({ open, onOpenChange }: UploadDialogProps) {
           })),
           originalName: file?.name ?? "unknown",
         };
-        await api.post<UploadRegisteredResponseDto>(
+        const { data } = await api.post<UploadRegisteredResponseDto>(
           "/photos/uploads/multipart/complete",
           body,
         );
+        collectedPhotoIds.push(data.photoId);
         return {};
       },
       async abortMultipartUpload(_file, { uploadId, key }) {
@@ -213,7 +233,7 @@ export function UploadDialog({ open, onOpenChange }: UploadDialogProps) {
             ? "Photo importée"
             : `${files.length} photos importées`,
         );
-        queryClient.invalidateQueries({ queryKey: ["photos"] });
+        pollUntilCompleted(collectedPhotoIds);
         reset();
         onOpenChange(false);
       }
