@@ -134,6 +134,7 @@ function AuthedNavbar({ user }: { user: NavbarUser }) {
     try {
       await api.post("/auth/logout");
     } finally {
+      router.refresh();
       router.push("/login");
     }
   };

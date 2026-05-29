@@ -20,6 +20,7 @@ export const PhotoResponseSchema = z.object({
   url: z.url(),
   originalName: z.string(),
   createdAt: z.coerce.date(),
+  shareToken: z.string().nullable(),
 });
 
 export type PhotoResponseDto = z.infer<typeof PhotoResponseSchema>;
@@ -34,6 +35,7 @@ export type UploadRegisteredResponseDto = z.infer<typeof UploadRegisteredRespons
 export const PhotoListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
+  order: z.enum(['desc', 'asc']).default('desc'),
 });
 
 export type PhotoListQueryDto = z.infer<typeof PhotoListQuerySchema>;
@@ -54,6 +56,22 @@ export const QuotaResponseSchema = z.object({
 });
 
 export type QuotaResponseDto = z.infer<typeof QuotaResponseSchema>;
+
+// --- Partage public d'une photo ---
+
+export const ShareResponseSchema = z.object({
+  shareToken: z.string(),
+});
+
+export type ShareResponseDto = z.infer<typeof ShareResponseSchema>;
+
+export const PublicPhotoResponseSchema = z.object({
+  url: z.url(),
+  originalName: z.string(),
+  createdAt: z.coerce.date(),
+});
+
+export type PublicPhotoResponseDto = z.infer<typeof PublicPhotoResponseSchema>;
 
 // --- Multipart upload (presigned URLs via NestJS, remplace Companion) ---
 

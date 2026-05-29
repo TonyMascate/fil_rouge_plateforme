@@ -19,9 +19,6 @@ export class Photo {
   @Column({ name: 's3_key' })
   s3Key: string;
 
-  @Column({ name: 'cloudfront_url', type: 'text', nullable: true })
-  cloudFrontUrl: string | null;
-
   @Column({ name: 'original_name' })
   originalName: string;
 
@@ -45,6 +42,9 @@ export class Photo {
 
   @Column({ name: 'dominant_color', type: 'varchar', length: 7, nullable: true })
   dominantColor: string | null;
+
+  @Column({ name: 'share_token', type: 'varchar', length: 32, nullable: true, unique: true })
+  shareToken: string | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

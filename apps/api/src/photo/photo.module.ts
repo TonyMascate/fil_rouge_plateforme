@@ -5,6 +5,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { AwsModule } from '@app/aws/aws.module';
 import { Photo } from './entities/photo.entity';
 import { PhotoController } from './photo.controller';
+import { PublicPhotoController } from './public-photo.controller';
 import { PhotoService } from './photo.service';
 import { PhotoProcessor } from './photo.processor';
 
@@ -14,7 +15,7 @@ import { PhotoProcessor } from './photo.processor';
     BullModule.registerQueue({ name: 'image-queue' }),
     AwsModule,
   ],
-  controllers: [PhotoController],
+  controllers: [PhotoController, PublicPhotoController],
   providers: [PhotoService, PhotoProcessor],
 })
 export class PhotoModule {}

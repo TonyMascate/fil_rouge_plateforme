@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiCookieAuth, ApiExtraModels, ApiHeader, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ApiErrorDto } from '@app/common/dto/api-error.dto';
 import {
@@ -8,6 +8,7 @@ import {
   PhotoStatusResponseDto,
   PhotoListResponseDto,
   QuotaResponseDto,
+  ShareResponseDto,
 } from './dto/photo-response.dto';
 import { CurrentUser } from '@app/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@app/auth/guards/jwt-auth.guard';
@@ -173,5 +174,37 @@ export class PhotoController {
   @ApiResponse({ status: 401, description: 'Non authentifié', type: ApiErrorDto })
   list(@Query() query: PhotoListQueryDto, @CurrentUser() user: { userId: string }) {
     return this.photoService.listForUser(user.userId, query);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Supprimer une photo (objet S3 + ligne DB)' })
+  @ApiParam({ name: 'id', type: String, format: 'uuid' })
+  @ApiResponse({ status: 204, description: 'Photo supprimée' })
+  @ApiResponse({ status: 401, description: 'Non authentifié', type: ApiErrorDto })
+  @ApiResponse({ status: 404, description: 'Photo introuvable ou accès refusé', type: ApiErrorDto })
+  deletePhoto(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: { userId: string }) {
+    return this.photoService.deletePhoto(id, user.userId);
+  }
+
+  @Post(':id/share')
+  @ApiOperation({ summary: 'Activer le partage public (génère un lien révocable)' })
+  @ApiParam({ name: 'id', type: String, format: 'uuid' })
+  @ApiResponse({ status: 201, type: ShareResponseDto })
+  @ApiResponse({ status: 401, description: 'Non authentifié', type: ApiErrorDto })
+  @ApiResponse({ status: 404, description: 'Photo introuvable ou accès refusé', type: ApiErrorDto })
+  sharePhoto(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: { userId: string }) {
+    return this.photoService.sharePhoto(id, user.userId);
+  }
+
+  @Delete(':id/share')
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Désactiver le partage public (repasser en privé)' })
+  @ApiParam({ name: 'id', type: String, format: 'uuid' })
+  @ApiResponse({ status: 204, description: 'Partage désactivé' })
+  @ApiResponse({ status: 401, description: 'Non authentifié', type: ApiErrorDto })
+  @ApiResponse({ status: 404, description: 'Photo introuvable ou accès refusé', type: ApiErrorDto })
+  unsharePhoto(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: { userId: string }) {
+    return this.photoService.unsharePhoto(id, user.userId);
   }
 }

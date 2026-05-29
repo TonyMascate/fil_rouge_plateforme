@@ -150,7 +150,6 @@ export class PhotoProcessor extends WorkerHost {
     await this.photoRepo.update(photoId, {
       status: PhotoStatus.COMPLETED,
       s3Key: optimizedKey,
-      cloudFrontUrl: this.aws.getPublicUrl(optimizedKey),
       fileSizeBytes: optimizedHead?.ContentLength ?? null,
       dominantColor,
     });
