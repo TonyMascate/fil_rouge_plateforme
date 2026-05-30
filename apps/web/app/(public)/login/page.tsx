@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { UserLoginDto, UserLoginSchema } from "@repo/shared";
 import api from "../../../lib/axios";
@@ -16,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -35,7 +37,10 @@ export default function LoginPage() {
     setError,
     successMessage: "Connexion réussie !",
     onSuccess: () => {
-      window.location.href = "/galerie";
+      // router.refresh() invalide le cache RSC pour que le RootLayout (Server Component)
+      // re-fetch GetSession() et affiche la navbar authentifiée sans full reload.
+      router.push("/galerie");
+      router.refresh();
     },
   });
 

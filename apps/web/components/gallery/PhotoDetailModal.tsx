@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { X, ChevronLeft, ChevronRight, Download, Trash2, Share2, Copy, Check, Globe, Lock } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Download, Trash2, Share2, Copy, Check, Globe, Lock, FolderPlus } from "lucide-react";
 
 import api from "@/lib/axios";
 import { cn } from "@/lib/utils";
 import type { GalleryPhoto } from "@/lib/useGalleryPhotos";
+import { AddToAlbumModal } from "@/components/albums/AddToAlbumModal";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 
@@ -45,6 +46,7 @@ export function PhotoDetailModal({ photo, photos, onClose, onNavigate, onRequest
   const [sharePanelOpen, setSharePanelOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [addToAlbumOpen, setAddToAlbumOpen] = useState(false);
 
   const isShared = shareToken !== null;
   const shareUrl = shareToken ? `${window.location.origin}/p/${shareToken}` : "";
@@ -169,6 +171,13 @@ export function PhotoDetailModal({ photo, photos, onClose, onNavigate, onRequest
             )}
           </div>
 
+          <button
+            onClick={() => setAddToAlbumOpen(true)}
+            className="flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white">
+            <FolderPlus className="size-3.5" />
+            Album
+          </button>
+
           <HeaderIconButton onClick={handleDownload} ariaLabel="Télécharger">
             <Download className="size-[18px]" />
           </HeaderIconButton>
@@ -209,6 +218,13 @@ export function PhotoDetailModal({ photo, photos, onClose, onNavigate, onRequest
           ))}
         </div>
       </div>
+
+      {addToAlbumOpen && (
+        <AddToAlbumModal
+          photoIds={[photo.id]}
+          onClose={() => setAddToAlbumOpen(false)}
+        />
+      )}
     </div>
   );
 }

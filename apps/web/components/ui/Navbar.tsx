@@ -47,60 +47,62 @@ function PublicNavbar() {
   }, [pathname]);
 
   return (
-    <nav className="w-full flex items-center justify-between px-10 h-16 bg-card backdrop-blur-sm border-b border-border sticky top-0 z-50">
-      <Link href="/" className="text-lg font-semibold text-foreground">
-        PhotoApp
-      </Link>
+    <header className="sticky top-0 z-50">
+      <nav className="w-full flex items-center justify-between px-10 h-16 bg-card backdrop-blur-sm border-b border-border">
+        <Link href="/" className="text-lg font-semibold text-foreground">
+          PhotoApp
+        </Link>
 
-      {/* Desktop */}
-      <NavigationMenu className="hidden md:flex">
-        <NavigationMenuList>
-          {PUBLIC_LINKS.map(({ label, href }) => (
-            <NavigationMenuItem key={label}>
-              <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                <Link href={href}>{label}</Link>
-              </NavigationMenuLink>
-            </NavigationMenuItem>
-          ))}
-        </NavigationMenuList>
-      </NavigationMenu>
-
-      <div className="hidden md:flex items-center gap-3">
-        <Button variant="ghost" asChild>
-          <Link href="/login">Se connecter</Link>
-        </Button>
-        <Button asChild className="rounded-full">
-          <Link href="/register">Créer un compte</Link>
-        </Button>
-      </div>
-
-      {/* Mobile */}
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetTrigger asChild className="md:hidden">
-          <Button variant="ghost" size="icon">
-            <Menu className="h-5 w-5" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="right" className="w-full max-w-full flex flex-col gap-8 pt-12 px-6">
-          <SheetTitle className="text-xl font-semibold">PhotoApp</SheetTitle>
-          <nav className="flex flex-col">
+        {/* Desktop */}
+        <NavigationMenu className="hidden md:flex">
+          <NavigationMenuList>
             {PUBLIC_LINKS.map(({ label, href }) => (
-              <Link key={label} href={href} className="py-4 text-base font-medium border-b border-border last:border-0 hover:text-primary transition-colors">
-                {label}
-              </Link>
+              <NavigationMenuItem key={label}>
+                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                  <Link href={href}>{label}</Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
             ))}
-          </nav>
-          <div className="flex flex-col gap-3">
-            <Button variant="outline" asChild className="w-full h-12">
-              <Link href="/login">Se connecter</Link>
+          </NavigationMenuList>
+        </NavigationMenu>
+
+        <div className="hidden md:flex items-center gap-3">
+          <Button variant="ghost" asChild>
+            <Link href="/login">Se connecter</Link>
+          </Button>
+          <Button asChild className="rounded-full">
+            <Link href="/register">Créer un compte</Link>
+          </Button>
+        </div>
+
+        {/* Mobile */}
+        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetTrigger asChild className="md:hidden">
+            <Button variant="ghost" size="icon">
+              <Menu className="h-5 w-5" />
             </Button>
-            <Button asChild className="w-full h-12 rounded-full">
-              <Link href="/register">Créer un compte</Link>
-            </Button>
-          </div>
-        </SheetContent>
-      </Sheet>
-    </nav>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-full max-w-full flex flex-col gap-8 pt-12 px-6">
+            <SheetTitle className="text-xl font-semibold">PhotoApp</SheetTitle>
+            <nav className="flex flex-col">
+              {PUBLIC_LINKS.map(({ label, href }) => (
+                <Link key={label} href={href} className="py-4 text-base font-medium border-b border-border last:border-0 hover:text-primary transition-colors">
+                  {label}
+                </Link>
+              ))}
+            </nav>
+            <div className="flex flex-col gap-3">
+              <Button variant="outline" asChild className="w-full h-12">
+                <Link href="/login">Se connecter</Link>
+              </Button>
+              <Button asChild className="w-full h-12 rounded-full">
+                <Link href="/register">Créer un compte</Link>
+              </Button>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </nav>
+    </header>
   );
 }
 
@@ -134,8 +136,11 @@ function AuthedNavbar({ user }: { user: NavbarUser }) {
     try {
       await api.post("/auth/logout");
     } finally {
-      router.refresh();
+      // router.refresh() invalide le cache RSC : le RootLayout (Server Component)
+      // re-fetch GetSession() → la navbar repasse en mode non-connecté.
+      // Sans ça, l'avatar reste affiché jusqu'au prochain full reload.
       router.push("/login");
+      router.refresh();
     }
   };
 
@@ -145,7 +150,8 @@ function AuthedNavbar({ user }: { user: NavbarUser }) {
 
   return (
     <>
-      <nav className="w-full flex items-center justify-between px-8 h-16 bg-card backdrop-blur-sm border-b border-border sticky top-0 z-50">
+      <header className="sticky top-0 z-50">
+      <nav className="w-full flex items-center justify-between px-8 h-16 bg-card backdrop-blur-sm border-b border-border">
         {/* Brand + nav links */}
         <div className="flex items-center gap-6">
           <Link href="/galerie" className="flex items-center gap-2">
@@ -254,10 +260,7 @@ function AuthedNavbar({ user }: { user: NavbarUser }) {
                 </Link>
               </div>
 
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-3 py-3 text-base font-medium text-destructive hover:text-destructive/80 transition-colors mt-auto"
-              >
+              <button onClick={handleLogout} className="flex items-center gap-3 py-3 text-base font-medium text-destructive hover:text-destructive/80 transition-colors mt-auto">
                 <LogOut className="size-4" />
                 Se déconnecter
               </button>
@@ -265,6 +268,7 @@ function AuthedNavbar({ user }: { user: NavbarUser }) {
           </Sheet>
         </div>
       </nav>
+      </header>
 
       <UploadDialog open={uploadOpen} onOpenChange={setUploadOpen} />
     </>

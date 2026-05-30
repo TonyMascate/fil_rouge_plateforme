@@ -16,6 +16,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { AwsModule } from './aws/aws.module';
 import { PhotoModule } from './photo/photo.module';
 import { RedisModule } from './redis/redis.module';
+import { AlbumModule } from './album/album.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { RedisModule } from './redis/redis.module';
     AwsModule,
     RedisModule,
     PhotoModule,
+    AlbumModule,
   ],
   controllers: [AppController],
   providers: [
