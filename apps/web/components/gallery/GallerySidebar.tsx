@@ -19,7 +19,7 @@ export function GallerySidebar({ total, years, onJumpToMonth }: GallerySidebarPr
   }
 
   return (
-    <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-56 shrink-0 flex-col gap-1 overflow-y-auto border-r border-border bg-card px-3 py-5 md:flex">
+    <aside className="sticky top-16 hidden w-56 shrink-0 flex-col gap-1 overflow-y-auto border-r border-border bg-card px-3 py-5 md:flex">
       <div className="px-2 pb-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
         Vue
       </div>

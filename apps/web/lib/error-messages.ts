@@ -11,4 +11,6 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.PHOTO_NOT_FOUND]: "Photo introuvable.",
   [ErrorCode.PHOTO_S3_MISSING]: "Le fichier de la photo est introuvable sur le serveur de stockage.",
   [ErrorCode.QUOTA_EXCEEDED]: "Quota de stockage dépassé. Supprimez des photos avant d'en ajouter de nouvelles.",
+  [ErrorCode.ALBUM_NOT_FOUND]: "Album introuvable.",
+  [ErrorCode.ALBUM_PHOTO_ALREADY_EXISTS]: "Cette photo est déjà dans l'album.",
 };

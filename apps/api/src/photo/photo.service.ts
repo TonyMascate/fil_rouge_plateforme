@@ -1,15 +1,14 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { Repository } from 'typeorm';
 import { ErrorCode, PhotoStatus, QuotaResponseDto } from '@repo/shared';
 
 import { AwsService } from '@app/aws/aws.service';
 import { ApiException } from '@app/common/api.exception';
 import { Photo } from './entities/photo.entity';
+import { PhotoRepository } from './repositories/photo.repository';
 import { PhotoListQueryDto } from './dto/photo-list-query.dto';
 
 export interface OptimizeJobData {
@@ -112,7 +111,7 @@ function clusterColorsByKmeans(
 @Injectable()
 export class PhotoService {
   constructor(
-    @InjectRepository(Photo) private readonly photoRepo: Repository<Photo>,
+    private readonly photoRepo: PhotoRepository,
     @InjectQueue('image-queue') private readonly imageQueue: Queue<OptimizeJobData>,
     private readonly aws: AwsService,
     private readonly config: ConfigService,
@@ -125,18 +124,8 @@ export class PhotoService {
     );
   }
 
-  async storageUsedForUser(userId: string): Promise<number> {
-    const result = await this.photoRepo
-      .createQueryBuilder('photo')
-      .select('COALESCE(SUM(photo.fileSizeBytes), 0)', 'total')
-      .where('photo.userId = :userId', { userId })
-      .andWhere('photo.status = :status', { status: PhotoStatus.COMPLETED })
-      .getRawOne<{ total: string }>();
-    return parseInt(result?.total ?? '0', 10);
-  }
-
   async getQuotaForUser(userId: string): Promise<QuotaResponseDto> {
-    const usedBytes = await this.storageUsedForUser(userId);
+    const usedBytes = await this.photoRepo.storageUsedByUser(userId);
     return { usedBytes, maxBytes: this.getMaxStorageBytes() };
   }
 
