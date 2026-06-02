@@ -37,8 +37,6 @@ export default function LoginPage() {
     setError,
     successMessage: "Connexion réussie !",
     onSuccess: () => {
-      // router.refresh() invalide le cache RSC pour que le RootLayout (Server Component)
-      // re-fetch GetSession() et affiche la navbar authentifiée sans full reload.
       router.push("/galerie");
       router.refresh();
     },

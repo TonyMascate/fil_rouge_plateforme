@@ -1,14 +1,12 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Job } from 'bullmq';
 import { PassThrough } from 'stream';
 import sharp from 'sharp';
 import { PhotoStatus } from '@repo/shared';
 
 import { AwsService } from '@app/aws/aws.service';
-import { Photo } from './entities/photo.entity';
+import { PhotoRepository } from './repositories/photo.repository';
 import { OptimizeJobData } from './photo.service';
 
 // ─── Extraction couleur dominante ────────────────────────────────────────────
@@ -101,7 +99,7 @@ export class PhotoProcessor extends WorkerHost {
 
   constructor(
     private readonly aws: AwsService,
-    @InjectRepository(Photo) private readonly photoRepo: Repository<Photo>,
+    private readonly photoRepo: PhotoRepository,
   ) {
     super();
   }

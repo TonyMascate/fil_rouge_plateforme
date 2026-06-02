@@ -8,6 +8,8 @@ import { AlbumPhoto } from './entities/album-photo.entity';
 import { AlbumMember } from './entities/album-member.entity';
 import { AlbumService } from './album.service';
 import { AlbumController } from './album.controller';
+import { AlbumPhotoRepository } from './repositories/album-photo.repository';
+import { AlbumMemberRepository } from './repositories/album-member.repository';
 
 @Module({
   imports: [
@@ -15,6 +17,6 @@ import { AlbumController } from './album.controller';
     AwsModule,
   ],
   controllers: [AlbumController],
-  providers: [AlbumService],
+  providers: [AlbumService, AlbumPhotoRepository, AlbumMemberRepository],
 })
 export class AlbumModule {}
