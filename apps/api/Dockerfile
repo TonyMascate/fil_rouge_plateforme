@@ -70,7 +70,7 @@ USER bun
 COPY --from=builder --chown=bun:bun /app/apps/api/dist ./dist
 # On récupère les dépendances
 COPY --from=builder --chown=bun:bun /app/node_modules ./node_modules
-# On récupère les packages 
+# On récupère les packages
 COPY --from=builder --chown=bun:bun /app/packages ./packages
 
 EXPOSE 3000

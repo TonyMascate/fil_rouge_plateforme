@@ -1,0 +1,108 @@
+---
+- name: Mise à jour du système
+  apt:
+    update_cache: yes
+    upgrade: dist
+    cache_valid_time: 3600
+
+- name: Paquets de base
+  apt:
+    name:
+      - curl
+      - ufw
+      - fail2ban
+      - ca-certificates
+      - gnupg
+      - python3-pip
+      - netcat-openbsd
+    state: present
+
+- name: Créer le user deploy
+  user:
+    name: deploy
+    groups: sudo
+    shell: /bin/bash
+    create_home: yes
+
+- name: Sudo sans mot de passe pour deploy
+  copy:
+    dest: /etc/sudoers.d/deploy
+    content: "deploy ALL=(ALL) NOPASSWD:ALL\n"
+    mode: '0440'
+    validate: 'visudo -cf %s'
+
+- name: Clé publique pour deploy
+  authorized_key:
+    user: deploy
+    key: "{{ lookup('file', '~/.ssh/id_deploy.pub') }}"
+
+- name: Désactiver le login root SSH
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin'
+    line: 'PermitRootLogin no'
+  notify: restart sshd
+
+- name: Désactiver l'auth par mot de passe
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+  notify: restart sshd
+
+- name: UFW - politique deny par défaut
+  ufw:
+    direction: incoming
+    policy: deny
+
+- name: UFW - SSH
+  ufw:
+    rule: allow
+    port: '22'
+    proto: tcp
+
+- name: UFW - HTTP
+  ufw:
+    rule: allow
+    port: '80'
+    proto: tcp
+
+- name: UFW - HTTPS
+  ufw:
+    rule: allow
+    port: '443'
+    proto: tcp
+
+# Ports internes Swarm — uniquement depuis le réseau privé entre nœuds.
+# Mettre à jour 10.0.0.0/24 avec le CIDR réel quand le réseau privé Contabo est activé.
+- name: UFW - Swarm management (port 2377)
+  ufw:
+    rule: allow
+    port: '2377'
+    proto: tcp
+    src: 10.0.0.0/24
+
+- name: UFW - Swarm gossip TCP (port 7946)
+  ufw:
+    rule: allow
+    port: '7946'
+    proto: tcp
+    src: 10.0.0.0/24
+
+- name: UFW - Swarm gossip UDP (port 7946)
+  ufw:
+    rule: allow
+    port: '7946'
+    proto: udp
+    src: 10.0.0.0/24
+
+- name: UFW - Swarm overlay VXLAN (port 4789)
+  ufw:
+    rule: allow
+    port: '4789'
+    proto: udp
+    src: 10.0.0.0/24
+
+- name: Activer UFW
+  ufw:
+    state: enabled

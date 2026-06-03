@@ -1,118 +1,15 @@
-# name: Backend CI/CD (Bun)
-
-# on:
-#   push:
-#     branches: [ "main" ]
-#     paths:
-#       - 'backend/**'
-#       - '.github/workflows/backend.yml'
-
-# env:
-#   REGISTRY: ghcr.io
-#   # Sera écrasé par le script de mise en minuscule, mais sert de référence
-#   IMAGE_NAME: ${{ github.repository_owner }}/fil-rouge-backend
-#   SERVICE_NAME: backend
-
-# jobs:
-#   quality:
-#     runs-on: ubuntu-latest
-#     defaults:
-#       run:
-#         working-directory: ./backend
-#     steps:
-#       - uses: actions/checkout@v4
-      
-#       - uses: oven-sh/setup-bun@v1
-#         with:
-#           bun-version: latest
-      
-#       - name: Install dependencies
-#         run: bun install --frozen-lockfile
-      
-#       - name: Lint
-#         run: bun run lint
-      
-#       - name: Unit Tests
-#         run: bun run test
-
-#   build-push:
-#     needs: quality
-#     runs-on: ubuntu-latest
-#     permissions:
-#       contents: read
-#       packages: write
-#     steps:
-#       - uses: actions/checkout@v4
-
-#       # Étape CRITIQUE pour convertir "TonyMascate" en "tonymascate"
-#       - name: Lowercase Variables
-#         run: |
-#           echo "REGISTRY=ghcr.io" >> $GITHUB_ENV
-#           echo "IMAGE_NAME=$(echo ${{ env.IMAGE_NAME }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-
-#       - name: Log in to GitHub Container Registry
-#         uses: docker/login-action@v3
-#         with:
-#           registry: ${{ env.REGISTRY }}
-#           username: ${{ github.actor }}
-#           password: ${{ secrets.GITHUB_TOKEN }}
-
-#       - name: Extract metadata
-#         id: meta
-#         uses: docker/metadata-action@v5
-#         with:
-#           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-#           tags: |
-#             type=raw,value=latest,enable={{is_default_branch}}
-#             type=sha
-
-#       - name: Build and push
-#         uses: docker/build-push-action@v5
-#         with:
-#           context: ./backend
-#           file: ./backend/Dockerfile 
-#           push: true
-#           tags: ${{ steps.meta.outputs.tags }}
-
-#   deploy:
-#     needs: build-push
-#     runs-on: ubuntu-latest
-#     steps:
-#       # Conversion minuscule indispensable pour la variable IMAGE_NAME
-#       - name: Lowercase Variables for Deploy
-#         run: |
-#           echo "IMAGE_NAME=$(echo ${{ env.IMAGE_NAME }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-
-#       - uses: appleboy/ssh-action@master
-#         with:
-#           host: ${{ secrets.VPS_HOST }}
-#           username: ${{ secrets.VPS_USER }}
-#           key: ${{ secrets.VPS_KEY }}
-#           # On injecte le secret ENV_PROD (qui contient tout le .env)
-#           envs: GITHUB_TOKEN
-#           script: |
-#             cd /var/www/html/fil_rouge
-            
-#             # 1. CRÉATION AUTOMATIQUE DU .ENV
-#             # On écrase l'ancien fichier avec le contenu du secret GitHub
-#             echo "${{ secrets.ENV_PROD }}" > .env
-            
-#             # 2. LOGIN (Correction de l'erreur "denied")
-#             # On utilise le secret TOKEN (ton PAT)
-#             echo ${{ secrets.TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-#             # 3. PULL & RESTART
-#             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-#             docker compose up -d --no-deps ${{ env.SERVICE_NAME }}
-#             docker image prune -f
-
-#  VERSION 2 avec SWARM 
-
 name: API CI/CD
 on:
   push:
     branches: ["main"]
-    paths: ["apps/api/**", "packages/**", ".github/workflows/api.yml"] 
+    paths:
+      - "apps/api/**"
+      - "packages/**"
+      - "infra/**"
+      - "stack.yml"
+      - "prometheus.yml"
+      - "promtail.yml"
+      - ".github/workflows/api.yml"
 
 env:
   REGISTRY: ghcr.io
@@ -121,78 +18,83 @@ env:
 jobs:
   build-push:
     runs-on: ubuntu-latest
-    permissions: { contents: read, packages: write } 
+    permissions: { contents: read, packages: write }
     steps:
       - uses: actions/checkout@v4
-      - name: Lowercase Variables
-        run: |
-          echo "REGISTRY=ghcr.io" >> $GITHUB_ENV
-          echo "IMAGE_NAME=$(echo ${{ env.IMAGE_NAME }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV 
+      - name: Lowercase image name
+        run: echo "IMAGE_NAME=$(echo ${{ env.IMAGE_NAME }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY}}
-          username: ${{github.actor}}
-          password: ${{secrets.TOKEN}}
-
-        # Build avec contexte racine pour Turborepo
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.TOKEN }}
       - uses: docker/build-push-action@v5
         with:
           context: .
           file: ./apps/api/Dockerfile
           push: true
-          tags: ${{env.REGISTRY}}/${{env.IMAGE_NAME}}:latest
-  
-  deploy:
+          tags: ghcr.io/${{ env.IMAGE_NAME }}:latest
+
+  secrets:
     needs: build-push
     runs-on: ubuntu-latest
     steps:
-      - uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_KEY }}
-          script: |
-            cd /var/www/html/fil_rouge
+      - uses: actions/checkout@v4
+      - name: Installer Ansible
+        run: pip install ansible
+      - name: Configurer la clé SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+      - name: Créer les Docker Secrets via Ansible
+        working-directory: infra
+        env:
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          CLOUDFRONT_KEY_PAIR_ID: ${{ secrets.CLOUDFRONT_KEY_PAIR_ID }}
+          CLOUDFRONT_PRIVATE_KEY_B64: ${{ secrets.CLOUDFRONT_PRIVATE_KEY_BASE64 }}
+        run: |
+          ansible-playbook playbook-secrets.yml \
+            -e "db_user=$DB_USER" \
+            -e "db_password=$DB_PASSWORD" \
+            -e "db_name=$DB_NAME" \
+            -e "jwt_access_secret=$JWT_ACCESS_SECRET" \
+            -e "jwt_refresh_secret=$JWT_REFRESH_SECRET" \
+            -e "aws_access_key_id=$AWS_ACCESS_KEY_ID" \
+            -e "aws_secret_access_key=$AWS_SECRET_ACCESS_KEY" \
+            -e "cloudfront_key_pair_id=$CLOUDFRONT_KEY_PAIR_ID" \
+            -e "cloudfront_private_key_b64=$CLOUDFRONT_PRIVATE_KEY_B64"
 
-            # 1. Login Docker sur le VPS
-            echo "${{ secrets.TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker pull ghcr.io/tonymascate/fil-rouge-api:latest
-
-            # 2. Injection Ninja
-            while IFS= read -r line || [[ -n "$line" ]]; do
-              if [[ -n "$line" && "$line" != \#* ]]; then
-                 export "$line"
-              fi
-            done <<< "${{ secrets.ENV_PROD }}"
-
-            # 3. Déploiement
-            docker stack deploy --with-registry-auth -c stack.yml mon-app
-
-            docker image prune -f
-
-  migrate:
-    needs: deploy
+  deploy:
+    needs: secrets
     runs-on: ubuntu-latest
     steps:
-      - uses: appleboy/ssh-action@master
+      - uses: actions/checkout@v4
+      - name: Copier les fichiers de config sur le serveur
+        uses: appleboy/scp-action@a6e43c3aaf4e8e6b0b15bf34e19d71118f6b1ca7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "stack.yml,prometheus.yml,promtail.yml"
+          target: /var/www/html/fil_rouge/
+      - name: Déployer la stack
+        uses: appleboy/ssh-action@1530429296e979861824d74fb800013190b5dee0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            echo "${{ secrets.TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-            # Attendre que pgbouncer soit prêt
-            sleep 15
-
-            docker run --rm \
-              --network mon-app_app-net \
-              -e DB_HOST=pgbouncer \
-              -e DB_PORT=5432 \
-              -e DB_USER=$(echo "${{ secrets.ENV_PROD }}" | grep '^DB_USER=' | cut -d= -f2-) \
-              -e DB_PASSWORD=$(echo "${{ secrets.ENV_PROD }}" | grep '^DB_PASSWORD=' | cut -d= -f2-) \
-              -e DB_NAME=$(echo "${{ secrets.ENV_PROD }}" | grep '^DB_NAME=' | cut -d= -f2-) \
-              ghcr.io/tonymascate/fil-rouge-api:latest \
-              node node_modules/.bin/typeorm migration:run -d dist/database/data-source.js
-          
-        
+            cd /var/www/html/fil_rouge
+            docker login ghcr.io -u ${{ github.actor }} --password-stdin <<< "${{ secrets.TOKEN }}"
+            docker pull ghcr.io/tonymascate/fil-rouge-api:latest
+            docker stack deploy --with-registry-auth -c stack.yml mon-app
+            docker image prune -f
