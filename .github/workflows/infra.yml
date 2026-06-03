@@ -37,4 +37,5 @@ jobs:
         working-directory: infra
         run: |
           ansible-playbook ${{ inputs.playbook }} \
-            --user ${{ inputs.remote_user }}
+            -e "ansible_user=${{ inputs.remote_user }}" \
+            --private-key ~/.ssh/id_deploy
