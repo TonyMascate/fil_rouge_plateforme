@@ -45,9 +45,11 @@ jobs:
       - name: Installer Ansible
         run: pip install ansible
       - name: Configurer la clé SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
       - name: Créer les Docker Secrets via Ansible (idempotent)
         working-directory: infra
@@ -79,7 +81,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Copier les fichiers de config sur le serveur
-        uses: appleboy/scp-action@master
+        uses: appleboy/scp-action@a6e43c3aaf4e8e6b0b15bf34e19d71118f6b1ca7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
@@ -87,14 +89,14 @@ jobs:
           source: "stack.yml,prometheus.yml,promtail.yml"
           target: /var/www/html/fil_rouge/
       - name: Déployer la stack
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@1530429296e979861824d74fb800013190b5dee0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/html/fil_rouge
-            echo "${{ secrets.TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker login ghcr.io -u ${{ github.actor }} --password-stdin <<< "${{ secrets.TOKEN }}"
             docker pull ghcr.io/tonymascate/fil-rouge-web:latest
             docker stack deploy --with-registry-auth -c stack.yml mon-app
             docker image prune -f
