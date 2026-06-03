@@ -378,7 +378,133 @@ docker secret rm db_password
 
 ---
 
-## 9. Points forts pour la soutenance
+## 9. Retour d'expérience — problèmes rencontrés en déploiement réel
+
+Cette section documente les problèmes concrets rencontrés lors du premier déploiement sur un VPS vierge. Chaque problème illustre une nuance réelle de l'écosystème Docker Swarm / Ansible.
+
+---
+
+### 9.1 — `ansible_user` dans l'inventory prend la priorité sur `--user`
+
+**Symptôme :** Le premier playbook (lancé en `root` via `--user root`) se connectait quand même en `deploy`, qui n'existait pas encore → échec SSH.
+
+**Cause :** Dans Ansible, `ansible_user` défini dans `[all:vars]` de l'inventory a une priorité **plus haute** que le flag `--user` en ligne de commande. C'est contre-intuitif mais documenté.
+
+**Solution :** Sortir `ansible_user` de l'inventory et le mettre dans `ansible.cfg` comme `remote_user = deploy`. `ansible.cfg` a la priorité la plus basse — les extra-vars (`-e ansible_user=root`) peuvent alors le surcharger. Le workflow `infra.yml` passe `-e "ansible_user=${{ inputs.remote_user }}"`.
+
+---
+
+### 9.2 — La clé publique SSH n'existe pas sur le runner GitHub
+
+**Symptôme :** Le rôle `common` utilise `authorized_key: key: "{{ lookup('file', '~/.ssh/id_deploy.pub') }}"` pour déposer la clé publique sur le VPS. Mais le runner GitHub n'a que la clé privée (stockée dans `SSH_PRIVATE_KEY`) — la clé publique n'existe pas.
+
+**Cause :** On stocke uniquement la clé privée dans GitHub Secrets (c'est la pratique normale). Le module Ansible `authorized_key` a besoin de lire le fichier `.pub` localement.
+
+**Solution :** Régénérer la clé publique depuis la privée dans le workflow, avant de lancer Ansible :
+
+```yaml
+- name: Configurer la clé SSH
+  env:
+    SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  run: |
+    mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
+    chmod 600 ~/.ssh/id_deploy
+    ssh-keygen -y -f ~/.ssh/id_deploy > ~/.ssh/id_deploy.pub
+```
+
+`ssh-keygen -y` extrait la clé publique d'une clé privée existante sans phrase de passe.
+
+---
+
+### 9.3 — Le nom de nœud Docker Swarm ≠ le nom Ansible
+
+**Symptôme :** La tâche `docker node update --label-add type=manager manager-1` échouait avec `node manager-1 not found`.
+
+**Cause :** `manager-1` est l'**alias Ansible** du serveur (défini dans `inventory.ini`). Docker Swarm lui, utilise le **hostname réel** de la machine (défini par le système d'exploitation, par exemple `vmi3007074` chez Contabo). Ces deux noms n'ont aucun lien.
+
+**Solution :** Remplacer le nom hardcodé par `{{ ansible_hostname }}`, variable Ansible qui contient le hostname réel du serveur distant :
+
+```yaml
+- name: Label node manager
+  command: docker node update --label-add type=manager {{ ansible_hostname }}
+```
+
+**Leçon :** Ne jamais confondre les noms d'inventaire Ansible (alias de gestion) avec les noms que les services internes (Docker, systemd) connaissent.
+
+---
+
+### 9.4 — edoburu/pgbouncer ne supporte pas la convention `_FILE`
+
+**Symptôme :** pgbouncer démarrait (1/1) mais l'API ne pouvait pas s'y connecter. Les logs pgbouncer montraient `password authentication failed for user "postgres"`.
+
+**Cause :** On avait configuré pgbouncer avec `DB_USER_FILE` et `DB_PASSWORD_FILE` (convention Docker Secrets standard). Mais l'image `edoburu/pgbouncer` dans sa version courante n'implémente pas cette convention pour `DB_PASSWORD_FILE` — elle utilise un mot de passe vide par défaut, que postgres refuse.
+
+```
+pgbouncer → postgres avec user=postgres, password="" → rejeté
+```
+
+**Solution :** Utiliser le mécanisme natif de pgbouncer : le fichier `userlist.txt`. On crée un Docker Secret `pgbouncer_userlist` dont le contenu est au format pgbouncer natif :
+
+```
+"postgres" "le_vrai_mot_de_passe"
+```
+
+Ce secret est généré dynamiquement par Ansible dans `playbook-secrets.yml` :
+```yaml
+- { name: "pgbouncer_userlist", value: '"{{ db_user }}" "{{ db_password }}"' }
+```
+
+Et monté dans pgbouncer avec :
+```yaml
+secrets:
+  - source: pgbouncer_userlist
+    target: userlist.txt
+environment:
+  AUTH_FILE: /run/secrets/userlist.txt
+  AUTH_TYPE: plain
+```
+
+**Leçon :** La convention `_FILE` est un standard de facto mais pas universel. Les images tierces peuvent l'implémenter partiellement ou pas du tout. Toujours vérifier en testant, pas en lisant la doc.
+
+---
+
+### 9.5 — Déploiements concurrents sur le même stack
+
+**Symptôme :** Quand `stack.yml` change, `api.yml` et `web.yml` se déclenchent tous les deux. Leurs jobs `deploy` exécutent `docker stack deploy` simultanément → `update out of sequence` et `prune operation is already running`.
+
+**Cause :** `docker stack deploy` n'est pas thread-safe sur le même stack. Docker Swarm traite une mise à jour à la fois par service, et deux déploiements concurrents entrent en conflit.
+
+**Solution :** Groupe de concurrence GitHub Actions sur le job `deploy` dans les deux workflows :
+
+```yaml
+deploy:
+  concurrency:
+    group: deploy-production
+    cancel-in-progress: false
+```
+
+`cancel-in-progress: false` : le second attend que le premier termine, ne l'annule pas. Les deux déploiements s'exécutent, mais séquentiellement. Le second est en pratique un no-op (l'état est déjà à jour), sans redémarrage des services inchangés.
+
+---
+
+### 9.6 — Image Docker avec hardlinks incompatibles avec overlayfs
+
+**Symptôme :** `docker pull` échouait sur le serveur avec `failed to extract layer ... link ... no such file or directory`.
+
+**Cause :** L'image API contient des hardlinks dans `node_modules` (créés par bun ou turborepo). La couche de snapshot overlayfs attendait que le fichier source soit déjà présent avant de créer le lien — mais l'ordre d'extraction ne le garantissait pas. Le cache containerd était dans un état incohérent.
+
+**Solution :** Nettoyer le cache Docker sur le serveur et relancer le déploiement :
+```bash
+docker system prune -f
+docker stack deploy --with-registry-auth -c /var/www/html/fil_rouge/stack.yml mon-app
+```
+
+**Leçon :** Les caches Docker (containerd snapshots) peuvent se corrompre, notamment après un redémarrage ou une réinstallation OS. `docker system prune` est le premier réflexe.
+
+---
+
+## 10. Points forts pour la soutenance
 
 ### Ce qui distingue cette approche
 
@@ -398,3 +524,4 @@ docker secret rm db_password
 - **Secrets immuables** : la rotation nécessite une procédure manuelle. Évolution : HashiCorp Vault avec rotation automatique.
 - **Single manager** : point unique de défaillance pour le raft Swarm. Évolution : 3 managers (quorum).
 - **Monitoring des secrets** : pas d'alerting si un secret expire ou est compromis. Évolution : audit log Docker + alerting Grafana.
+- **Convention `_FILE` non universelle** : images tierces peuvent ne pas la supporter (voir section 9.4). À vérifier image par image.
