@@ -62,7 +62,7 @@
     path: /var/www/html/fil_rouge
     state: directory
     owner: deploy
-    mode: '0755'
+    mode: '0750'
   delegate_to: "{{ groups['managers'][0] }}"
   run_once: true
 
@@ -74,7 +74,7 @@
     dest: /var/www/html/fil_rouge/prometheus.yml
     force: no
     owner: deploy
-    mode: '0644'
+    mode: '0640'
   delegate_to: "{{ groups['managers'][0] }}"
   run_once: true
 
@@ -84,7 +84,7 @@
     dest: /var/www/html/fil_rouge/promtail.yml
     force: no
     owner: deploy
-    mode: '0644'
+    mode: '0640'
   delegate_to: "{{ groups['managers'][0] }}"
   run_once: true
 

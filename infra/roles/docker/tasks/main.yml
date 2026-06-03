@@ -3,13 +3,13 @@
   file:
     path: /etc/apt/keyrings
     state: directory
-    mode: '0755'
+    mode: '0750'
 
 - name: Clé GPG Docker
   get_url:
     url: https://download.docker.com/linux/ubuntu/gpg
     dest: /etc/apt/keyrings/docker.asc
-    mode: '0644'
+    mode: '0640'
 
 - name: Dépôt Docker
   apt_repository:
