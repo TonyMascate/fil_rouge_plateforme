@@ -76,6 +76,9 @@ jobs:
   deploy:
     needs: secrets
     runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - name: Copier les fichiers de config sur le serveur
