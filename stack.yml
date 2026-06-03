@@ -85,18 +85,19 @@ services:
     image: edoburu/pgbouncer
     secrets:
       - db_user
-      - db_password
       - db_name
+      - source: pgbouncer_userlist
+        target: userlist.txt
     environment:
       DB_USER_FILE: /run/secrets/db_user
-      DB_PASSWORD_FILE: /run/secrets/db_password
       DB_NAME_FILE: /run/secrets/db_name
       DB_HOST: postgres
+      AUTH_TYPE: plain
+      AUTH_FILE: /run/secrets/userlist.txt
       POOL_MODE: transaction
       MAX_CLIENT_CONN: 1000
       DEFAULT_POOL_SIZE: 20
       IGNORE_STARTUP_PARAMETERS: extra_float_digits,statement_timeout
-      AUTH_TYPE: plain
     networks:
       - app-net
     deploy:
@@ -306,4 +307,6 @@ secrets:
   cloudfront_key_pair_id:
     external: true
   cloudfront_private_key_b64:
+    external: true
+  pgbouncer_userlist:
     external: true
