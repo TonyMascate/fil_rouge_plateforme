@@ -90,7 +90,7 @@
 
 # Le stack.yml utilise node.labels.type == manager pour épingler postgres, redis, etc.
 - name: Label node manager
-  command: docker node update --label-add type=manager manager-1
+  command: docker node update --label-add type=manager {{ ansible_hostname }}
   delegate_to: "{{ groups['managers'][0] }}"
   run_once: true
   changed_when: false
