@@ -1,4 +1,5 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { readSecret } from './secret';
 
 export const getDbConfig = (): TypeOrmModuleOptions => {
   const isProduction = process.env.NODE_ENV === 'production';
@@ -7,9 +8,9 @@ export const getDbConfig = (): TypeOrmModuleOptions => {
     type: 'postgres',
     host: process.env.DB_HOST, // 'localhost' (Dev) ou 'pgbouncer' (Prod)
     port: parseInt(process.env.DB_PORT || '5432', 10), // 5432 (Dev) ou 6432 (Prod)
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+    username: readSecret('DB_USER'),
+    password: readSecret('DB_PASSWORD'),
+    database: readSecret('DB_NAME'),
 
     autoLoadEntities: true, // Ou [__dirname + '/../**/*.entity{.ts,.js}']
 

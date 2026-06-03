@@ -1,0 +1,6 @@
+---
+- name: Configurer le cluster Swarm
+  hosts: swarm
+  become: yes
+  roles:
+    - swarm

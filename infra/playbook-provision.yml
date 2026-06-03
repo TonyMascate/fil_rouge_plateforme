@@ -1,0 +1,7 @@
+---
+- name: Provisionner les serveurs
+  hosts: all
+  become: yes
+  roles:
+    - common
+    - docker

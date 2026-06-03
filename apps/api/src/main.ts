@@ -4,6 +4,50 @@ import { ZodValidationPipe, cleanupOpenApiDoc } from 'nestjs-zod';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { Logger } from 'nestjs-pino';
+import { readSecret } from './config/secret';
+import { dataSource } from './database/data-source';
+
+// Secrets Docker à injecter dans process.env avant l'init de NestJS.
+// En dev, readSecret retombe sur process.env (pas de _FILE défini).
+// En prod, lit /run/secrets/<name> (tmpfs RAM) pour que ConfigService le trouve.
+const SECRET_NAMES = [
+  'JWT_ACCESS_SECRET',
+  'JWT_REFRESH_SECRET',
+  'DB_USER',
+  'DB_PASSWORD',
+  'DB_NAME',
+  'AWS_ACCESS_KEY_ID',
+  'AWS_SECRET_ACCESS_KEY',
+  'CLOUDFRONT_KEY_PAIR_ID',
+  'CLOUDFRONT_PRIVATE_KEY_BASE64',
+];
+
+function loadSecrets() {
+  for (const name of SECRET_NAMES) {
+    const value = readSecret(name);
+    if (value !== undefined) {
+      process.env[name] = value;
+    }
+  }
+}
+
+async function runMigrations() {
+  const MAX_ATTEMPTS = 30;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      await dataSource.initialize();
+      await dataSource.runMigrations();
+      await dataSource.destroy();
+      return;
+    } catch {
+      if (attempt === MAX_ATTEMPTS) throw new Error('DB unreachable after 30 attempts');
+      console.log(`DB not ready, retry ${attempt}/${MAX_ATTEMPTS}...`);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+  }
+}
+
+loadSecrets();
 
 const allowedOrigins = (process.env.FRONTEND_URL ?? '')
   .split(',')
@@ -11,6 +55,7 @@ const allowedOrigins = (process.env.FRONTEND_URL ?? '')
   .filter(Boolean);
 
 async function bootstrap() {
+  await runMigrations();
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   app.use(cookieParser());

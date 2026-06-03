@@ -1,0 +1,96 @@
+---
+- name: État du Swarm
+  command: docker info --format '{{ "{{" }}.Swarm.LocalNodeState{{ "}}" }}'
+  register: swarm_state
+  changed_when: false
+
+- name: Init Swarm sur le premier manager
+  command: >
+    docker swarm init
+    --advertise-addr {{ hostvars[inventory_hostname].ansible_private_host }}
+    --listen-addr {{ hostvars[inventory_hostname].ansible_private_host }}:2377
+  when:
+    - "'managers' in group_names"
+    - swarm_state.stdout == "inactive"
+    - inventory_hostname == groups['managers'][0]
+
+- name: Token worker
+  command: docker swarm join-token -q worker
+  register: worker_token
+  changed_when: false
+  delegate_to: "{{ groups['managers'][0] }}"
+  run_once: true
+
+- name: Token manager
+  command: docker swarm join-token -q manager
+  register: manager_token
+  changed_when: false
+  delegate_to: "{{ groups['managers'][0] }}"
+  run_once: true
+
+- name: Join worker
+  command: >
+    docker swarm join --token {{ worker_token.stdout }}
+    --advertise-addr {{ hostvars[inventory_hostname].ansible_private_host }}
+    {{ hostvars[groups['managers'][0]].ansible_private_host }}:2377
+  when:
+    - "'workers' in group_names"
+    - swarm_state.stdout == "inactive"
+
+- name: Join manager supplémentaire
+  command: >
+    docker swarm join --token {{ manager_token.stdout }}
+    --advertise-addr {{ hostvars[inventory_hostname].ansible_private_host }}
+    {{ hostvars[groups['managers'][0]].ansible_private_host }}:2377
+  when:
+    - "'managers' in group_names"
+    - swarm_state.stdout == "inactive"
+    - inventory_hostname != groups['managers'][0]
+
+- name: Réseau overlay app-net
+  command: docker network create --driver overlay --attachable mon-app_app-net
+  register: net_create
+  changed_when: "'already exists' not in net_create.stderr"
+  failed_when:
+    - net_create.rc != 0
+    - "'already exists' not in net_create.stderr"
+  delegate_to: "{{ groups['managers'][0] }}"
+  run_once: true
+
+- name: Créer le dossier de déploiement
+  file:
+    path: /var/www/html/fil_rouge
+    state: directory
+    owner: deploy
+    mode: '0755'
+  delegate_to: "{{ groups['managers'][0] }}"
+  run_once: true
+
+# Fichiers vides pour que le premier deploy ne plante pas sur un volume manquant.
+# Le CI copiera les vraies versions à chaque push (comme stack.yml).
+- name: Créer prometheus.yml vide si absent
+  copy:
+    content: ""
+    dest: /var/www/html/fil_rouge/prometheus.yml
+    force: no
+    owner: deploy
+    mode: '0644'
+  delegate_to: "{{ groups['managers'][0] }}"
+  run_once: true
+
+- name: Créer promtail.yml vide si absent
+  copy:
+    content: ""
+    dest: /var/www/html/fil_rouge/promtail.yml
+    force: no
+    owner: deploy
+    mode: '0644'
+  delegate_to: "{{ groups['managers'][0] }}"
+  run_once: true
+
+# Le stack.yml utilise node.labels.type == manager pour épingler postgres, redis, etc.
+- name: Label node manager
+  command: docker node update --label-add type=manager manager-1
+  delegate_to: "{{ groups['managers'][0] }}"
+  run_once: true
+  changed_when: false

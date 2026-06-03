@@ -1,0 +1,40 @@
+name: Infrastructure (manuel)
+on:
+  workflow_dispatch:
+    inputs:
+      playbook:
+        description: "Playbook à exécuter"
+        required: true
+        type: choice
+        options:
+          - playbook-provision.yml
+          - playbook-swarm.yml
+      remote_user:
+        description: "Utilisateur SSH (root pour le premier run, deploy ensuite)"
+        required: true
+        type: choice
+        default: deploy
+        options:
+          - deploy
+          - root
+
+jobs:
+  run-playbook:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer Ansible
+        run: pip install ansible
+
+      - name: Configurer la clé SSH
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+
+      - name: Exécuter ${{ inputs.playbook }}
+        working-directory: infra
+        run: |
+          ansible-playbook ${{ inputs.playbook }} \
+            --user ${{ inputs.remote_user }}
