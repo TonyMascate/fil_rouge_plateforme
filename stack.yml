@@ -218,6 +218,8 @@ services:
     image: grafana/grafana:latest
     volumes:
       - grafana-data:/var/lib/grafana
+      - /var/www/html/fil_rouge/grafana/provisioning:/etc/grafana/provisioning
+      - /var/www/html/fil_rouge/grafana/dashboards:/var/lib/grafana/dashboards
     networks:
       - app-net
     deploy:
@@ -256,9 +258,10 @@ services:
 
   loki:
     image: grafana/loki:latest
-    command: -config.file=/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/config.yml
     volumes:
       - loki-data:/loki
+      - /var/www/html/fil_rouge/loki.yml:/etc/loki/config.yml
     networks:
       - app-net
     deploy:
