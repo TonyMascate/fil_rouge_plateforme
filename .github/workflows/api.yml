@@ -9,6 +9,8 @@ on:
       - "stack.yml"
       - "prometheus.yml"
       - "promtail.yml"
+      - "loki.yml"
+      - "grafana/**"
       - ".github/workflows/api.yml"
 
 env:
