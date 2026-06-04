@@ -88,6 +88,29 @@
   delegate_to: "{{ groups['managers'][0] }}"
   run_once: true
 
+- name: Créer loki.yml vide si absent
+  copy:
+    content: ""
+    dest: /var/www/html/fil_rouge/loki.yml
+    force: no
+    owner: deploy
+    mode: '0640'
+  delegate_to: "{{ groups['managers'][0] }}"
+  run_once: true
+
+- name: Créer les dossiers grafana provisioning
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: deploy
+    mode: '0750'
+  loop:
+    - /var/www/html/fil_rouge/grafana/provisioning/datasources
+    - /var/www/html/fil_rouge/grafana/provisioning/dashboards
+    - /var/www/html/fil_rouge/grafana/dashboards
+  delegate_to: "{{ groups['managers'][0] }}"
+  run_once: true
+
 # Le stack.yml utilise node.labels.type == manager pour épingler postgres, redis, etc.
 - name: Label node manager
   command: docker node update --label-add type=manager {{ ansible_hostname }}

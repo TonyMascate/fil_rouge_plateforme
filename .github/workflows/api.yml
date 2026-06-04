@@ -87,7 +87,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "stack.yml,prometheus.yml,promtail.yml"
+          source: "stack.yml,prometheus.yml,promtail.yml,loki.yml,grafana/"
           target: /var/www/html/fil_rouge/
       - name: Déployer la stack
         uses: appleboy/ssh-action@1530429296e979861824d74fb800013190b5dee0

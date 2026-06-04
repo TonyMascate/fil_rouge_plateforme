@@ -7,8 +7,6 @@ positions:
 
 clients:
   - url: http://loki:3100/loki/api/v1/push
-    batchwait: 1s
-    batchsize: 1048576
 
 scrape_configs:
   - job_name: docker
@@ -16,7 +14,6 @@ scrape_configs:
       - host: unix:///var/run/docker.sock
         refresh_interval: 5s
     pipeline_stages:
-      # Parse les logs JSON de Pino pour extraire le niveau (30=info, 40=warn, 50=error)
       - json:
           expressions:
             pino_level: level
@@ -33,18 +30,11 @@ scrape_configs:
       - labels:
           level:
     relabel_configs:
-      - source_labels: ['__meta_docker_container_name']
-        regex: '/(.+)\.(.+)\.(.+)'
-        target_label: service
-        replacement: '${1}'
-      # Label "app" : nom du service sans le préfixe de la stack (ex: "api")
-      - source_labels: ['__meta_docker_container_name']
-        regex: '/[^_]+_(.+)\.\d+\..+'
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
         target_label: app
-        replacement: '${1}'
-      - source_labels: ['__meta_docker_container_name']
-        regex: '/(.+)\.(\d+)\..+'
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: service
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_container_number']
         target_label: replica
-        replacement: '${2}'
       - source_labels: ['__meta_docker_container_log_stream']
         target_label: stream
