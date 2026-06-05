@@ -1,0 +1,59 @@
+name: Database Backup
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sauvegarder la base de données vers S3
+        uses: appleboy/ssh-action@1530429296e979861824d74fb800013190b5dee0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 10m
+          script: |
+            docker service rm db-backup 2>/dev/null || true
+
+            docker service create \
+              --detach \
+              --name db-backup \
+              --restart-condition none \
+              --network mon-app_app-net \
+              --secret db_user \
+              --secret db_password \
+              --secret db_name \
+              --secret aws_access_key_id \
+              --secret aws_secret_access_key \
+              -e AWS_DEFAULT_REGION=eu-west-3 \
+              postgres:15-alpine \
+              sh -c '
+                apk add --no-cache aws-cli --quiet &&
+                PGPASSWORD=$(cat /run/secrets/db_password) \
+                pg_dump -h mon-app_postgres -U $(cat /run/secrets/db_user) $(cat /run/secrets/db_name) \
+                | gzip \
+                | AWS_ACCESS_KEY_ID=$(cat /run/secrets/aws_access_key_id) \
+                  AWS_SECRET_ACCESS_KEY=$(cat /run/secrets/aws_secret_access_key) \
+                  aws s3 cp - s3://fil-rouge-backups/backup-$(date +%Y%m%d-%H%M%S).sql.gz
+              '
+
+            for i in $(seq 1 60); do
+              STATE=$(docker service ps db-backup --format "{{.CurrentState}}" 2>/dev/null | head -1)
+              echo "[$i/60] $STATE"
+              echo "$STATE" | grep -qE "Complete|Failed|Rejected" && break
+              sleep 5
+            done
+
+            docker service logs db-backup 2>&1 || true
+            FINAL=$(docker service ps db-backup --format "{{.CurrentState}}" 2>/dev/null | head -1)
+            docker service rm db-backup || true
+
+            if echo "$FINAL" | grep -qE "Failed|Rejected"; then
+              echo "Backup échoué"
+              exit 1
+            fi
+            echo "Backup réussi"
