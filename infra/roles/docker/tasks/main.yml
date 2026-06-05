@@ -3,7 +3,7 @@
   file:
     path: /etc/apt/keyrings
     state: directory
-    mode: '0750'
+    mode: '0755'
 
 - name: Clé GPG Docker
   get_url:
@@ -12,11 +12,16 @@
     mode: '0644'
 
 - name: Dépôt Docker
-  apt_repository:
-    repo: >
-      deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc]
-      https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
-    filename: docker
+  deb822_repository:
+    name: docker
+    types: deb
+    uris: https://download.docker.com/linux/ubuntu
+    suites: "{{ ansible_distribution_release }}"
+    components: stable
+    architectures: amd64
+    signed_by: /etc/apt/keyrings/docker.asc
+    state: present
+    enabled: true
 
 - name: Installer Docker
   apt:
