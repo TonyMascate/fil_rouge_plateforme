@@ -126,6 +126,7 @@ jobs:
 
             # Lancer la migration comme service Swarm one-shot
             docker service create \
+              --detach \
               --name api-migrate \
               --restart-condition none \
               --network mon-app_app-net \
