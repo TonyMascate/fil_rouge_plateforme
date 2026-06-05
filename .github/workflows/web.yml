@@ -9,6 +9,7 @@ on:
       - "prometheus.yml"
       - "promtail.yml"
       - ".github/workflows/web.yml"
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
