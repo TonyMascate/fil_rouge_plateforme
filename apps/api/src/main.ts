@@ -5,7 +5,6 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { Logger } from 'nestjs-pino';
 import { readSecret } from './config/secret';
-import { dataSource } from './database/data-source';
 
 // Secrets Docker à injecter dans process.env avant l'init de NestJS.
 // En dev, readSecret retombe sur process.env (pas de _FILE défini).
@@ -31,22 +30,6 @@ function loadSecrets() {
   }
 }
 
-async function runMigrations() {
-  const MAX_ATTEMPTS = 30;
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    try {
-      await dataSource.initialize();
-      await dataSource.runMigrations();
-      await dataSource.destroy();
-      return;
-    } catch {
-      if (attempt === MAX_ATTEMPTS) throw new Error('DB unreachable after 30 attempts');
-      console.log(`DB not ready, retry ${attempt}/${MAX_ATTEMPTS}...`);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-    }
-  }
-}
-
 loadSecrets();
 
 const allowedOrigins = (process.env.FRONTEND_URL ?? '')
@@ -55,7 +38,6 @@ const allowedOrigins = (process.env.FRONTEND_URL ?? '')
   .filter(Boolean);
 
 async function bootstrap() {
-  await runMigrations();
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   app.use(cookieParser());

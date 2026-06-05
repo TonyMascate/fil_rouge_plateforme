@@ -104,3 +104,58 @@ jobs:
             docker pull ghcr.io/tonymascate/fil-rouge-api:latest
             docker stack deploy --with-registry-auth -c stack.yml mon-app
             docker image prune -f
+
+  migrate:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Exécuter les migrations TypeORM
+        uses: appleboy/ssh-action@1530429296e979861824d74fb800013190b5dee0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker login ghcr.io -u ${{ github.actor }} --password-stdin <<< "${{ secrets.TOKEN }}"
+
+            # Attendre que postgres soit prêt dans le Swarm
+            sleep 20
+
+            # Supprimer un éventuel service de migration précédent
+            docker service rm api-migrate 2>/dev/null || true
+
+            # Lancer la migration comme service Swarm one-shot
+            docker service create \
+              --name api-migrate \
+              --restart-condition none \
+              --network mon-app_app-net \
+              --secret db_user \
+              --secret db_password \
+              --secret db_name \
+              -e DB_HOST=postgres \
+              -e DB_PORT=5432 \
+              -e DB_USER_FILE=/run/secrets/db_user \
+              -e DB_PASSWORD_FILE=/run/secrets/db_password \
+              -e DB_NAME_FILE=/run/secrets/db_name \
+              ghcr.io/tonymascate/fil-rouge-api:latest \
+              node node_modules/.bin/typeorm migration:run -d dist/database/data-source.js
+
+            # Attendre la fin (max 90s)
+            for i in $(seq 1 30); do
+              STATE=$(docker service ps api-migrate --format "{{.CurrentState}}" 2>/dev/null | head -1)
+              echo "Migration state: $STATE"
+              if echo "$STATE" | grep -qE "Complete|Failed|Rejected"; then
+                break
+              fi
+              sleep 3
+            done
+
+            docker service logs api-migrate 2>&1 || true
+
+            FINAL=$(docker service ps api-migrate --format "{{.CurrentState}}" 2>/dev/null | head -1)
+            docker service rm api-migrate || true
+
+            if echo "$FINAL" | grep -qE "Failed|Rejected"; then
+              echo "Migration échouée"
+              exit 1
+            fi
