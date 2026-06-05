@@ -1,0 +1,65 @@
+name: Restore Database
+
+on:
+  workflow_dispatch:
+    inputs:
+      backup_file:
+        description: "Fichier à restaurer (ex: backup-20260605-020000.sql.gz)"
+        required: true
+        type: string
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Restaurer la base de données depuis S3
+        uses: appleboy/ssh-action@1530429296e979861824d74fb800013190b5dee0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 15m
+          script: |
+            docker service rm db-restore 2>/dev/null || true
+
+            docker service create \
+              --detach \
+              --name db-restore \
+              --restart-condition none \
+              --network mon-app_app-net \
+              --secret db_user \
+              --secret db_password \
+              --secret db_name \
+              --secret aws_access_key_id \
+              --secret aws_secret_access_key \
+              -e AWS_DEFAULT_REGION=eu-west-3 \
+              -e BACKUP_FILE=${{ github.event.inputs.backup_file }} \
+              postgres:15-alpine \
+              sh -c '
+                apk add --no-cache aws-cli --quiet &&
+                AWS_ACCESS_KEY_ID=$(cat /run/secrets/aws_access_key_id) \
+                AWS_SECRET_ACCESS_KEY=$(cat /run/secrets/aws_secret_access_key) \
+                aws s3 cp s3://fil-rouge-backups/$BACKUP_FILE - \
+                | gunzip \
+                | PGPASSWORD=$(cat /run/secrets/db_password) \
+                  psql -h mon-app_postgres \
+                       -U $(cat /run/secrets/db_user) \
+                       -d $(cat /run/secrets/db_name)
+              '
+
+            for i in $(seq 1 90); do
+              STATE=$(docker service ps db-restore --format "{{.CurrentState}}" 2>/dev/null | head -1)
+              echo "[$i/90] $STATE"
+              echo "$STATE" | grep -qE "Complete|Failed|Rejected" && break
+              sleep 5
+            done
+
+            docker service logs db-restore 2>&1 || true
+            FINAL=$(docker service ps db-restore --format "{{.CurrentState}}" 2>/dev/null | head -1)
+            docker service rm db-restore || true
+
+            if echo "$FINAL" | grep -qE "Failed|Rejected"; then
+              echo "Restauration échouée"
+              exit 1
+            fi
+            echo "Restauration réussie"
