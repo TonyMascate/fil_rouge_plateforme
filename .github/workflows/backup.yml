@@ -32,6 +32,7 @@ jobs:
               -e AWS_DEFAULT_REGION=eu-west-3 \
               postgres:15-alpine \
               sh -c '
+                set -eo pipefail
                 apk add --no-cache aws-cli --quiet &&
                 PGPASSWORD=$(cat /run/secrets/db_password) \
                 pg_dump -h mon-app_postgres -U $(cat /run/secrets/db_user) $(cat /run/secrets/db_name) \
