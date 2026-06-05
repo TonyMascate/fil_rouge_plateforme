@@ -34,7 +34,7 @@ jobs:
               sh -c '
                 apk add --no-cache aws-cli --quiet &&
                 PGPASSWORD=$(cat /run/secrets/db_password) \
-                pg_dump -h postgres -U $(cat /run/secrets/db_user) $(cat /run/secrets/db_name) \
+                pg_dump -h mon-app_postgres -U $(cat /run/secrets/db_user) $(cat /run/secrets/db_name) \
                 | gzip \
                 | AWS_ACCESS_KEY_ID=$(cat /run/secrets/aws_access_key_id) \
                   AWS_SECRET_ACCESS_KEY=$(cat /run/secrets/aws_secret_access_key) \

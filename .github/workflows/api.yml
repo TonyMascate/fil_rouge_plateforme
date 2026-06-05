@@ -133,13 +133,13 @@ jobs:
               --secret db_user \
               --secret db_password \
               --secret db_name \
-              -e DB_HOST=postgres \
+              -e DB_HOST=mon-app_postgres \
               -e DB_PORT=5432 \
               -e DB_USER_FILE=/run/secrets/db_user \
               -e DB_PASSWORD_FILE=/run/secrets/db_password \
               -e DB_NAME_FILE=/run/secrets/db_name \
               ghcr.io/tonymascate/fil-rouge-api:latest \
-              node node_modules/.bin/typeorm migration:run -d dist/database/data-source.js
+              bun node_modules/.bin/typeorm migration:run -d dist/database/data-source.js
 
             # Attendre la fin (max 90s)
             for i in $(seq 1 30); do
