@@ -43,7 +43,8 @@ jobs:
                 aws s3 cp s3://fil-rouge-backups/$BACKUP_FILE - \
                 | gunzip \
                 | PGPASSWORD=$(cat /run/secrets/db_password) \
-                  psql -h mon-app_postgres \
+                  psql -v ON_ERROR_STOP=1 \
+                       -h mon-app_postgres \
                        -U $(cat /run/secrets/db_user) \
                        -d $(cat /run/secrets/db_name)
               '
