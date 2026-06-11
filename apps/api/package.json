@@ -115,10 +115,6 @@
       "!**/decorators/**",
       "!**/config/**",
       "!**/database/**",
-      "!**/middlewares/**",
-      "!**/*.processor.ts",
-      "!**/auth/strategies/**",
-      "!**/album/repositories/**",
       "!**/common/validation.exception.ts"
     ],
     "coverageDirectory": "../coverage",
