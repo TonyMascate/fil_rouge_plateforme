@@ -29,8 +29,32 @@ jobs:
         working-directory: apps/web
         run: bun run test
 
-  build-push:
+  playwright:
     needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Installer les dépendances
+        run: bun install
+      - name: Installer les navigateurs Playwright
+        working-directory: apps/web
+        run: bunx playwright install --with-deps chromium
+      - name: Lancer les tests E2E Playwright
+        working-directory: apps/web
+        run: bun run test:e2e
+      - name: Uploader le rapport Playwright en cas d'échec
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7
+
+  build-push:
+    needs: [test, playwright]
     runs-on: ubuntu-latest
     permissions: { contents: read, packages: write }
     steps:
