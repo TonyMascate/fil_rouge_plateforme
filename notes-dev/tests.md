@@ -550,11 +550,147 @@ build-push:
 
 ---
 
-## 13. Roadmap des phases suivantes
+## 13. Phase 4 — Tests Vitest pour `apps/web` (Next.js 19 / React 19)
 
-### Phase 4 — Tests unitaires web (Vitest)
-Installer Vitest + React Testing Library dans `apps/web`. Tester les composants React,
-les hooks, les utils.
+### Stack et installation
+
+```bash
+bun add -D vitest @vitejs/plugin-react @testing-library/react @testing-library/user-event @testing-library/jest-dom jsdom @vitest/coverage-v8
+```
+
+| Package | Version | Rôle |
+|---------|---------|------|
+| `vitest` | 4.x | Runner de tests |
+| `@vitejs/plugin-react` | 6.x | Transforme JSX/TSX en JS |
+| `@testing-library/react` | 16.x | API de rendu React (React 19 compatible) |
+| `@testing-library/user-event` | 14.x | Simulation d'interactions utilisateur |
+| `@testing-library/jest-dom` | 6.x | Matchers supplémentaires (toBeInTheDocument, etc.) |
+| `jsdom` | 29.x | Implémente le DOM/BOM dans Node.js |
+| `@vitest/coverage-v8` | 4.x | Rapport de couverture via V8 |
+
+### Configuration : `vitest.config.ts`
+
+```ts
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
+import { fileURLToPath } from 'url';
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: { '@': fileURLToPath(new URL('.', import.meta.url)) },
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./vitest.setup.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      include: ['components/**', 'lib/**', 'app/**'],
+      exclude: ['**/*.spec.*', 'lib/auth.ts', ...],
+    },
+  },
+});
+```
+
+**Pourquoi `fileURLToPath(new URL('.', import.meta.url))` ?**
+Le chemin doit être un path absolu Windows/Mac-compatible. `import.meta.url` donne l'URL du
+fichier config, `new URL('.')` en extrait le dossier, `fileURLToPath` convertit en chemin natif.
+Cela reproduit l'alias `"@/*": ["./*"]` du `tsconfig.json` de Next.js.
+
+### Mocks globaux : `vitest.setup.ts`
+
+Les composants Next.js utilisent `next/navigation`, `next/image`, `next/link` — qui requièrent
+un contexte Next.js absent en test. On les mocke globalement :
+
+```ts
+import '@testing-library/jest-dom'; // matchers supplémentaires sur expect()
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn(), ... }),
+  usePathname: () => '/',
+}));
+
+vi.mock('next/image', () => ({
+  default: function MockImage({ src, alt, ...props }) {
+    return React.createElement('img', { src, alt, ...props });
+  },
+}));
+```
+
+**Note sur les mocks de composants JSX** : le fichier setup a l'extension `.ts` (pas `.tsx`).
+Pour éviter d'y mettre du JSX, on utilise `React.createElement` directement.
+
+### Hoisting de `vi.mock` et `vi.hoisted()`
+
+```ts
+// ❌ ERREUR — mockPost est déclaré après le hoist de vi.mock
+const mockPost = vi.fn();
+vi.mock('@/lib/axios', () => ({ default: { post: mockPost } }));
+
+// ✅ CORRECT — vi.hoisted() s'exécute AVANT les imports
+const mockPost = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/axios', () => ({ default: { post: mockPost } }));
+```
+
+`vi.mock()` est hissé (hoisted) au sommet du fichier par Vitest, AVANT les `import`.
+Les variables `const` déclarées après les imports ne sont donc pas encore initialisées.
+`vi.hoisted(() => ...)` garantit que la factory s'exécute au moment du hoist.
+
+C'est différent de Jest où les variables nommées `mock*` sont accessibles dans les factories
+grâce à un mécanisme spécifique à Jest (non compatible avec Vitest).
+
+### Wrapper QueryClientProvider pour les tests de composants
+
+Les composants qui utilisent `useMutation` ou `useQuery` (via TanStack Query) doivent être
+encapsulés dans un `QueryClientProvider`. Pattern recommandé :
+
+```tsx
+function renderWithQuery(ui: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { mutations: { retry: false } },
+  });
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
+```
+
+`retry: false` évite des retries automatiques qui ralentiraient les tests.
+
+### Tests écrits (18 tests, 3 fichiers)
+
+**`lib/utils.spec.ts`** — 5 tests pour la fonction `cn()` (fusion de classes Tailwind) :
+fusion simple, valeurs falsy ignorées, résolution de conflits Tailwind (`px-3 + px-5 → px-5`),
+conditions via objet, chaîne vide sans arguments.
+
+**`components/ui/button.spec.tsx`** — 7 tests :
+texte visible, onClick appelé, disabled bloque le click, data-variant, data-size, render via
+`asChild` (Slot → `<a>` au lieu de `<button>`).
+
+**`app/(public)/login/page.spec.tsx`** — 6 tests :
+champs email/password présents, lien inscription, erreur Zod email invalide, erreur Zod
+password trop court, état "Connexion..." pendant mutation en cours, toggle afficher/masquer
+le mot de passe (aria-label + type d'input).
+
+### CI/CD (`.github/workflows/web.yml`)
+
+Un job `test` a été ajouté avant `build-push` :
+```yaml
+test:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - uses: oven-sh/setup-bun@v2
+    - run: bun install
+    - working-directory: apps/web
+      run: bun run test   # vitest run — échoue si un test fail
+build-push:
+  needs: test
+```
+
+---
+
+## 14. Roadmap des phases suivantes
 
 ### Phase 5 — Tests E2E Playwright
 Tests navigateur complets (login, upload, galerie) contre un environnement de preview.

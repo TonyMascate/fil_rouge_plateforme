@@ -16,7 +16,21 @@ env:
   IMAGE_NAME: ${{ github.repository_owner }}/fil-rouge-web
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Installer les dépendances
+        run: bun install
+      - name: Lancer les tests Vitest
+        working-directory: apps/web
+        run: bun run test
+
   build-push:
+    needs: test
     runs-on: ubuntu-latest
     permissions: { contents: read, packages: write }
     steps:
