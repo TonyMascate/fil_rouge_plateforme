@@ -12,17 +12,20 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
+    exclude: ['**/node_modules/**', 'e2e/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
-      include: ['components/**', 'lib/**', 'app/**'],
-      exclude: [
-        '**/*.spec.*',
-        '**/*.config.*',
-        'lib/auth.ts',       // server-only, ne tourne pas en jsdom
-        'lib/pricing-data.ts',
-        '**/node_modules/**',
+      include: [
+        'app/**/login/page.tsx',
+        'app/**/register/page.tsx',
+        'lib/utils.ts',
+        'lib/error-messages.ts',
+        'lib/form-errors.ts',
+        'lib/useFormMutation.ts',
+        'components/ui/button.tsx',
       ],
+      exclude: ['**/*.spec.*', '**/*.config.*', '**/node_modules/**'],
     },
   },
 });

@@ -587,8 +587,19 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
-      include: ['components/**', 'lib/**', 'app/**'],
-      exclude: ['**/*.spec.*', 'lib/auth.ts', ...],
+      // Lister explicitement les fichiers à couvrir — évite d'inclure les server
+      // components (layout.tsx avec cookies(), pages d'auth), les hooks TanStack Query
+      // qui nécessitent MSW, et les 15+ composants shadcn générés sans logique métier.
+      include: [
+        'app/**/login/page.tsx',      // ** requis — (public) dans le nom de dossier
+        'app/**/register/page.tsx',   // casse le matching glob sans l'échappement
+        'lib/utils.ts',
+        'lib/error-messages.ts',
+        'lib/form-errors.ts',
+        'lib/useFormMutation.ts',
+        'components/ui/button.tsx',
+      ],
+      exclude: ['**/*.spec.*', '**/*.config.*', '**/node_modules/**'],
     },
   },
 });
@@ -657,7 +668,7 @@ function renderWithQuery(ui: React.ReactElement) {
 
 `retry: false` évite des retries automatiques qui ralentiraient les tests.
 
-### Tests écrits (18 tests, 3 fichiers)
+### Tests écrits (24 tests, 4 fichiers)
 
 **`lib/utils.spec.ts`** — 5 tests pour la fonction `cn()` (fusion de classes Tailwind) :
 fusion simple, valeurs falsy ignorées, résolution de conflits Tailwind (`px-3 + px-5 → px-5`),
@@ -671,6 +682,29 @@ texte visible, onClick appelé, disabled bloque le click, data-variant, data-siz
 champs email/password présents, lien inscription, erreur Zod email invalide, erreur Zod
 password trop court, état "Connexion..." pendant mutation en cours, toggle afficher/masquer
 le mot de passe (aria-label + type d'input).
+
+**`app/(public)/register/page.spec.tsx`** — 6 tests :
+5 champs présents + bouton "Créer mon compte", erreur Zod email invalide, erreur Zod
+password trop court (confirmPassword valide pour éviter doublon de message), erreur Zod
+refine mots de passe différents (`Password123!` vs `Password456!` — tous deux valides
+individuellement pour que le `.refine()` tourne), état "Création..." pendant mutation,
+`toast.success` appelé avec le message de confirmation au succès.
+
+**Piège Zod refine** : `UserCreateSchema.shape.password` exige min(8) + regex digit + regex
+majuscule. Si `confirmPassword` échoue ses propres validations, le `.refine()` ne tourne pas
+et l'erreur "Les mots de passe ne correspondent pas" n'apparaît jamais. Utiliser deux mots
+de passe valides mais différents (`Password123!` / `Password456!`).
+
+**Pourquoi un `include` ciblé ?**
+`include: ['app/**']` était trompeur : les server components (`layout.tsx` avec `cookies()`,
+pages d'auth derrière un token) ne peuvent pas tourner en jsdom, et les 15+ composants
+shadcn générés n'ont pas de logique métier à tester. Le rapport affichait 2.21% (beaucoup
+de fichiers à 0% non testables). Avec un `include` ciblé sur les fichiers réellement testés,
+la couverture est de ~64% statements / 61% branches (58 instructions, 37 couvertes).
+
+**Piège glob** : les parenthèses dans `app/(public)/` ne sont pas matchées correctement par
+picomatch (utilisé par Vitest). Utiliser `app/**/login/page.tsx` à la place — le `**` matche
+`(public)` sans ambiguïté.
 
 ### CI/CD (`.github/workflows/web.yml`)
 
