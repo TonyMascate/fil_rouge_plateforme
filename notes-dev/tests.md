@@ -396,19 +396,142 @@ All files | 97.73% | 81.88% | 94.25% | 98%
 Seuil CI/CD : 80% sur les 4 métriques ✓
 ```
 
-Fichiers avec branches résiduelles non couvertes (75-88%) :
-- `app.controller.ts` : branche de decorator NestJS (Istanbul artefact)
-- `album/album.controller.ts` : idem
-- `auth/auth.controller.ts` : condition cookie domain en production
-- `photo/photo.controller.ts` : `catch` dans `completeMultipart`
-- `redis/redis.service.ts` : constructor `parseInt` (Istanbul artefact)
+---
 
-Ces branches sont des artefacts des décorateurs NestJS ou des cas extrêmes de production. Elles
-seront couvertes en Phase 3 (tests E2E Supertest avec un vrai module NestJS chargé).
+## 11. Phase 3 — Tests E2E Supertest (`apps/api/test/app.e2e-spec.ts`)
+
+Les tests E2E démarrent un vrai module NestJS (sans BDD) et envoient des requêtes HTTP réelles
+via `supertest`. Ils vérifient le routage, la validation des DTOs, et les cookies.
+
+### Configuration E2E (`test/jest-e2e.json`)
+
+Fichier de config séparé pour les E2E. Même override ts-jest que les tests unitaires
+(`module: commonjs`, `moduleResolution: node`, `resolvePackageJsonExports: false`), mais avec
+`moduleNameMapper` pointant vers `<rootDir>/../src/` puisque le rootDir est `test/`.
+
+```bash
+bun run test:e2e   # lance uniquement les tests E2E
+```
+
+### Problème résolu : `APP_GUARD` + `useValue` → `metatype is not a constructor`
+
+**Symptôme** : `Test.createTestingModule(...).compile()` échoue avec `TypeError: metatype is not
+a constructor` dès qu'on ajoute `{ provide: APP_GUARD, useValue: ... }` dans les providers.
+
+**Cause** : En NestJS v11, le token `APP_GUARD` est traité spécialement par le scanner de modules.
+Même avec `useValue`, NestJS accède à `wrapper.metatype` (le constructeur de la classe) qui est
+`undefined` pour un provider `useValue`. Cela provoque l'erreur lors de l'instanciation.
+
+**Solution** : Ne pas enregistrer de `APP_GUARD` dans le module de test. Puisque `CsrfGuard` est
+déjà couvert par `csrf.guard.spec.ts`, on peut simplement ne pas l'activer en E2E. Les requêtes
+passent sans contrôle CSRF.
+
+**À ne PAS faire** (dans le module E2E) :
+```ts
+// ❌ Crash : metatype is not a constructor
+{ provide: APP_GUARD, useClass: CsrfGuard }   // useClass
+{ provide: APP_GUARD, useValue: { canActivate: () => true } } // useValue aussi !
+```
+
+### Gardes remplacées par `overrideGuard().useValue()`
+
+`useClass` dans `overrideGuard` peut aussi causer des problèmes de métadonnées TypeScript.
+On utilise `useValue` avec des objets implémentant `CanActivate` :
+
+```ts
+// ✅ Correct
+const e2eJwtGuard = {
+  canActivate(context: ExecutionContext): boolean {
+    const token = context.switchToHttp().getRequest<any>().cookies?.['access_token'];
+    if (!token) throw new UnauthorizedException();
+    const payload = jwtService.verify<any>(token); // le vrai JwtService injecté
+    context.switchToHttp().getRequest<any>().user = { userId: payload.sub, ... };
+    return true;
+  },
+};
+
+const e2eRolesGuard = {
+  canActivate(context: ExecutionContext): boolean {
+    const required: string[] = Reflect.getMetadata('roles', context.getHandler());
+    if (!required) return true;
+    const user = context.switchToHttp().getRequest<any>().user;
+    if (!required.includes(user?.role)) throw new UnauthorizedException();
+    return true;
+  },
+};
+
+// Dans le module :
+.overrideGuard(JwtAuthGuard).useValue(e2eJwtGuard)
+.overrideGuard(RolesGuard).useValue(e2eRolesGuard)
+```
+
+### Structure du module E2E
+
+```ts
+const moduleFixture = await Test.createTestingModule({
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true }),
+    JwtModule.register({ secret: JWT_SECRET, signOptions: { expiresIn: '15m' } }),
+  ],
+  controllers: [AppController, AuthController, UsersController],
+  providers: [
+    AppService,
+    { provide: AuthService, useValue: mockAuthService },
+    { provide: UsersService, useValue: mockUsersService },
+    // Pas de APP_GUARD !
+  ],
+})
+  .overrideGuard(JwtAuthGuard).useValue(e2eJwtGuard)
+  .overrideGuard(RolesGuard).useValue(e2eRolesGuard)
+  .compile();
+
+jwtService = moduleFixture.get<JwtService>(JwtService);
+
+app = moduleFixture.createNestApplication();
+app.use(cookieParser());
+app.useGlobalPipes(new ZodValidationPipe());
+await app.init();
+```
+
+### Codes HTTP NestJS par défaut
+
+NestJS retourne **201** pour toutes les méthodes `@Post()` sans `@HttpCode()` explicite.
+Ne pas confondre avec les contrôleurs Express classiques où POST → 200.
+
+| Méthode        | Code par défaut |
+|----------------|-----------------|
+| `@Get()`       | 200             |
+| `@Post()`      | 201             |
+| `@Put()`       | 200             |
+| `@Patch()`     | 200             |
+| `@Delete()`    | 200             |
+
+### Cas testés (14 tests, `app.e2e-spec.ts`)
+
+| Route | Cas | Statut attendu |
+|-------|-----|----------------|
+| `GET /` | bienvenue | 200 |
+| `POST /auth/register` | body valide | 201 + cookies |
+| `POST /auth/register` | sans email | 400 (Zod) |
+| `POST /auth/register` | password trop court | 400 (Zod) |
+| `POST /auth/login` | credentials valides | 201 + cookies |
+| `POST /auth/login` | credentials invalides (mock null) | 401 |
+| `POST /auth/login` | email malformé | 400 (Zod) |
+| `POST /auth/logout` | - | 201 + cookies effacés |
+| `POST /auth/refresh` | sans cookie | 401 |
+| `POST /auth/refresh` | avec cookie | 201 |
+| `GET /users/profile` | sans JWT | 401 |
+| `GET /users/profile` | JWT valide | 200 + profil |
+| `GET /users/admin-only` | sans JWT | 401 |
+| `GET /users/admin-only` | JWT user (≠ admin) | 401 (RolesGuard) |
+
+**Note sur le schéma Zod** : `UserLoginSchema` hérite de `UserSchema` et valide le password
+(min 8 chars, au moins 1 chiffre, au moins 1 majuscule). Le test "credentials invalides" doit
+utiliser un password valide côté Zod (`Password123!`) et contrôler le résultat via le mock.
 
 ---
 
-## 11. Intégration CI/CD (`.github/workflows/api.yml`)
+## 12. Intégration CI/CD (`.github/workflows/api.yml`)
 
 ```yaml
 test:
@@ -419,20 +542,15 @@ test:
     - run: bun install
     - working-directory: apps/api
       run: bun run test:cov   # ← échoue si < 80% sur un métrique
+    - working-directory: apps/api
+      run: bun run test:e2e   # ← 14 tests E2E Supertest
 build-push:
   needs: test  # ← le build Docker ne se lance que si les tests passent
 ```
 
-Si `coverageThreshold` n'est pas atteint, Jest sort avec un code d'erreur non-zéro → le job
-échoue → `build-push` ne se lance pas → pas de déploiement.
-
 ---
 
-## 12. Roadmap des phases suivantes
-
-### Phase 3 — Tests E2E Supertest
-Tester les endpoints HTTP de bout en bout avec `supertest` et un module NestJS complet
-(mais sans vraie BDD). Fichier : `apps/api/test/app.e2e-spec.ts`.
+## 13. Roadmap des phases suivantes
 
 ### Phase 4 — Tests unitaires web (Vitest)
 Installer Vitest + React Testing Library dans `apps/web`. Tester les composants React,

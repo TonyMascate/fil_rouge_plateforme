@@ -28,9 +28,12 @@ jobs:
           bun-version: latest
       - name: Installer les dépendances
         run: bun install
-      - name: Lancer les tests avec couverture
+      - name: Lancer les tests unitaires avec couverture
         working-directory: apps/api
         run: bun run test:cov
+      - name: Lancer les tests E2E Supertest
+        working-directory: apps/api
+        run: bun run test:e2e
 
   build-push:
     needs: test
