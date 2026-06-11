@@ -690,10 +690,165 @@ build-push:
 
 ---
 
-## 14. Roadmap des phases suivantes
+## 14. Phase 5 — Tests E2E Playwright (`apps/web`)
 
-### Phase 5 — Tests E2E Playwright
-Tests navigateur complets (login, upload, galerie) contre un environnement de preview.
+### Stack et installation
+
+```bash
+bun add -D @playwright/test
+bunx playwright install chromium  # binaires navigateur
+```
+
+| Package | Version | Rôle |
+|---------|---------|------|
+| `@playwright/test` | 1.60.0 | Framework E2E navigateur (Chromium) |
+
+### Configuration : `playwright.config.ts`
+
+```ts
+import { defineConfig, devices } from '@playwright/test';
+import { E2E_JWT_SECRET, API_URL } from './e2e/helpers/constants';
+
+export default defineConfig({
+  testDir: './e2e',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 1 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: [['list'], ['html', { open: 'never' }]],
+  use: {
+    baseURL: 'http://localhost:3000',
+    trace: 'on-first-retry',
+  },
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  webServer: {
+    command: 'bun run dev',
+    url: 'http://localhost:3000',
+    reuseExistingServer: !process.env.CI, // réutilise le dev server local, démarre frais en CI
+    timeout: 120_000,
+    env: {
+      NEXT_PUBLIC_API_URL: API_URL,
+      NEXT_PUBLIC_CLOUDFRONT_DOMAIN: 'https://test.cloudfront.net',
+      JWT_ACCESS_SECRET: E2E_JWT_SECRET, // utilisé en CI uniquement (serveur frais)
+    },
+  },
+});
+```
+
+**`reuseExistingServer: !process.env.CI`** — en local, réutilise le dev server déjà en cours
+pour éviter le conflit de `.next/dev/lock` (Next.js 15 : deux instances ne peuvent pas partager
+le même répertoire `.next`). En CI, démarre toujours un serveur frais avec nos env vars de test.
+
+### Secret JWT et tests authentifiés (`e2e/helpers/`)
+
+```ts
+// e2e/helpers/constants.ts
+export const E2E_JWT_SECRET = 'playwright-e2e-secret-at-least-32-chars-ok';
+export const API_URL = 'http://localhost:3001';
+
+// e2e/helpers/auth.ts
+export async function loginAs(context: BrowserContext, role = 'USER') {
+  const token = await new SignJWT({ sub: 'test-user-1', role, email: '...', ... })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('15m')
+    .sign(new TextEncoder().encode(E2E_JWT_SECRET));
+  await context.addCookies([{ name: 'access_token', value: token, domain: 'localhost', ... }]);
+}
+```
+
+**`context.addCookies()`** injecte un cookie httpOnly dans le contexte Playwright. Quand le
+navigateur navigue vers une page protégée, il envoie le cookie et le serveur Next.js le vérifie
+avec `jwtVerify`. Pour que la vérification réussisse, le serveur doit utiliser le même secret —
+c'est garanti en CI (`webServer.env.JWT_ACCESS_SECRET = E2E_JWT_SECRET`).
+
+En local avec dev server réutilisé (secret différent), les tests qui dépendent du JWT utilisent
+**`test.skip(!process.env.CI, ...)`**. Pour les exécuter localement : arrêtez le dev server avant.
+
+### Mocking de l'API avec `page.route()`
+
+Les tests mockent l'API (`http://localhost:3001/**`) via `page.route()` pour éviter un vrai
+backend. Playwright intercepte les appels XHR/fetch côté client avant qu'ils partent sur le réseau.
+
+```ts
+// Mock spécifique pour un endpoint
+await page.route(`${API_URL}/auth/login`, async route => {
+  await loginAs(context); // set cookie avant la navigation post-login
+  await route.fulfill({ status: 201, contentType: 'application/json', body: '{}' });
+});
+
+// Catch-all pour les appels secondaires (ex: données de la galerie)
+await page.route(`${API_URL}/**`, route =>
+  route.fulfill({ status: 200, contentType: 'application/json', body: '{"data":[],"total":0}' }),
+);
+```
+
+**Ordre d'enregistrement** : Playwright applique la route la plus récemment enregistrée en premier.
+Enregistrez les catch-all avant les spécifiques, ou gérez tout dans un seul handler.
+
+**Nuance axios + 401** : L'intercepteur axios ne déclenche PAS de refresh sur `/auth/login` (condition
+`!url.includes('/auth/login')` dans l'intercepteur). Un 401 sur login arrive directement dans
+`onError` de `useFormMutation` → toast "Email ou mot de passe incorrect." sans retry. Testable sans
+mock `/auth/refresh`.
+
+### Tests écrits (14 tests, 3 fichiers — 13 passent, 1 skip local)
+
+**`e2e/login.spec.ts`** — 6 tests :
+- Page accessible, champs présents, lien inscription
+- Erreur Zod : email invalide, mot de passe trop court
+- Toast "Email ou mot de passe incorrect." sur 401 (API mockée)
+- *(CI only)* Redirect /galerie après login success + cookie JWT injecté
+
+**`e2e/register.spec.ts`** — 5 tests :
+- Page accessible, tous les champs présents
+- Erreur "Les mots de passe ne correspondent pas" (Zod refine)
+- Redirect /login après inscription réussie (API mockée, délai 2s côté page)
+- Toast "Un compte existe déjà avec cet email." sur 409 (API mockée)
+
+**`e2e/protected-routes.spec.ts`** — 3 tests :
+- `/galerie` sans auth → redirect `/login`
+- `/albums` sans auth → redirect `/login`
+- `/explore` sans auth → redirect `/login`
+
+### Sélecteurs — problèmes rencontrés
+
+`getByLabel('Mot de passe')` résolvait en 2 éléments : l'input (`id="password"`) ET le bouton
+toggle (`aria-label="Afficher le mot de passe"`). Playwright fait un match partiel insensible à
+la casse, donc "Afficher le mot de **passe**" ≠ "Mot de passe" normalement — mais avec
+normalisation des accents et matching partiel, les deux matchent.
+
+**Fix** : `getByLabel('Mot de passe', { exact: true })`.
+
+Même problème avec `getByLabel('Nom')` qui matchait aussi l'input "Prénom" car "pré**nom**" →
+"pre**nom**" contient "nom" après déaccentation. Fix : `{ exact: true }`.
+
+### CI/CD (`.github/workflows/web.yml`)
+
+```yaml
+playwright:
+  needs: test          # après les tests Vitest
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - uses: oven-sh/setup-bun@v2
+    - run: bun install
+    - working-directory: apps/web
+      run: bunx playwright install --with-deps chromium
+    - working-directory: apps/web
+      run: bun run test:e2e
+    - uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: playwright-report
+        path: apps/web/playwright-report/
+        retention-days: 7
+
+build-push:
+  needs: [test, playwright]
+```
+
+---
+
+## 15. Roadmap des phases suivantes
 
 ### Phase 6 — Tests d'intégration avec vraie BDD (testcontainers)
 Pour les repositories qui ont du SQL PostgreSQL-spécifique (`ANY($1)` etc.), monter un
