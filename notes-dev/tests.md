@@ -848,8 +848,161 @@ build-push:
 
 ---
 
-## 15. Roadmap des phases suivantes
+## 15. Phase 6 — Tests d'intégration repositories (testcontainers PostgreSQL)
 
-### Phase 6 — Tests d'intégration avec vraie BDD (testcontainers)
-Pour les repositories qui ont du SQL PostgreSQL-spécifique (`ANY($1)` etc.), monter un
-conteneur PostgreSQL via `@testcontainers/postgresql` dans les tests. Nécessite Docker dans le CI.
+### Pourquoi testcontainers pour les repositories ?
+
+Les 3 repositories ont du SQL que les mocks ne peuvent pas valider :
+- `getCoversS3KeysForAlbums` : window function `ROW_NUMBER() OVER (PARTITION BY ... ORDER BY ...)` + `ANY($1)`
+- `storageUsedByUser` : `COALESCE(SUM(...), 0)` — vérifie que le résultat est parsé en entier et non `"0"` string
+- `getMembersForAlbums` : INNER JOIN avec aliases raw (`"albumId"`, `"firstName"`, `"lastName"`)
+
+Un mock qui retourne `{ total: '0' }` ne teste pas que le SQL tourne réellement sur Postgres.
+
+### Stack et installation
+
+```bash
+bun add -D testcontainers @testcontainers/postgresql
+```
+
+| Package | Version | Rôle |
+|---------|---------|------|
+| `testcontainers` | 12.x | Démarre des conteneurs Docker depuis Node.js |
+| `@testcontainers/postgresql` | 12.x | Container PostgreSQL pré-configuré |
+
+### Architecture des tests
+
+```
+apps/api/test/
+├── jest-e2e.json            (Supertest — existant)
+├── jest-integration.json    (nouveau)
+└── integration/
+    ├── db.helper.ts              (setupIntegrationDatabase, teardownIntegrationDatabase, clearTables)
+    ├── photo.repository.spec.ts  (4 tests)
+    ├── album-photo.repository.spec.ts  (7 tests)
+    └── album-member.repository.spec.ts (3 tests)
+```
+
+Les fichiers `*.spec.ts` sont en dehors de `src/` → invisibles pour le runner Jest unitaire
+(`rootDir: "src"` dans `package.json`).
+
+### `jest-integration.json`
+
+```json
+{
+  "rootDir": ".",               // = apps/api/test/
+  "testRegex": "test/integration/.*\\.spec\\.ts$",
+  "testTimeout": 120000,        // startup container + tests
+  "transform": { ... ts-jest commonjs ... },
+  "moduleNameMapper": {
+    "^@app/(.*)$": "<rootDir>/../src/$1",
+    "^@repo/shared$": "<rootDir>/../../../packages/shared/src/index.ts"
+  }
+}
+```
+
+**Piège clé** : `rootDir` dans un fichier `test/jest-*.json` pointe vers `test/`, pas vers `apps/api`.
+Donc `<rootDir>/../src` = `apps/api/src`, et `<rootDir>/../../../packages/shared` = `packages/shared`.
+
+### `test/integration/db.helper.ts`
+
+```ts
+let container: StartedPostgreSqlContainer;
+let dataSource: DataSource;
+
+export async function setupIntegrationDatabase(): Promise<DataSource> {
+  container = await new PostgreSqlContainer('postgres:16-alpine').start();
+  dataSource = new DataSource({
+    type: 'postgres',
+    host: container.getHost(),
+    port: container.getMappedPort(5432),
+    // ... username/password/database depuis container
+    entities: [User, Photo, Album, AlbumPhoto, AlbumMember, RefreshToken],
+    synchronize: true,   // crée tables + ENUMs automatiquement
+    logging: false,
+  });
+  await dataSource.initialize();
+  return dataSource;
+}
+
+export async function clearTables(): Promise<void> {
+  await dataSource.query('TRUNCATE TABLE users CASCADE');
+  // users CASCADE → albums → album_photos, album_members, photos, refresh_token
+}
+```
+
+**`synchronize: true`** : TypeORM crée automatiquement toutes les tables ET les types ENUM PostgreSQL
+(`photo_status_enum`, etc.) au démarrage du container. Aucune migration à lancer manuellement.
+
+**`TRUNCATE TABLE users CASCADE`** : les clés étrangères avec `onDelete: 'CASCADE'` permettent de
+nettoyer toutes les tables en une seule instruction depuis la table racine.
+
+**`beforeAll` avec timeout explicite** : la startup du container prend 10-30 secondes.
+
+```ts
+beforeAll(async () => {
+  dataSource = await setupIntegrationDatabase();
+  // ...
+}, 120_000); // override du timeout Jest pour ce beforeAll
+```
+
+### Cas testés — 14 tests
+
+**`photo.repository.spec.ts`** (4 tests) :
+- `storageUsedByUser` : sans photo → 0
+- `storageUsedByUser` : somme uniquement COMPLETED (PENDING/FAILED exclus)
+- `storageUsedByUser` : n'inclut pas les photos d'un autre utilisateur
+- `storageUsedByUser` : COALESCE retourne 0 si fileSizeBytes null
+
+**`album-photo.repository.spec.ts`** (7 tests) :
+- `getCoversS3KeysForAlbums` : Map vide si albumIds vide
+- `getCoversS3KeysForAlbums` : max 4 clés (window function ROW_NUMBER)
+- `getCoversS3KeysForAlbums` : exclut PENDING/FAILED
+- `getCoversS3KeysForAlbums` : plusieurs albums via ANY($1)
+- `getCoversS3KeysForAlbums` : ordre par added_at DESC (INSERT SQL explicite pour contrôler la date)
+- `countByAlbumIds` : Map vide si albumIds vide
+- `countByAlbumIds` : comptes corrects par album (COUNT + GROUP BY)
+
+**`album-member.repository.spec.ts`** (3 tests) :
+- `getMembersForAlbums` : liste vide si albumIds vide
+- `getMembersForAlbums` : INNER JOIN retourne les données utilisateur (email, firstName, lastName)
+- `getMembersForAlbums` : plusieurs albums en un appel
+
+**Astuce pour contrôler `added_at`** (champ `@CreateDateColumn()` auto-généré) :
+
+```ts
+await dataSource.query(
+  `INSERT INTO album_photos (album_id, photo_id, added_at) VALUES ($1, $2, $3)`,
+  [albumId, photoId, new Date('2024-01-02T10:00:00Z')],
+);
+```
+Le raw SQL contourne le `@CreateDateColumn()` pour injecter une date précise → permet de tester
+l'ordre `ORDER BY ap.added_at DESC`.
+
+### Script et CI
+
+```json
+// apps/api/package.json
+"test:integration": "jest --config ./test/jest-integration.json --runInBand"
+```
+
+`--runInBand` : exécute les suites de manière séquentielle (un seul conteneur PostgreSQL partagé
+entre les 3 fichiers de test). Évite les problèmes de concurrence sur le port Docker.
+
+```yaml
+# .github/workflows/api.yml
+test-integration:
+  needs: test              # après les tests unitaires
+  runs-on: ubuntu-latest   # Docker disponible par défaut sur GitHub Actions
+  steps:
+    - uses: actions/checkout@v4
+    - uses: oven-sh/setup-bun@v2
+    - run: bun install
+    - working-directory: apps/api
+      run: bun run test:integration
+
+build-push:
+  needs: [test, test-integration]
+```
+
+**Durée CI estimée** : ~30-45s (pull image postgres:16-alpine + startup + 14 tests).

@@ -35,8 +35,22 @@ jobs:
         working-directory: apps/api
         run: bun run test:e2e
 
-  build-push:
+  test-integration:
     needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Installer les dépendances
+        run: bun install
+      - name: Lancer les tests d'intégration (testcontainers PostgreSQL)
+        working-directory: apps/api
+        run: bun run test:integration
+
+  build-push:
+    needs: [test, test-integration]
     runs-on: ubuntu-latest
     permissions: { contents: read, packages: write }
     steps:
