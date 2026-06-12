@@ -1,0 +1,60 @@
+@startuml UC-05 — Ajout d'une image dans un album
+
+title UC-05 — Ajout d'une image dans un album
+
+left to right direction
+
+skinparam actorStyle awesome
+skinparam backgroundColor #FAFAFA
+skinparam usecase {
+  BackgroundColor #EDE9FE
+  BorderColor #7C3AED
+  FontColor #1F2937
+}
+skinparam actor {
+  BackgroundColor #7C3AED
+  FontColor #1F2937
+}
+skinparam arrow {
+  Color #374151
+}
+skinparam note {
+  BackgroundColor #FEF3C7
+  BorderColor #D97706
+}
+
+actor "Utilisateur\nauthentifié" as User
+
+rectangle "PhotoApp — Albums" {
+
+  usecase "Ajouter une image\ndans un album" as UC_Add
+  usecase "Retirer une image\nd'un album" as UC_Remove
+
+  usecase "Vérifier l'authentification\n(JWT cookie)" as UC_Auth
+  usecase "Vérifier les droits\nsur l'album (ownership)" as UC_CheckAlbum
+  usecase "Vérifier les droits\nsur l'image (ownership)" as UC_CheckPhoto
+  usecase "Créer l'association\nimage ↔ album" as UC_Link
+  usecase "Supprimer l'association\nimage ↔ album" as UC_Unlink
+
+}
+
+User --> UC_Add
+User --> UC_Remove
+
+UC_Add    ..> UC_Auth       : <<include>>
+UC_Add    ..> UC_CheckAlbum : <<include>>
+UC_Add    ..> UC_CheckPhoto : <<include>>
+UC_Add    ..> UC_Link       : <<include>>
+
+UC_Remove ..> UC_Auth       : <<include>>
+UC_Remove ..> UC_CheckAlbum : <<include>>
+UC_Remove ..> UC_CheckPhoto : <<include>>
+UC_Remove ..> UC_Unlink     : <<include>>
+
+note bottom of UC_Link
+  Contrainte UNIQUE (albumId, photoId)
+  L'image reste dans la galerie
+  si elle est retirée de l'album
+end note
+
+@enduml

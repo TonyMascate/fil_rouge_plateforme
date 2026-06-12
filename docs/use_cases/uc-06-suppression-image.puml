@@ -1,0 +1,63 @@
+@startuml UC-06 — Suppression d'une image
+
+title UC-06 — Suppression d'une image
+
+left to right direction
+
+skinparam actorStyle awesome
+skinparam backgroundColor #FAFAFA
+skinparam usecase {
+  BackgroundColor #EDE9FE
+  BorderColor #7C3AED
+  FontColor #1F2937
+}
+skinparam actor {
+  BackgroundColor #7C3AED
+  FontColor #1F2937
+}
+skinparam arrow {
+  Color #374151
+}
+skinparam note {
+  BackgroundColor #FEF3C7
+  BorderColor #D97706
+}
+
+actor "Utilisateur\nauthentifié" as User
+
+rectangle "PhotoApp — Gestion des photos" {
+
+  usecase "Supprimer une image" as UC_Delete
+
+  usecase "Vérifier l'authentification\n(JWT cookie)" as UC_Auth
+  usecase "Vérifier les droits\n(ownership)" as UC_CheckOwner
+  usecase "Supprimer le fichier\nde S3" as UC_DeleteS3
+  usecase "Supprimer les associations\nimage ↔ albums" as UC_DeleteLinks
+  usecase "Supprimer les métadonnées\nen base de données" as UC_DeleteMeta
+
+}
+
+User --> UC_Delete
+
+UC_Delete ..> UC_Auth        : <<include>>
+UC_Delete ..> UC_CheckOwner  : <<include>>
+UC_Delete ..> UC_DeleteLinks : <<include>>
+UC_Delete ..> UC_DeleteS3    : <<include>>
+UC_Delete ..> UC_DeleteMeta  : <<include>>
+
+note bottom of UC_DeleteS3
+  Opération irréversible.
+  La DB est supprimée en premier,
+  puis S3. Si S3 échoue, l'objet
+  devient orphelin dans le bucket
+  mais aucune référence n'existe
+  plus côté application.
+end note
+
+note bottom of UC_DeleteLinks
+  Supprime toutes les associations
+  album_photos référençant cette image,
+  avant la suppression en base (FK).
+end note
+
+@enduml

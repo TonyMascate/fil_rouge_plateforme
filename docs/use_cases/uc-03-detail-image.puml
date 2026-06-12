@@ -1,0 +1,64 @@
+@startuml UC-03 — Visionnage du détail d'une image
+
+title UC-03 — Visionnage du détail d'une image
+
+left to right direction
+
+skinparam actorStyle awesome
+skinparam backgroundColor #FAFAFA
+skinparam usecase {
+  BackgroundColor #EDE9FE
+  BorderColor #7C3AED
+  FontColor #1F2937
+}
+skinparam actor {
+  BackgroundColor #7C3AED
+  FontColor #1F2937
+}
+skinparam arrow {
+  Color #374151
+}
+skinparam note {
+  BackgroundColor #FEF3C7
+  BorderColor #D97706
+}
+
+actor "Utilisateur\nauthentifié" as User
+
+rectangle "PhotoApp — Détail image" {
+
+  usecase "Voir le détail\nd'une image" as UC_ViewDetail
+  usecase "Consulter le statut\nde traitement" as UC_GetStatus
+
+  usecase "Vérifier l'authentification\n(JWT cookie)" as UC_Auth
+  usecase "Vérifier les droits\n(ownership)" as UC_CheckOwner
+  usecase "Vérifier le statut\n(COMPLETED)" as UC_CheckStatus
+  usecase "Charger l'image\n(URL signée CloudFront)" as UC_LoadImage
+  usecase "Afficher les métadonnées\n(nom, date de création)" as UC_ShowMeta
+
+}
+
+User --> UC_ViewDetail
+User --> UC_GetStatus
+
+UC_ViewDetail ..> UC_Auth        : <<include>>
+UC_ViewDetail ..> UC_CheckOwner  : <<include>>
+UC_ViewDetail ..> UC_CheckStatus : <<include>>
+UC_ViewDetail ..> UC_LoadImage   : <<include>>
+UC_ViewDetail ..> UC_ShowMeta    : <<include>>
+
+UC_GetStatus  ..> UC_Auth        : <<include>>
+UC_GetStatus  ..> UC_CheckOwner  : <<include>>
+
+note bottom of UC_CheckStatus
+  Photo PENDING → traitement en cours,
+  affichage non disponible
+end note
+
+note bottom of UC_LoadImage
+  URL signée CloudFront (canned policy)
+  Expiration arrondie à une fenêtre TTL
+  pour permettre la mise en cache CDN
+end note
+
+@enduml

@@ -1,0 +1,70 @@
+@startuml UC-04 — Gestion d'un album
+
+title UC-04 — Gestion d'un album (création, renommage, suppression)
+
+left to right direction
+
+skinparam actorStyle awesome
+skinparam backgroundColor #FAFAFA
+skinparam usecase {
+  BackgroundColor #EDE9FE
+  BorderColor #7C3AED
+  FontColor #1F2937
+}
+skinparam actor {
+  BackgroundColor #7C3AED
+  FontColor #1F2937
+}
+skinparam arrow {
+  Color #374151
+}
+skinparam note {
+  BackgroundColor #FEF3C7
+  BorderColor #D97706
+}
+
+actor "Utilisateur\nauthentifié" as User
+
+rectangle "PhotoApp — Albums" {
+
+  usecase "Créer un album" as UC_Create
+  usecase "Renommer un album" as UC_Rename
+  usecase "Supprimer un album" as UC_Delete
+
+  usecase "Vérifier l'authentification\n(JWT cookie)" as UC_Auth
+  usecase "Vérifier les droits\n(ownership)" as UC_CheckOwner
+  usecase "Valider le nom\n(non vide, longueur max)" as UC_Validate
+  usecase "Persister en\nbase de données" as UC_Persist
+  usecase "Supprimer les associations\nimage ↔ album" as UC_DeleteLinks
+
+}
+
+User --> UC_Create
+User --> UC_Rename
+User --> UC_Delete
+
+UC_Create ..> UC_Auth        : <<include>>
+UC_Create ..> UC_Validate    : <<include>>
+UC_Create ..> UC_Persist     : <<include>>
+
+UC_Rename ..> UC_Auth        : <<include>>
+UC_Rename ..> UC_CheckOwner  : <<include>>
+UC_Rename ..> UC_Validate    : <<include>>
+UC_Rename ..> UC_Persist     : <<include>>
+
+UC_Delete ..> UC_Auth        : <<include>>
+UC_Delete ..> UC_CheckOwner  : <<include>>
+UC_Delete ..> UC_DeleteLinks : <<include>>
+
+note bottom of UC_Persist
+  Champs : id (UUID), name,
+  userId (owner), createdAt, updatedAt
+end note
+
+note bottom of UC_DeleteLinks
+  Supprime uniquement les associations.
+  Les photos restent dans la galerie
+  de l'utilisateur.
+end note
+
+@enduml
