@@ -59,7 +59,7 @@ Mon application nécessite un système d'authentification sécurisé pour proté
 
 4. **Argon2 :** Première recommandation OWASP pour le hachage de mots de passe. Résistant aux attaques GPU/ASIC grâce à son paramètre de consommation mémoire (memory-hard). Le module `argon2` pour Node.js utilise la bibliothèque C native, pas de dépendance purement JS.
 
-5. **Refresh token persisté :** Le hash du refresh token est stocké en base de données. Cela permet de le révoquer explicitement (déconnexion, changement de mot de passe, compromission) — contrairement à un JWT purement stateless qui ne peut pas être invalidé avant expiration.
+5. **Refresh token persisté avec rotation :** Le hash du refresh token est stocké en base de données. À chaque utilisation du refresh token, l'ancien est supprimé et un nouveau est créé (rotation). La déconnexion (`POST /auth/logout`) efface uniquement les cookies HTTP-only côté client — le token en base n'est pas explicitement révoqué au logout, car la durée de vie courte combinée à la rotation limite la surface d'exploitation. La persistance en DB permet cependant une révocation future (compromission, changement de mot de passe) si besoin.
 
 6. **Passport.js + @nestjs/jwt :** L'écosystème NestJS fournit des modules officiels qui s'intègrent dans le système d'injection de dépendances, avec des stratégies Passport (LocalStrategy, JwtStrategy) réutilisables et testables.
 
@@ -69,7 +69,7 @@ Mon application nécessite un système d'authentification sécurisé pour proté
 
 **Positives :**
 - Sécurité élevée : tokens non accessibles en JS, hachage résistant aux attaques modernes.
-- Révocation possible grâce à la persistance du refresh token en base.
+- Révocation possible en cas de compromission grâce à la persistance du refresh token en base (rotation systématique à chaque usage).
 - Renouvellement transparent pour l'utilisateur (pas de re-connexion fréquente).
 - Compatible multi-réplicas (stateless pour l'access token).
 

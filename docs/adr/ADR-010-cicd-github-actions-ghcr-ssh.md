@@ -39,7 +39,7 @@ Mon projet nécessite un pipeline CI/CD automatisé pour construire les images D
 | Complexité                     | Faible                        | Moyenne                       | Très faible                   | Élevée                        |
 | Contrôle du déploiement        | Total                         | Total                         | Limité (pas de staging)       | Total                         |
 | Rolling update Swarm           | Via `docker stack deploy`     | Via modules Docker            | Automatique                   | Via Deployment                |
-| Adapté au projet               | Oui                           | Overkill                      | Trop automatique              | Voir ADR-001                  |
+| Adapté au projet               | Oui                           | Utilisé pour la gestion des secrets | Trop automatique         | Voir ADR-001                  |
 
 ---
 
@@ -55,18 +55,19 @@ Mon projet nécessite un pipeline CI/CD automatisé pour construire les images D
 
 2. **ghcr.io avec GITHUB_TOKEN :** Le registre GitHub Packages (ghcr.io) est authentifié automatiquement via le `GITHUB_TOKEN` intégré à GitHub Actions — pas de secret supplémentaire à gérer pour le push d'images. `docker stack deploy --with-registry-auth` transmet les credentials aux nœuds Swarm.
 
-3. **Pipeline en trois étapes :**
+3. **Pipeline en quatre étapes (api.yml) :**
    - **Build & Push :** Construction de l'image Docker avec `turbo prune` (voir ADR-009), push sur ghcr.io.
-   - **Deploy :** SSH sur le VPS, `docker stack deploy` avec la nouvelle image.
-   - **Migrate :** Exécution des migrations TypeORM comme conteneur éphémère (`docker run --rm`) après le déploiement, avant que le trafic arrive sur la nouvelle version.
+   - **Secrets :** Job Ansible (`playbook-secrets.yml`) qui crée ou met à jour les Docker Secrets sur le VPS avant le déploiement — les secrets sensibles (clés JWT, credentials DB, AWS) sont injectés via Docker Secrets (fichiers tmpfs), pas via variables d'environnement en clair.
+   - **Deploy :** Copie du `stack.yml` sur le VPS via `appleboy/scp-action`, puis SSH pour `docker stack deploy --with-registry-auth`.
+   - **Migrate :** Exécution des migrations TypeORM via `docker service create --restart-condition none` (service Swarm one-shot), après le déploiement.
 
 4. **SSH via appleboy/ssh-action :** Action marketplace simple et maintenue pour exécuter des commandes sur le VPS via SSH. La clé privée SSH est stockée dans GitHub Secrets. Pas de VPN, pas d'agent intermédiaire.
 
 5. **Rolling update automatique :** `docker stack deploy` réutilise la configuration Swarm existante (réplicas, restart policies, update config) définie dans `stack.yml`. Le rolling update préserve la disponibilité pendant le déploiement (voir ADR-001).
 
-6. **Migrations post-déploiement :** Les migrations sont exécutées dans un conteneur éphémère après que les nouveaux conteneurs d'API sont démarrés, mais avant que le routeur Swarm n'envoie du trafic dessus (grâce au health check). Cela garantit que la base de données est à jour avant que les nouvelles instances répondent.
+6. **Migrations post-déploiement via service Swarm one-shot :** Les migrations sont exécutées via `docker service create --restart-condition none` — un service Swarm qui s'exécute une fois puis s'arrête. Cela permet au service de s'authentifier sur ghcr.io (`--with-registry-auth`) contrairement à un `docker run --rm` classique.
 
-7. **Séparation des workflows :** API et frontend ont des workflows distincts (`api.yml`, `web.yml`). Un changement frontend ne déclenche pas un redéploiement de l'API — pas de déploiement inutile.
+7. **Séparation des workflows :** API et frontend ont des workflows distincts (`api.yml`, `web.yml`). En plus des pipelines de déploiement, le projet dispose de workflows dédiés : `backup.yml` (sauvegarde PostgreSQL automatisée), `restore.yml` (restauration de la base) et `infra.yml` (provisionnement de l'infrastructure). Un changement frontend ne déclenche pas un redéploiement de l'API.
 
 ---
 

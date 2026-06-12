@@ -55,7 +55,7 @@ Mon frontend Next.js utilise React Server Components (RSC) pour les pages initia
 
 5. **Gestion d'erreurs cohérente :** Axios throw automatiquement sur les réponses 4xx/5xx. Combiné avec les `onError` callbacks de React Query, les erreurs API sont traitées de façon centralisée.
 
-6. **DevTools React Query :** En développement, les DevTools TanStack Query permettent de visualiser le cache, inspecter les queries et tester l'invalidation — gain de productivité non négligeable.
+6. **DevTools React Query :** Les DevTools TanStack Query (`@tanstack/react-query-devtools`) permettent de visualiser le cache, inspecter les queries et tester l'invalidation. Le package n'est pas encore installé dans ce projet mais reste une option disponible si le besoin se précise.
 
 ---
 
@@ -65,7 +65,6 @@ Mon frontend Next.js utilise React Server Components (RSC) pour les pages initia
 - Cache automatique des requêtes côté client, sans boilerplate.
 - Invalidation précise après mutation — UI toujours synchronisée avec le serveur.
 - Logique d'authentification centralisée dans l'intercepteur Axios.
-- DevTools pour déboguer le cache en développement.
 
 **Négatives / Risques :**
 - React Query est un overhead pour les pages en RSC pur — mais son usage est limité aux composants réellement interactifs.

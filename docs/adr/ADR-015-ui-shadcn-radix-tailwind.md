@@ -45,9 +45,9 @@ Mon frontend Next.js nécessite une bibliothèque de composants UI pour construi
 
 ## Justification
 
-1. **shadcn/ui : code dans le projet, pas une dépendance :** Les composants shadcn/ui sont copiés dans le projet (`/apps/web/components/ui/`), pas installés comme package npm. Je possède le code source de chaque composant — je peux le modifier librement sans fork de bibliothèque.
+1. **shadcn/ui : code dans le projet, pas une dépendance :** Les composants shadcn/ui sont copiés dans le projet (`/apps/web/components/ui/`), pas installés comme package npm. Je possède le code source de chaque composant — je peux le modifier librement sans fork de bibliothèque. Le style choisi est `radix-luma` (configuré dans `components.json`), avec la couleur de base `mauve` et des variables CSS pour les tokens de design.
 
-2. **Radix UI pour l'accessibilité :** shadcn/ui est construit sur Radix UI, une bibliothèque de composants headless (sans style) qui implémente correctement les patterns ARIA (dialog, dropdown, tabs, etc.). L'accessibilité est gérée au niveau de la bibliothèque primitive — je n'ai pas à gérer manuellement les attributs ARIA, le focus management et le keyboard navigation.
+2. **Radix UI pour l'accessibilité :** shadcn/ui est construit sur Radix UI, une bibliothèque de composants headless (sans style) qui implémente correctement les patterns ARIA (dialog, dropdown, tabs, etc.). Le projet utilise le meta-package `radix-ui` (v1.4.x) qui regroupe tous les primitives sous un seul import — les composants importent directement depuis `"radix-ui"` (ex : `import { Slot } from "radix-ui"`) plutôt que depuis les packages individuels `@radix-ui/react-*`. L'accessibilité est gérée au niveau de la bibliothèque primitive — pas besoin de gérer manuellement les attributs ARIA, le focus management et le keyboard navigation.
 
 3. **Tailwind CSS v4 :** La v4 de Tailwind abandonne le fichier `tailwind.config.js` au profit d'une configuration CSS native (`@theme`). Plus rapide (moteur Rust), plus simple à configurer, et compatible avec les CSS custom properties. Cohérent avec la directive de modernité du projet.
 

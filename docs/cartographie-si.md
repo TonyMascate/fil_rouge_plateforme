@@ -25,7 +25,7 @@
 graph LR
   Browser["Navigateur"]
 
-  subgraph Frontend["Frontend — Next.js 15"]
+  subgraph Frontend["Frontend — Next.js 16"]
     AuthUI["UI Auth"]
     GalleryUI["UI Galerie"]
     AlbumUI["UI Albums"]

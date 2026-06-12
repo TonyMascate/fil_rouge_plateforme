@@ -116,12 +116,12 @@ Les informations issues de sources de type enquête (S2, S3) ont été recoupée
 
 ## 3. Frontend
 
-### 3.1 Next.js 15 & React Server Components
+### 3.1 Next.js 16 & React Server Components
 
 **Source principale :** Documentation officielle Next.js (S1), State of JavaScript 2024 (S2)
 
 **Contexte technologique 2025 :**
-Next.js 15 (sorti en octobre 2024) consolide le modèle de rendu hybride introduit avec le App Router en v13. React 19 (stable depuis décembre 2024) apporte de nouvelles primitives (`useActionState`, `use()`) qui renforcent l'intégration serveur-client.
+Next.js 16 (sorti en octobre 2025) consolide le modèle de rendu hybride introduit avec le App Router en v13. React 19 (stable depuis décembre 2024) apporte de nouvelles primitives (`useActionState`, `use()`) qui renforcent l'intégration serveur-client.
 
 **Points clés observés :**
 
@@ -136,9 +136,9 @@ Next.js 15 (sorti en octobre 2024) consolide le modèle de rendu hybride introdu
 
 **Bénéfice Green IT :** Les React Server Components réduisent la quantité de JavaScript envoyée au navigateur. Pour une page galerie d'images, le composant de liste peut rester entièrement côté serveur, éliminant son bundle JS du payload client — typiquement entre 20 et 60 KB selon la complexité.
 
-**Tendance 2025 :** Le Partial Prerendering (PPR), introduit expérimentalement en v15, permet de mélanger statique et dynamique sur une même page sans overhead. C'est la prochaine évolution majeure du modèle de rendu.
+**Tendance 2025 :** Le Partial Prerendering (PPR), introduit expérimentalement dans les versions précédentes, permet de mélanger statique et dynamique sur une même page sans overhead. C'est la prochaine évolution majeure du modèle de rendu.
 
-**Recommandation :** Next.js 15 avec App Router est le choix justifié pour 2025. La migration vers le Pages Router serait un recul technique et de performance.
+**Recommandation :** Next.js 16 avec App Router est le choix justifié pour 2025. La migration vers le Pages Router serait un recul technique et de performance.
 
 ---
 
@@ -593,7 +593,7 @@ Backend (NestJS)
 
 | Domaine              | Technologie retenue     | Statut veille     | Alternatives à surveiller        |
 | -------------------- | ----------------------- | ----------------- | -------------------------------- |
-| Frontend framework   | Next.js 15 (App Router) | Standard 2025     | Remix (croissance)               |
+| Frontend framework   | Next.js 16 (App Router) | Standard 2025     | Remix (croissance)               |
 | CSS                  | Tailwind CSS v4         | Standard 2025     | —                                |
 | Composants UI        | shadcn/ui + Radix       | Standard 2025     | —                                |
 | State serveur client | TanStack Query v5       | Standard 2025     | —                                |

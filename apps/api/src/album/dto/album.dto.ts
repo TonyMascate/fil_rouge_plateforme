@@ -1,5 +1,5 @@
 import { createZodDto } from 'nestjs-zod';
-import { z } from 'zod';
+import { CreateAlbumSchema, UpdateAlbumSchema, AddPhotosSchema, AddMemberSchema } from '@repo/shared';
 
 export interface MemberDto {
   id: string;
@@ -20,22 +20,9 @@ export interface AlbumResponseDto {
   updatedAt: Date;
 }
 
-export const CreateAlbumSchema = z.object({
-  name: z.string().trim().min(1).max(100),
-});
+export { CreateAlbumSchema, UpdateAlbumSchema, AddPhotosSchema, AddMemberSchema };
+
 export class CreateAlbumDto extends createZodDto(CreateAlbumSchema) {}
-
-export const UpdateAlbumSchema = z.object({
-  name: z.string().trim().min(1).max(100),
-});
 export class UpdateAlbumDto extends createZodDto(UpdateAlbumSchema) {}
-
-export const AddPhotosSchema = z.object({
-  photoIds: z.array(z.uuid()).min(1).max(200),
-});
 export class AddPhotosDto extends createZodDto(AddPhotosSchema) {}
-
-export const AddMemberSchema = z.object({
-  email: z.string().trim().email(),
-});
 export class AddMemberDto extends createZodDto(AddMemberSchema) {}

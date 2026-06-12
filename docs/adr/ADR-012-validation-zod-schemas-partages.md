@@ -35,7 +35,7 @@ Mon API NestJS doit valider les données entrantes (body, params, query) pour ga
 
 ## Justification
 
-1. **Schémas partagés front/back :** Les schémas Zod sont définis une fois dans `packages/shared` et utilisés à la fois dans les pipes de validation NestJS et dans les formulaires React (via `react-hook-form` + `@hookform/resolvers/zod`). Un seul endroit pour modifier une règle de validation — pas de désynchronisation possible.
+1. **Schémas partagés front/back (partiel) :** Les schémas liés aux photos (`PhotoResponseSchema`, `CreateMultipartSchema`, `PhotoListQuerySchema`, etc.) et aux utilisateurs (`UserCreateSchema`, `UserLoginSchema`) sont définis dans `packages/shared` et utilisés par le frontend (formulaires via `react-hook-form` + `@hookform/resolvers/zod`) et le backend. Les schémas d'album (`CreateAlbumSchema`, `UpdateAlbumSchema`, `AddPhotosSchema`, `AddMemberSchema`) sont définis localement dans `apps/api/src/album/dto/album.dto.ts` car ils ne sont pas encore utilisés côté frontend.
 
 2. **Inférence de types automatique :** `z.infer<typeof MySchema>` génère le type TypeScript correspondant au schéma. Pas besoin de maintenir une interface séparée du schéma de validation — le type EST la validation.
 
@@ -45,7 +45,7 @@ Mon API NestJS doit valider les données entrantes (body, params, query) pour ga
 
 5. **Richesse de l'écosystème Zod :** `z.string().email()`, `z.string().uuid()`, `z.number().min()`, refinements customs, transformations — toutes les règles du projet sont expressibles avec Zod sans configuration additionnelle.
 
-6. **Contrats d'API explicites :** Les schémas dans `@repo/shared` servent de documentation vivante des contrats d'API. Un développeur lisant `CreatePhotoSchema` comprend immédiatement quels champs sont attendus, leurs types et leurs contraintes.
+6. **Contrats d'API explicites :** Les schémas dans `@repo/shared` servent de documentation vivante des contrats d'API. Un développeur lisant `CreateAlbumSchema` ou `CreateMultipartSchema` comprend immédiatement quels champs sont attendus, leurs types et leurs contraintes.
 
 ---
 

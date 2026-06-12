@@ -34,11 +34,11 @@ Mon API NestJS expose des routes publiques (authentification, partage public) et
 
 1. **Intégration native NestJS :** `@nestjs/throttler` s'intègre directement dans le système de guards de NestJS. La configuration est déclarative dans `AppModule` et appliquée globalement via `APP_GUARD`. Pas de proxy intermédiaire à configurer.
 
-2. **Deux buckets de limitation :**
-   - **Court terme (short) :** 100 requêtes par minute par IP — protège contre les pics soudains et les scripts automatisés basiques.
-   - **Long terme (long) :** 500 requêtes par 10 minutes par IP — protège contre les attaques soutenues tout en permettant un usage intensif légitime.
+2. **Deux buckets de limitation (TTL en millisecondes) :**
+   - **Court terme (short) :** `{ ttl: 60000, limit: 100 }` — 100 requêtes par 60 secondes par IP. Protège contre les pics soudains et les scripts automatisés basiques.
+   - **Long terme (long) :** `{ ttl: 600000, limit: 500 }` — 500 requêtes par 10 minutes par IP. Protège contre les attaques soutenues tout en permettant un usage intensif légitime.
 
-3. **Protection par décorateur :** Les routes sensibles (login, register, reset password) peuvent être annotées avec `@Throttle()` pour des limites plus strictes, sans modifier la configuration globale.
+3. **Override par décorateur sur les routes sensibles :** Le endpoint de login est annoté avec `@Throttle({ short: { ttl: 60000, limit: 5 } })` — 5 tentatives par minute maximum. Cela protège contre le brute force de mots de passe sans impacter les autres routes.
 
 4. **Stockage en mémoire acceptable à cette échelle :** Pour ce projet, le stockage en mémoire des compteurs est suffisant. En environnement multi-réplicas Swarm, chaque réplica maintient ses propres compteurs — un attaquant pourrait théoriquement contourner la limite en atteignant des réplicas différents. Un backend Redis serait la solution idéale, mais la complexité additionnelle n'est pas justifiée à l'échelle du projet.
 

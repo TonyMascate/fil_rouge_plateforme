@@ -46,28 +46,23 @@ Je dois choisir une architecture d'autorisation claire, testable et évolutive.
 
 ## Justification
 
-1. **RBAC statique via mapping en code :** Les rôles de l'application (`USER`, `ADMIN`) sont stables et peu nombreux. Un mapping statique `ROLE_PERMISSIONS` dans le package partagé (`@repo/shared`) suffit. Cela évite une table de permissions en base de données pour des rôles qui ne changent pas entre déploiements.
+1. **RBAC statique via décorateur `@Roles()` + `RolesGuard` :** Les rôles de l'application (`USER`, `ADMIN`) sont définis dans l'enum `Role` du package partagé (`@repo/shared`). Le décorateur `@Roles(Role.ADMIN)` est posé sur les routes réservées aux admins. Le `RolesGuard` extrait le rôle du payload JWT et vérifie la correspondance. Pas de table de permissions en base de données.
 
-2. **Permissions déclarées dans le code partagé :** Le mapping de permissions est défini dans `packages/shared`, accessible à la fois par le backend (guards NestJS) et le frontend (affichage conditionnel des boutons/actions). Un seul endroit de vérité, pas de désynchronisation.
+2. **Ownership-based Access Control dans les services :** Pour les ressources (photos, albums), la vérification d'appartenance (`resource.userId === requestUser.id`) est effectuée dans les méthodes de service via des helpers privés (`assertOwner()`, `assertAccess()`). Ce n'est pas dans des guards NestJS dédiés mais directement dans la couche service, ce qui garantit que la logique métier et la sécurité restent co-localisées.
 
-3. **Guards NestJS par décorateur :** Chaque route déclare ses permissions via des décorateurs (`@RequirePermission('photo:delete')`). Le `PermissionGuard` vérifie automatiquement le rôle du JWT. Pas de logique d'autorisation dans les services.
+3. **Accès partagé aux albums par email :** Le partage d'album avec un autre utilisateur de la plateforme est implémenté via la table `AlbumMember`. Le propriétaire invite par email (`POST /albums/:id/members`). Le membre invité voit l'album en lecture (pas de modification possible).
 
-4. **Ownership-based Access Control :** Pour les ressources (photos, albums), un check d'appartenance complémentaire vérifie que `resource.userId === requestUser.id`. Les admins peuvent bypasser ce check. Cette logique est centralisée dans des guards réutilisables, pas dans chaque controller.
-
-5. **Partage public par token UUID :** Le partage d'album/photo public génère un UUID aléatoire (non devinable). L'accès via ce token ne nécessite pas d'authentification — c'est un mécanisme orthogonal au système RBAC/OAC.
-
-6. **Synchronisation front/back :** Le frontend utilise le même mapping de permissions pour décider d'afficher ou masquer des actions. Si un utilisateur tente quand même l'action, le backend la bloque. Double protection sans duplication de logique.
+4. **Partage public de photo par token :** Le partage public d'une photo génère un token aléatoire (`randomBytes(16).toString('base64url')`) stocké sur l'entité `Photo`. L'accès via `/p/[token]` ne nécessite pas d'authentification — mécanisme orthogonal au RBAC/OAC.
 
 ---
 
 ## Conséquences
 
 **Positives :**
-- Logique d'autorisation centralisée, lisible, testable.
-- Pas de requête DB supplémentaire pour vérifier les permissions.
-- Cohérence frontend/backend via le package partagé.
-- Extensible : ajouter un rôle `MODERATOR` = modifier le mapping et les guards.
+- Logique d'autorisation simple, sans requête DB supplémentaire pour les rôles.
+- Ownership vérifié systématiquement dans les services — aucune ressource ne peut être accédée sans vérification explicite.
+- Extensible : ajouter un rôle = modifier l'enum `Role` et poser le décorateur sur les routes concernées.
 
 **Négatives / Risques :**
 - Ajouter un nouveau rôle nécessite un redéploiement (pas de gestion dynamique) — acceptable pour ce projet.
-- Pas de granularité fine par ressource (ex : "partager un album avec un utilisateur spécifique") — hors scope du projet actuel.
+- La vérification d'ownership dans les services (et non dans des guards) implique que chaque méthode de service doit l'appeler explicitement — risque d'oubli si de nouvelles routes sont ajoutées sans rigueur.
