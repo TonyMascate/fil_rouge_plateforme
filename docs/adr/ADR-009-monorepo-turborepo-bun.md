@@ -55,7 +55,7 @@ Mon projet comprend deux applications (`apps/api`, `apps/web`) et un package par
 
 5. **Bun comme runtime de scripts :** Les scripts (`bun run build`, `bun run dev`) s'exécutent directement avec Bun, sans overhead Node.js. Le démarrage à froid est plus rapide, utile en développement local.
 
-6. **Compatibilité Node.js :** NestJS et Next.js sont des frameworks Node.js. Bun est compatible à >95% avec l'API Node.js. Les cas incompatibles ne concernent pas ce projet. En production, les conteneurs Docker utilisent Node.js pour garantir la stabilité (Bun est utilisé uniquement pour le build et le développement local).
+6. **Bun en production pour les deux applications :** Les images finales Docker (`apps/api/Dockerfile`, `apps/web/Dockerfile`) utilisent toutes les deux `oven/bun:1`. Bun est donc le runtime de production pour l'API et le frontend. Les deux services sont déployés sur Docker Swarm (service `api` et service `web` dans `stack.yml`). NestJS et Next.js sont compatibles Bun à >95% et les cas incompatibles ne concernent pas ce projet.
 
 7. **Structure claire des workspaces :**
    ```
@@ -63,7 +63,8 @@ Mon projet comprend deux applications (`apps/api`, `apps/web`) et un package par
      api/     → NestJS
      web/     → Next.js
    packages/
-     shared/  → Types, schémas Zod, constantes
+     shared/           → Types, schémas Zod, constantes partagés
+     typescript-config/ → Configurations TypeScript partagées (tsconfig base)
    ```
    Cette séparation permet le partage de code sans duplication ni couplage fort.
 

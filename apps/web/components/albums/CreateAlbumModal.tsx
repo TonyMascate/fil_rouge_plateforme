@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CreateAlbumSchema, type CreateAlbumDto } from "@repo/shared";
 
 interface CreateAlbumModalProps {
   onClose: () => void;
@@ -23,12 +26,13 @@ export function CreateAlbumModal({
   title = "Nouvel album",
   submitLabel = "Créer l'album",
 }: CreateAlbumModalProps) {
-  const [name, setName] = useState(initialName);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const { register, handleSubmit, formState: { errors, isValid } } = useForm<CreateAlbumDto>({
+    resolver: zodResolver(CreateAlbumSchema),
+    defaultValues: { name: initialName },
+    mode: "onChange",
+  });
 
   useEffect(() => {
-    inputRef.current?.focus();
-    inputRef.current?.select();
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
     }
@@ -36,10 +40,8 @@ export function CreateAlbumModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim() || loading) return;
-    onSubmit(name.trim());
+  function onValid(data: CreateAlbumDto) {
+    onSubmit(data.name);
   }
 
   return (
@@ -54,19 +56,19 @@ export function CreateAlbumModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onValid)}>
           <div className="px-6 py-5">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="album-name">Nom de l'album</Label>
               <Input
-                ref={inputRef}
                 id="album-name"
                 placeholder="Ex : Vacances d'été"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                maxLength={100}
                 disabled={loading}
+                {...register("name")}
               />
+              {errors.name && (
+                <p className="text-sm text-destructive">{errors.name.message}</p>
+              )}
             </div>
           </div>
 
@@ -74,7 +76,7 @@ export function CreateAlbumModal({
             <Button type="button" variant="outline" className="rounded-full" onClick={onClose} disabled={loading}>
               Annuler
             </Button>
-            <Button type="submit" className="rounded-full" disabled={!name.trim() || loading}>
+            <Button type="submit" className="rounded-full" disabled={!isValid || loading}>
               {submitLabel}
             </Button>
           </div>

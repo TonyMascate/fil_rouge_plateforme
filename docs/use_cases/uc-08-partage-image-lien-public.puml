@@ -1,0 +1,68 @@
+@startuml UC-08 — Partage d'une image via lien public
+
+title UC-08 — Partage d'une image via lien public
+
+left to right direction
+
+skinparam actorStyle awesome
+skinparam backgroundColor #FAFAFA
+skinparam usecase {
+  BackgroundColor #EDE9FE
+  BorderColor #7C3AED
+  FontColor #1F2937
+}
+skinparam actor {
+  BackgroundColor #7C3AED
+  FontColor #1F2937
+}
+skinparam arrow {
+  Color #374151
+}
+skinparam note {
+  BackgroundColor #FEF3C7
+  BorderColor #D97706
+}
+
+actor "Utilisateur\nauthentifié" as User
+actor "Visiteur\nanonyme" as Visitor
+
+rectangle "PhotoApp — Partage public" {
+
+  usecase "Activer le partage\npublic d'une image" as UC_Share
+  usecase "Désactiver le partage\npublic" as UC_Unshare
+  usecase "Accéder à une image\nvia lien public" as UC_Access
+
+  usecase "Vérifier l'authentification\n(JWT cookie)" as UC_Auth
+  usecase "Vérifier les droits\n(ownership)" as UC_CheckOwner
+  usecase "Générer un token\npublic unique (UUID)" as UC_GenerateToken
+  usecase "Valider le token\npublic" as UC_ValidateToken
+  usecase "Afficher l'image\n(URL signée CloudFront)" as UC_ShowImage
+
+}
+
+User    --> UC_Share
+User    --> UC_Unshare
+Visitor --> UC_Access
+
+UC_Share   ..> UC_Auth          : <<include>>
+UC_Share   ..> UC_CheckOwner    : <<include>>
+UC_Share   ..> UC_GenerateToken : <<include>>
+
+UC_Unshare ..> UC_Auth          : <<include>>
+UC_Unshare ..> UC_CheckOwner    : <<include>>
+
+UC_Access  ..> UC_ValidateToken : <<include>>
+UC_Access  ..> UC_ShowImage     : <<include>>
+
+note bottom of UC_GenerateToken
+  shareToken = randomBytes(16).toString('base64url')
+  Stocké directement sur l'entité Photo.
+  Révoqué (mis à null) à la désactivation.
+end note
+
+note bottom of UC_Access
+  Aucune authentification requise.
+  Token invalide ou partage inactif → HTTP 404.
+end note
+
+@enduml

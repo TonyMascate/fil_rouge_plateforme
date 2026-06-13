@@ -1,0 +1,77 @@
+@startuml UC-01 — Connexion et Inscription sécurisée
+
+title UC-01 — Connexion et Inscription sécurisée (JWT + Refresh Token)
+
+left to right direction
+
+skinparam actorStyle awesome
+skinparam backgroundColor #FAFAFA
+skinparam usecase {
+  BackgroundColor #EDE9FE
+  BorderColor #7C3AED
+  FontColor #1F2937
+}
+skinparam actor {
+  BackgroundColor #7C3AED
+  FontColor #1F2937
+}
+skinparam arrow {
+  Color #374151
+}
+skinparam note {
+  BackgroundColor #FEF3C7
+  BorderColor #D97706
+}
+
+actor "Visiteur" as Visiteur
+actor "Utilisateur\nauthentifié" as User
+
+rectangle "PhotoApp — Authentification" {
+
+  usecase "S'inscrire" as UC_Register
+  usecase "Se connecter" as UC_Login
+  usecase "Se déconnecter" as UC_Logout
+  usecase "Renouveler l'access token\n(Refresh)" as UC_Refresh
+
+  usecase "Valider les données\n(format email, force mdp)" as UC_Validate
+  usecase "Hacher le mot de passe\n(Argon2)" as UC_Hash
+  usecase "Vérifier les identifiants\n(Argon2 verify)" as UC_VerifyCredentials
+  usecase "Générer les tokens\n(access 15 min + refresh 7 j)" as UC_GenerateTokens
+  usecase "Stocker en cookies\nHTTP-only" as UC_StoreTokens
+  usecase "Valider le refresh token\n(hash DB + expiration)" as UC_ValidateRefresh
+  usecase "Effacer les cookies\n(access + refresh + XSRF)" as UC_ClearCookies
+
+}
+
+Visiteur --> UC_Register
+Visiteur --> UC_Login
+User    --> UC_Logout
+User    --> UC_Refresh
+
+UC_Register ..> UC_Validate          : <<include>>
+UC_Register ..> UC_Hash              : <<include>>
+UC_Register ..> UC_GenerateTokens    : <<include>>
+
+UC_Login    ..> UC_VerifyCredentials : <<include>>
+UC_Login    ..> UC_GenerateTokens    : <<include>>
+
+UC_GenerateTokens ..> UC_StoreTokens : <<include>>
+
+UC_Refresh  ..> UC_ValidateRefresh   : <<include>>
+UC_Refresh  ..> UC_GenerateTokens    : <<include>>
+
+UC_Logout   ..> UC_ClearCookies      : <<include>>
+
+note bottom of UC_GenerateTokens
+  Access token JWT (RS256) : 15 min
+  Refresh token JWT haché (Argon2) en base : 7 jours
+  Rotation : l'ancien token est supprimé à chaque refresh
+end note
+
+note bottom of UC_StoreTokens
+  Cookies HTTP-only + Secure + SameSite=Lax
+  Non lisibles depuis JavaScript (anti-XSS)
+  + cookie XSRF-TOKEN (non HTTP-only, lu par le client)
+end note
+
+@enduml

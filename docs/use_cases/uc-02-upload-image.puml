@@ -1,0 +1,69 @@
+@startuml UC-02 — Upload d'une image
+
+title UC-02 — Upload d'une image
+
+left to right direction
+
+skinparam actorStyle awesome
+skinparam backgroundColor #FAFAFA
+skinparam usecase {
+  BackgroundColor #EDE9FE
+  BorderColor #7C3AED
+  FontColor #1F2937
+}
+skinparam actor {
+  BackgroundColor #7C3AED
+  FontColor #1F2937
+}
+skinparam arrow {
+  Color #374151
+}
+skinparam note {
+  BackgroundColor #FEF3C7
+  BorderColor #D97706
+}
+
+actor "Utilisateur\nauthentifié" as User
+
+rectangle "PhotoApp — Upload" {
+
+  usecase "Uploader une image" as UC_Upload
+  usecase "Annuler l'upload\nen cours" as UC_Abort
+
+  usecase "Vérifier l'authentification\n(JWT cookie)" as UC_Auth
+  usecase "Vérifier le quota\nde stockage" as UC_CheckQuota
+  usecase "Transférer l'image\nvers S3 (multipart)" as UC_Transfer
+  usecase "Enregistrer la photo\nen base de données" as UC_Register
+  usecase "Traitement asynchrone\n(optimisation image)" as UC_Process
+
+}
+
+User --> UC_Upload
+User --> UC_Abort
+
+UC_Upload ..> UC_Auth        : <<include>>
+UC_Upload ..> UC_CheckQuota  : <<include>>
+UC_Upload ..> UC_Transfer    : <<include>>
+UC_Upload ..> UC_Register    : <<include>>
+UC_Upload ..> UC_Process     : <<include>>
+
+UC_Abort  ..> UC_Auth        : <<include>>
+
+note bottom of UC_CheckQuota
+  Quota dépassé → HTTP 403
+  Refus avant initialisation S3
+end note
+
+note bottom of UC_Transfer
+  Upload multipart S3 :
+  initMultipart → signPart(s) → completeMultipart
+  Session uploadId dans Redis (TTL 1h)
+end note
+
+note bottom of UC_Register
+  Statut initial : PENDING
+  Déclenche le worker d'optimisation
+  Statut final : COMPLETED
+end note
+
+@enduml

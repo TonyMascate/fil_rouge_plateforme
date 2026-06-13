@@ -124,7 +124,7 @@ Notation de 1 à 5 par domaine.
 
 Les solutions self-hosted (Immich, Nextcloud) offrent la confidentialité mais avec une UX technique et peu accessible. Les solutions grand public (Google, Apple) ont une belle UX mais aspirent les données vers des serveurs soumis au Cloud américain.
 
-→ **Mon point fort :** Architecture self-hosted (Docker Swarm sur VPS EU) avec une interface moderne (Next.js 15, shadcn/ui, Tailwind v4), combinant confidentialité RGPD-native et expérience utilisateur soignée.
+→ **Mon point fort :** Architecture self-hosted (Docker Swarm sur VPS EU) avec une interface moderne (Next.js 16, shadcn/ui, Tailwind v4), combinant confidentialité RGPD-native et expérience utilisateur soignée.
 
 > **Compromis accepté :** Les fichiers binaires des photos sont stockés sur Amazon S3 (région Paris, `eu-west-3`) avec distribution via CloudFront. Ce choix introduit une dépendance à AWS, service américain soumis au Cloud Act. La mitigation retenue est le choix de la région EU et le fait que les données personnelles identifiantes (comptes, métadonnées, albums) restent exclusivement sur le VPS auto-hébergé. Les fichiers photos seuls sont externalisés, sans lien direct exploitable sans accès à la base de données.
 

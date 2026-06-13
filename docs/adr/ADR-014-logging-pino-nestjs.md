@@ -33,17 +33,17 @@ Mon API NestJS doit produire des logs exploitables pour le débogage et l'observ
 
 ## Justification
 
-1. **Performance de Pino :** Pino est le logger Node.js le plus rapide disponible. Il utilise une approche asynchrone (sérialisation dans un worker thread) qui minimise l'impact sur la latence des requêtes. Pour une API avec plusieurs réplicas qui logge chaque requête HTTP, la performance du logger compte.
+1. **Performance de Pino :** Pino est le logger Node.js le plus rapide disponible. Il utilise une approche asynchrone (sérialisation dans un worker thread) qui minimise l'impact sur la latence des requêtes.
 
-2. **Logs HTTP automatiques avec `pino-http` :** Le plugin `pino-http` intercepte chaque requête HTTP et logue automatiquement la méthode, l'URL, le status code, le temps de réponse et l'ID de requête. Pas de boilerplate dans chaque controller.
+2. **Logs HTTP désactivés volontairement (`autoLogging: false`) :** Les logs automatiques par requête HTTP sont désactivés pour éviter le bruit dans les logs (chaque requête loggée = volume important, peu utile en production). Seuls les événements métier explicitement loggés via `this.logger.log()` sont émis : connexion d'un utilisateur, traitement d'une photo, erreurs. Les sérialiseurs sont configurés pour ne logguer que `method`, `url` et `statusCode` si `autoLogging` est réactivé.
 
-3. **Format JSON en production :** Les logs JSON produits par Pino sont directement parsables par Promtail (agent de collecte Loki). Loki indexe les labels extraits du JSON (service, level, reqId) — la corrélation des logs avec les métriques Prometheus est facilitée (voir ADR-005).
+3. **Format JSON en production :** Les logs JSON produits par Pino sont directement parsables par Promtail (agent de collecte Loki). Loki indexe les labels extraits du JSON (service, level) — la corrélation avec les métriques Prometheus est facilitée (voir ADR-005).
 
 4. **`pino-pretty` en développement :** En local, les logs JSON bruts sont peu lisibles. `pino-pretty` les formate de façon colorée et humainement lisible, sans impacter le comportement en production.
 
 5. **`nestjs-pino` comme logger NestJS :** Le module `nestjs-pino` remplace le logger par défaut de NestJS (qui utilise `console.log`) par Pino. Tous les `this.logger.log()`, `this.logger.error()` dans les services NestJS produisent automatiquement des logs JSON structurés.
 
-6. **Request ID pour la corrélation :** `pino-http` génère un `reqId` unique par requête, attaché à tous les logs émis pendant cette requête. En cas d'erreur, je peux retrouver tous les logs d'une requête spécifique dans Grafana/Loki en filtrant par `reqId`.
+6. **Données sensibles exclues des logs :** Les sérialiseurs ne loggent jamais de mots de passe ni de tokens. L'email de l'utilisateur est loggé uniquement à la connexion (traçabilité sécurité intentionnelle).
 
 ---
 
