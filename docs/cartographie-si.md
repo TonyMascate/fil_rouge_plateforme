@@ -8,16 +8,102 @@
 
 ## Table des matières
 
-1. [Diagramme de composants](#1-diagramme-de-composants)
-2. [Diagramme de déploiement](#2-diagramme-de-déploiement)
-3. [Analyse de risques](#3-analyse-de-risques)
-4. [Accessibilité](#4-accessibilité)
+La cartographie suit le découpage en **quatre niveaux** de l'urbanisation des systèmes d'information
+(métier → fonctionnel → applicatif → infrastructure), du plus abstrait au plus concret, complété par
+l'analyse de risques et l'accessibilité.
+
+1. [Niveau métier](#1-niveau-métier)
+2. [Niveau fonctionnel](#2-niveau-fonctionnel)
+3. [Niveau applicatif — Diagramme de composants](#3-niveau-applicatif--diagramme-de-composants)
+4. [Niveau infrastructure — Diagramme de déploiement](#4-niveau-infrastructure--diagramme-de-déploiement)
+5. [Analyse de risques](#5-analyse-de-risques)
+6. [Accessibilité](#6-accessibilité)
 
 ---
 
-## 1. Diagramme de composants
+## 1. Niveau métier
 
-> **Objectif :** représenter le découpage fonctionnel du système — les grandes briques métier et leurs interactions.
+> **Objectif :** représenter les **acteurs** et les **processus métier** du système, indépendamment de
+> toute technologie — _qui_ fait _quoi_.
+
+### 1.1 Acteurs
+
+| Acteur             | Description                                                                                                              |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| **Visiteur**       | Internaute non authentifié : peut créer un compte, se connecter, ou consulter une ressource partagée via un lien public. |
+| **Utilisateur**    | Compte authentifié : gère ses photos, ses albums, ses partages et explore sa bibliothèque par la couleur.                |
+| **Membre d'album** | Utilisateur avec qui un album a été partagé (album collaboratif) : consulte l'album partagé.                             |
+| **Administrateur** | Rôle `ADMIN` : supervision (peut accéder/supprimer au-delà de la propriété stricte).                                     |
+
+### 1.2 Processus métier
+
+```mermaid
+flowchart TD
+    V["Visiteur"]
+    U["Utilisateur"]
+    A["Administrateur"]
+
+    subgraph Processus["Processus métier de PhotoApp"]
+        P1["Gérer son compte<br/>(inscription, connexion, suppression — RGPD)"]
+        P2["Importer ses photos"]
+        P3["Organiser sa bibliothèque<br/>(galerie, albums)"]
+        P4["Explorer par la couleur<br/>(exploration chromatique)"]
+        P5["Partager<br/>(lien public, album collaboratif)"]
+        P6["Superviser la plateforme"]
+    end
+
+    V --> P1
+    U --> P1
+    U --> P2
+    U --> P3
+    U --> P4
+    U --> P5
+    A --> P6
+```
+
+Ces processus se déclinent en cas d'utilisation détaillés (diagrammes UML), disponibles dans
+[`use_cases/`](use_cases/) : connexion/inscription, upload, détail image, gestion d'album, ajout d'image
+à un album, suppression, partage par lien public.
+
+---
+
+## 2. Niveau fonctionnel
+
+> **Objectif :** lister les **grandes fonctions** du système, regroupées en blocs cohérents, toujours
+> indépendamment de la technologie.
+
+```mermaid
+flowchart LR
+    subgraph F["Blocs fonctionnels"]
+        direction TB
+        F1["Authentification<br/>& autorisation"]
+        F2["Gestion des photos<br/>(upload, quota, suppression)"]
+        F3["Gestion des albums<br/>(CRUD, membres)"]
+        F4["Partage<br/>(lien public, collaboration)"]
+        F5["Exploration chromatique<br/>(couleur dominante, regroupement)"]
+        F6["Diffusion des médias<br/>(stockage, CDN)"]
+        F7["Observabilité<br/>(métriques, logs, dashboards)"]
+    end
+```
+
+| Bloc fonctionnel                | Processus métier servi    | Fonctions principales                                           |
+| ------------------------------- | ------------------------- | --------------------------------------------------------------- |
+| Authentification & autorisation | Gérer son compte          | Inscription, connexion, déconnexion, rôles, sessions révocables |
+| Gestion des photos              | Importer ses photos       | Upload résilient, quota, statut de traitement, suppression      |
+| Gestion des albums              | Organiser sa bibliothèque | Création, contenu, renommage, couverture, membres               |
+| Partage                         | Partager                  | Lien public révocable, albums collaboratifs                     |
+| Exploration chromatique         | Explorer par la couleur   | Extraction de la couleur dominante, regroupement k-means        |
+| Diffusion des médias            | (transverse)              | Stockage objet, distribution CDN par URL signée                 |
+| Observabilité                   | Superviser la plateforme  | Métriques, logs corrélés, tableaux de bord (alerting à configurer) |
+
+> Les niveaux **applicatif** (section 3) et **infrastructure** (section 4) ci-dessous montrent _comment_
+> ces blocs fonctionnels sont réalisés et déployés.
+
+---
+
+## 3. Niveau applicatif — Diagramme de composants
+
+> **Objectif :** représenter les **composants logiciels** qui réalisent les blocs fonctionnels et leurs interactions.
 
 **Diagramme 1 — Architecture applicative**
 
@@ -29,16 +115,16 @@ graph LR
     AuthUI["UI Auth"]
     GalleryUI["UI Galerie"]
     AlbumUI["UI Albums"]
-    WhiteboardUI["UI Whiteboard"]
+    ExploreUI["UI Exploration chromatique"]
   end
 
   subgraph API["API — NestJS"]
-    AuthMod["Auth\n‹IAuthentication›\n‹IAuthorization›"]
+    AuthMod["Auth\n(JWT + RBAC/ownership)"]
     UserMod["Users"]
-    PhotoMod["Photos\n‹IPhotoService›"]
-    AlbumMod["Albums"]
-    WhiteboardMod["Whiteboard"]
-    StorageMod["Storage\n‹IStorage›"]
+    PhotoMod["Photos\n(upload, quota, couleurs)"]
+    AlbumMod["Albums\n(+ membres)"]
+    AwsMod["AWS\n(S3 + CloudFront)"]
+    Worker["Worker BullMQ\n(Sharp : WebP + couleur)"]
   end
 
   subgraph Data["Données"]
@@ -56,20 +142,21 @@ graph LR
   Browser -->|"CDN"| CloudFront
 
   Frontend -->|"REST"| AuthMod
+  Frontend -->|"REST"| UserMod
   Frontend -->|"REST"| PhotoMod
   Frontend -->|"REST"| AlbumMod
-  Frontend -->|"REST"| WhiteboardMod
 
   AuthMod -->|"cookie JWT"| Browser
+  AuthMod -->|"inscription"| UserMod
   AuthMod --> PgBouncer
   UserMod --> PgBouncer
   PhotoMod --> PgBouncer
-  PhotoMod --> StorageMod
+  PhotoMod --> AwsMod
+  PhotoMod -->|"enqueue"| Worker
   AlbumMod --> PhotoMod
   AlbumMod --> PgBouncer
-  WhiteboardMod --> PhotoMod
-  WhiteboardMod --> PgBouncer
-  StorageMod -->|"AWS SDK"| S3
+  Worker --> AwsMod
+  AwsMod -->|"AWS SDK"| S3
   S3 --- CloudFront
 
   API -->|"cache"| Redis
@@ -117,7 +204,7 @@ graph LR
 
 ---
 
-## 2. Diagramme de déploiement
+## 4. Niveau infrastructure — Diagramme de déploiement
 
 > **Objectif :** représenter l'infrastructure physique — où tourne quoi et comment ça communique.
 
@@ -160,7 +247,8 @@ graph TB
       cAdvisor["«container»\ncAdvisor :8080"]
     end
 
-    PGVol[("Volume\npostgres-data")]
+    PGVol[("Volume\ndb-data")]
+    RedisVol[("Volume\nredis-data")]
   end
 
   S3["«external»\nAmazon S3 + CloudFront"]
@@ -177,6 +265,7 @@ graph TB
   APISvc -->|"TCP :6379"| Redis
   APISvc -->|"HTTPS (AWS SDK)"| S3
   PostgreSQL --- PGVol
+  Redis --- RedisVol
 
   %% AWS est un service externe, non déployé via CI/CD
 
@@ -213,7 +302,7 @@ graph TB
 
 ---
 
-## 3. Analyse de risques
+## 5. Analyse de risques
 
 > **Méthode :** EBIOS Risk Manager (ANSSI) — version simplifiée (Ateliers 1, 2, 3 et 5)
 > Probabilité : 1 (faible) → 3 (élevée) · Impact : 1 (faible) → 3 (critique)
@@ -262,73 +351,66 @@ graph TB
 > Probabilité et impact évalués **avant mitigation** · Score résiduel **après mitigation**
 > Échelle : 1 (faible) → 3 (élevé) · Score = Probabilité × Impact
 
-| #   | Actif         | Menace                                     | Source de risque       | Prob. | Impact | Score brut | Mitigation                                                             | Score résiduel |
-| --- | ------------- | ------------------------------------------ | ---------------------- | :---: | :----: | :--------: | ---------------------------------------------------------------------- | :------------: |
-| R1  | Service Auth  | Brute force sur login                      | Bot automatisé         |   3   |   3    |  **9** 🔴  | Throttler (5 req/60s), Argon2id, refresh token JWT révocable en base   |    **2** 🟢    |
-| R2  | PostgreSQL    | Panne / indisponibilité (SPOF)             | Panne matérielle       |   3   |   3    |  **9** 🔴  | Backups quotidiens automatisés, restart policy Swarm, alerting Grafana |    **6** 🔴    |
-| R3  | Photos        | Accès non autorisé à des photos privées    | Hacker externe         |   2   |   3    |  **6** 🔴  | Ownership guard (`photo.userId`), JWT HTTP-only, URL S3 signées        |    **2** 🟢    |
-| R4  | Tokens JWT    | Vol de token via XSS                       | Hacker externe         |   2   |   3    |  **6** 🔴  | Cookies HTTP-only (inaccessibles par JS), access token 15 min, HTTPS   |    **2** 🟢    |
-| R5  | VPS           | Indisponibilité totale (panne matérielle)  | Panne matérielle       |   2   |   3    |  **6** 🔴  | Rolling updates Swarm, snapshot VPS régulier, alerting Grafana         |    **3** 🟡    |
-| R6  | Redis         | Indisponibilité (SPOF)                     | Panne matérielle       |   2   |   2    |  **4** 🟡  | Restart policy Swarm, graceful degradation (cache miss → DB)           |    **2** 🟢    |
-| R7  | API NestJS    | Injection SQL                              | Hacker externe         |   1   |   3    |  **3** 🟡  | TypeORM (requêtes paramétrées), validation Zod sur toutes les entrées  |    **1** 🟢    |
-| R8  | S3 / AWS      | Cloud Act — accès données par autorités US | Fournisseur défaillant |   1   |   2    |  **2** 🟢  | Région EU (eu-west-3 Paris), aucune donnée personnelle stockée sur S3  |    **1** 🟢    |
+| #   | Actif         | Menace                                     | Source de risque       | Prob. | Impact | Score brut | Mitigation                                                                          | Score résiduel |
+| --- | ------------- | ------------------------------------------ | ---------------------- | :---: | :----: | :--------: | ----------------------------------------------------------------------------------- | :------------: |
+| R1  | Service Auth  | Brute force sur login                      | Bot automatisé         |   3   |   3    |  **9** 🔴  | Throttler (5 req/60s), Argon2id, refresh token JWT révocable en base                |    **2** 🟢    |
+| R2  | PostgreSQL    | Panne / indisponibilité (SPOF)             | Panne matérielle       |   3   |   3    |  **9** 🔴  | Backups quotidiens automatisés, restart policy Swarm, supervision Grafana (métriques) |    **6** 🔴    |
+| R3  | Photos        | Accès non autorisé à des photos privées    | Hacker externe         |   2   |   3    |  **6** 🔴  | Ownership guard (`photo.userId`), JWT HTTP-only, URL S3 signées                     |    **2** 🟢    |
+| R4  | Tokens JWT    | Vol de token via XSS                       | Hacker externe         |   2   |   3    |  **6** 🔴  | Cookies HTTP-only (inaccessibles par JS), access token 15 min, HTTPS                |    **2** 🟢    |
+| R5  | VPS           | Indisponibilité totale (panne matérielle)  | Panne matérielle       |   2   |   3    |  **6** 🔴  | Rolling updates Swarm, snapshot VPS régulier, supervision Grafana (métriques)        |    **3** 🟡    |
+| R6  | Redis         | Indisponibilité (SPOF)                     | Panne matérielle       |   2   |   2    |  **4** 🟡  | Restart policy Swarm, graceful degradation (cache miss → DB)                        |    **2** 🟢    |
+| R7  | API NestJS    | Injection SQL                              | Hacker externe         |   1   |   3    |  **3** 🟡  | TypeORM (requêtes paramétrées), validation Zod sur toutes les entrées               |    **1** 🟢    |
+| R8  | S3 / AWS      | Cloud Act — accès données par autorités US | Fournisseur défaillant |   1   |   2    |  **2** 🟢  | Région EU (eu-west-3 Paris), aucune donnée personnelle stockée sur S3               |    **1** 🟢    |
 | R9  | Logs (Loki)   | Fuite de données sensibles dans les logs   | Erreur humaine         |   1   |   2    |  **2** 🟢  | Pino sans MDP ni token ; email loggé uniquement à la connexion (audit intentionnel) |    **1** 🟢    |
-| R10 | Images Docker | Supply chain attack                        | Hacker externe         |   1   |   2    |  **2** 🟢  | Build CI contrôlé, ghcr.io privé, GITHUB_TOKEN éphémère                |    **1** 🟢    |
+| R10 | Images Docker | Supply chain attack                        | Hacker externe         |   1   |   2    |  **2** 🟢  | Build CI contrôlé, ghcr.io privé, GITHUB_TOKEN éphémère                             |    **1** 🟢    |
 
 #### Matrice de risques (avant mitigation)
 
-```mermaid
-quadrantChart
-    title Matrice de risques — Probabilité × Impact (avant mitigation)
-    x-axis Faible Impact --> Impact Critique
-    y-axis Faible Probabilite --> Probabilite Elevee
-    quadrant-1 Risques critiques
-    quadrant-2 Risques surveilles
-    quadrant-3 Risques mineurs
-    quadrant-4 Risques significatifs
-    R1 - Brute force: [0.80, 0.83]
-    R2 - Panne PostgreSQL: [0.86, 0.87]
-    R3 - Acces photos: [0.82, 0.50]
-    R4 - Vol token XSS: [0.87, 0.46]
-    R5 - Indispo VPS: [0.84, 0.54]
-    R6 - Redis SPOF: [0.50, 0.50]
-    R7 - Injection SQL: [0.83, 0.15]
-    R8 - Cloud Act: [0.47, 0.15]
-    R9 - Fuite logs: [0.52, 0.15]
-    R10 - Supply chain: [0.56, 0.15]
-```
+Grille de criticité : chaque case correspond à un couple **Probabilité × Impact** ; les risques y
+sont placés selon leur cotation brute. La couleur de la case indique la criticité (score = P × I :
+🟢 1-2 · 🟡 3-4 · 🔴 6-9).
+
+| Probabilité ↓ \ Impact → | Faible (1) | Moyen (2) | Critique (3) |
+| ------------------------ | ---------- | --------- | ------------ |
+| **Élevée (3)**   | 🟢 *(3)* — | 🔴 *(6)* — | 🔴 *(9)* **R1** Brute force · **R2** Panne PostgreSQL |
+| **Moyenne (2)**  | 🟢 *(2)* — | 🟡 *(4)* **R6** Redis SPOF | 🔴 *(6)* **R3** Accès photos · **R4** Vol token XSS · **R5** Indispo VPS |
+| **Faible (1)**   | 🟢 *(1)* — | 🟢 *(2)* **R8** Cloud Act · **R9** Fuite logs · **R10** Supply chain | 🟡 *(3)* **R7** Injection SQL |
+
+> Lecture : les risques **R1 à R5** (haut-droite) sont les plus critiques avant mitigation et
+> concentrent l'effort de traitement (voir le tableau de traitement EBIOS ci-dessous). Après
+> mitigation, leurs scores résiduels retombent en zone 🟢/🟡.
 
 ---
 
 ### Atelier 5 — Traitement du risque
 
-| #   | Stratégie              | Actions concrètes                                                                   | Responsable  | Délai         |
-| --- | ---------------------- | ----------------------------------------------------------------------------------- | ------------ | ------------- |
-| R1  | **RÉDUIRE**            | Throttler NestJS (5 req/60s sur `/auth/login`), Argon2id, rotation refresh token    | Tony Mascate | ✅ Implémenté |
-| R2  | **RÉDUIRE + ACCEPTER** | Backup PostgreSQL quotidien via workflow GitHub Actions, alerting Grafana/PagerDuty | Tony Mascate | ✅ Implémenté |
-| R3  | **RÉDUIRE**            | Ownership guard sur chaque ressource, URL S3 signées temporairement                 | Tony Mascate | ✅ Implémenté |
-| R4  | **RÉDUIRE**            | Cookies HTTP-only + Secure + SameSite=Lax, access token 15 min, HTTPS obligatoire   | Tony Mascate | ✅ Implémenté |
-| R5  | **RÉDUIRE + ACCEPTER** | Docker Swarm restart policy, snapshot VPS hebdomadaire, alerting Grafana            | Tony Mascate | ✅ Implémenté |
-| R6  | **RÉDUIRE**            | Restart policy Swarm, dégradation gracieuse (cache miss → DB)                       | Tony Mascate | ✅ Implémenté |
-| R7  | **ÉVITER**             | TypeORM avec requêtes paramétrées, validation Zod sur toutes les entrées API        | Tony Mascate | ✅ Implémenté |
-| R8  | **TRANSFÉRER**         | AWS région eu-west-3 (Paris), aucune PII stockée sur S3 (binaires uniquement)       | AWS / Tony   | ✅ Implémenté |
+| #   | Stratégie              | Actions concrètes                                                                     | Responsable  | Délai         |
+| --- | ---------------------- | ------------------------------------------------------------------------------------- | ------------ | ------------- |
+| R1  | **RÉDUIRE**            | Throttler NestJS (5 req/60s sur `/auth/login`), Argon2id, rotation refresh token      | Tony Mascate | ✅ Implémenté |
+| R2  | **RÉDUIRE + ACCEPTER** | Backup PostgreSQL quotidien via workflow GitHub Actions, monitoring Grafana (alerting à configurer) | Tony Mascate | ✅ Implémenté |
+| R3  | **RÉDUIRE**            | Ownership guard sur chaque ressource, URL S3 signées temporairement                   | Tony Mascate | ✅ Implémenté |
+| R4  | **RÉDUIRE**            | Cookies HTTP-only + Secure + SameSite=Lax, access token 15 min, HTTPS obligatoire     | Tony Mascate | ✅ Implémenté |
+| R5  | **RÉDUIRE + ACCEPTER** | Docker Swarm restart policy, snapshot VPS hebdomadaire, monitoring Grafana            | Tony Mascate | ✅ Implémenté |
+| R6  | **RÉDUIRE**            | Restart policy Swarm, dégradation gracieuse (cache miss → DB)                         | Tony Mascate | ✅ Implémenté |
+| R7  | **ÉVITER**             | TypeORM avec requêtes paramétrées, validation Zod sur toutes les entrées API          | Tony Mascate | ✅ Implémenté |
+| R8  | **TRANSFÉRER**         | AWS région eu-west-3 (Paris), aucune PII stockée sur S3 (binaires uniquement)         | AWS / Tony   | ✅ Implémenté |
 | R9  | **RÉDUIRE**            | Pino sans MDP ni token ; email loggé à la connexion uniquement (traçabilité sécurité) | Tony Mascate | ✅ Implémenté |
-| R10 | **RÉDUIRE**            | Pipeline CI GitHub Actions, registry privé ghcr.io, GITHUB_TOKEN éphémère           | Tony Mascate | ✅ Implémenté |
+| R10 | **RÉDUIRE**            | Pipeline CI GitHub Actions, registry privé ghcr.io, GITHUB_TOKEN éphémère             | Tony Mascate | ✅ Implémenté |
 
 #### Risques résiduels acceptés
 
-- **R2 — PostgreSQL SPOF (score résiduel 6) :** La réplication primaire/secondaire dépasse la charge d'un projet solo. Mitigation retenue : backup quotidien automatisé + alerting immédiat. Risque accepté en connaissance de cause.
+- **R2 — PostgreSQL SPOF (score résiduel 6) :** La réplication primaire/secondaire dépasse la charge d'un projet solo. Mitigation retenue : backup quotidien automatisé + supervision Grafana (règle d'alerte à configurer). Risque accepté en connaissance de cause.
 - **R5 — VPS unique (score résiduel 3) :** Un VPS de failover n'est pas justifié économiquement à cette échelle. Le restart automatique Docker Swarm couvre les pannes applicatives.
 - **Pas de WAF :** Le rate limiting applicatif (Throttler NestJS) et le pare-feu réseau du VPS constituent la protection en place. Risque accepté.
 
 ---
 
-## 4. Accessibilité
+## 6. Accessibilité
 
 > **Référentiel :** WCAG 2.1 (niveau AA) / RGAA 4.1
 > **Principes POUR :** Perceptible · Opérable · Understandable · Robuste
 
-### 4.1 Choix techniques favorisant l'accessibilité
+### 6.1 Choix techniques favorisant l'accessibilité
 
 | Technologie                   | Bénéfice accessibilité                                                                                                                                       |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -337,7 +419,7 @@ quadrantChart
 | **Tailwind CSS v4**           | Utilitaires de contraste intégrés, respect des ratios WCAG via les classes de couleur                                                                        |
 | **HTML sémantique**           | Landmarks HTML5 (`<header>`, `<nav>`, `<main>`, `<footer>`) utilisés dans tous les layouts                                                                   |
 
-### 4.2 Critères WCAG appliqués
+### 6.2 Critères WCAG appliqués
 
 | Critère WCAG                       | Principe       | Application dans le projet                                                                      |
 | ---------------------------------- | -------------- | ----------------------------------------------------------------------------------------------- |
@@ -351,19 +433,19 @@ quadrantChart
 | 3.3.1 — Identification des erreurs | Understandable | Messages d'erreur Zod localisés et associés aux champs via `react-hook-form`                    |
 | 4.1.2 — Nom, rôle, valeur          | Robuste        | Rôles ARIA natifs via Radix UI sur tous les composants interactifs                              |
 
-### 4.3 Point de vigilance — Whiteboard (killer feature)
+### 6.3 Point de vigilance — Exploration chromatique (killer feature)
 
-Le whiteboard interactif (React Flow) repose sur un rendu Canvas/SVG avec drag & drop. Ce type d'interface pose des défis d'accessibilité spécifiques :
+L'exploration chromatique repose sur une interface visuelle de bulles colorées (chaque bulle = un cluster de couleurs). Ce type d'interface, fondé sur la couleur, pose des défis d'accessibilité spécifiques :
 
-| Limitation                                         | Impact                                    | Mitigation prévue                                                                                       |
-| -------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Drag & drop non accessible au clavier par défaut   | Utilisateurs moteurs / navigation clavier | Prévoir des alternatives clavier : boutons "Déplacer nœud", sélection par Tab + touches directionnelles |
-| Nœuds colorés comme seul identifiant               | Utilisateurs daltoniens                   | Ajouter un label textuel sur chaque nœud (nom de la couleur en texte)                                   |
-| Zone canvas non vocalisée par les lecteurs d'écran | Utilisateurs malvoyants                   | Ajouter une description textuelle de la carte (liste des nœuds et photos associées) en dehors du canvas |
+| Limitation                                            | Impact                                    | Mitigation prévue                                                                                        |
+| ----------------------------------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Identification par la seule couleur                   | Utilisateurs daltoniens                   | Ajouter une étiquette textuelle sur chaque bulle (nom de la teinte) et le nombre de photos               |
+| Bulles non vocalisées par les lecteurs d'écran        | Utilisateurs malvoyants                   | Exposer une alternative textuelle (liste des groupes de couleur et de leurs photos) hors du rendu visuel |
+| Navigation à la souris (clic sur bulle / sous-nuance) | Utilisateurs moteurs / navigation clavier | Rendre les bulles focalisables et activables au clavier (Tab + Entrée), avec un ordre de focus logique   |
 
-> **Note :** L'accessibilité complète du whiteboard représente une contrainte technique significative. Le niveau AA sur cette fonctionnalité spécifique sera atteint partiellement, avec les alternatives textuelles comme priorité.
+> **Note :** L'accessibilité complète de l'exploration chromatique représente une contrainte significative (interface intrinsèquement visuelle). Le niveau AA sur cet écran sera atteint partiellement, avec les alternatives textuelles comme priorité.
 
-### 4.4 Checklist de validation
+### 6.4 Checklist de validation
 
 - [ ] Tester la navigation clavier complète (Tab, Entrée, Échap) sans souris
 - [ ] Vérifier les contrastes avec l'outil Wave ou Axe DevTools
