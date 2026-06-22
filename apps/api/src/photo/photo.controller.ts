@@ -11,6 +11,7 @@ import {
   ShareResponseDto,
 } from './dto/photo-response.dto';
 import { CurrentUser } from '@app/auth/decorators/current-user.decorator';
+import { SkipCsrf } from '@app/auth/decorators/skip-csrf.decorator';
 import { JwtAuthGuard } from '@app/auth/guards/jwt-auth.guard';
 import { AwsService } from '@app/aws/aws.service';
 import { ApiException } from '@app/common/api.exception';
@@ -47,6 +48,12 @@ export class PhotoController {
     }
   }
 
+  // Routes d'upload exemptées du double-submit CSRF : elles sont déjà protégées
+  // par le JWT (auth), SameSite=lax (qui bloque tout POST/fetch cross-site, donc
+  // le CSRF classique) et la vérification Redis du propriétaire de l'upload. Le
+  // token CSRF y est redondant et se désynchronise sous la forte concurrence d'un
+  // upload multi-fichiers, ce qui faisait échouer une partie des envois (403).
+  @SkipCsrf()
   @Post('uploads/multipart')
   @ApiOperation({ summary: 'Initialiser un upload multipart' })
   @ApiResponse({ status: 201, type: CreateMultipartResponseDto })
@@ -67,6 +74,7 @@ export class PhotoController {
     return result;
   }
 
+  @SkipCsrf()
   @Post('uploads/multipart/sign-part')
   @ApiOperation({ summary: 'Signer une URL PUT pour une part' })
   @ApiResponse({ status: 201, type: SignPartResponseDto })
@@ -81,6 +89,7 @@ export class PhotoController {
     return { url };
   }
 
+  @SkipCsrf()
   @Post('uploads/multipart/list-parts')
   @HttpCode(200)
   @ApiOperation({ summary: 'Lister les parts déjà uploadées (reprise)' })
@@ -95,6 +104,7 @@ export class PhotoController {
     return this.aws.listParts(dto.key, dto.uploadId);
   }
 
+  @SkipCsrf()
   @Post('uploads/multipart/complete')
   @ApiOperation({ summary: 'Assembler les parts, enregistrer la photo et lancer l\'optimisation' })
   @ApiResponse({ status: 201, type: UploadRegisteredResponseDto })
@@ -122,6 +132,7 @@ export class PhotoController {
     }
   }
 
+  @SkipCsrf()
   @Post('uploads/multipart/abort')
   @HttpCode(204)
   @ApiOperation({ summary: 'Annuler un upload en cours' })
