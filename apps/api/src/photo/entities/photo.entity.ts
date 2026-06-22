@@ -43,6 +43,18 @@ export class Photo {
   @Column({ name: 'dominant_color', type: 'varchar', length: 7, nullable: true })
   dominantColor: string | null;
 
+  // Palette pondérée extraite à l'ingestion : jusqu'à 5 couleurs avec leur cellule
+  // d'atlas et leur poids. Sert au rendu (pastilles) et est la source de vérité
+  // des couleurs d'une photo.
+  @Column({ name: 'palette', type: 'jsonb', nullable: true })
+  palette: { hex: string; cellId: string; weight: number }[] | null;
+
+  // Cellules d'atlas couvertes par la palette (dédupliquées). Colonne tableau
+  // indexée en GIN (cf. migration) → requêtes « photos de la cellule X » rapides
+  // et appartenance multiple d'une photo à plusieurs couleurs.
+  @Column({ name: 'color_cells', type: 'text', array: true, nullable: true })
+  colorCells: string[] | null;
+
   @Column({ name: 'share_token', type: 'varchar', length: 32, nullable: true, unique: true })
   shareToken: string | null;
 

@@ -97,10 +97,9 @@ Il partage ensuite ses meilleures sélections sous forme d'albums sur une galeri
 
 ### Ce que la plateforme lui apporte
 
-- Le **whiteboard interactif** : ses photos sont automatiquement regroupées par couleur dominante sur un canvas visuel
-- Il déplace les nœuds, regroupe les séries, construit sa sélection de façon intuitive
-- Une fois sa sélection faite sur le whiteboard, il publie l'album en un clic
-- Son organisation de travail devient directement son album partagé
+- L'**exploration chromatique** : ses photos sont rangées automatiquement dans un nuancier (atlas de couleurs)
+- Il clique une teinte pour voir d'un coup toutes les photos qui la contiennent, et peut restreindre à un album
+- Il repère immédiatement la cohérence colorielle de ses séries, une entrée absente des autres plateformes
 
 ---
 
@@ -109,7 +108,7 @@ Il partage ensuite ses meilleures sélections sous forme d'albums sur une galeri
 |                             | Léa — Particulier            | Maxime — Photographe amateur    |
 | --------------------------- | ---------------------------- | ------------------------------- |
 | **Motivation principale**   | Simplicité + confidentialité | Organisation colorimétrique     |
-| **Killer feature utilisée** | Albums + partage             | Whiteboard interactif           |
+| **Killer feature utilisée** | Albums + partage             | Exploration chromatique         |
 | **Niveau technique**        | Non-technique                | Non-technique                   |
 | **Volume de photos**        | Quelques centaines par an    | Plusieurs milliers par an       |
 | **Partage**                 | Famille et amis              | Entourage et réseau             |

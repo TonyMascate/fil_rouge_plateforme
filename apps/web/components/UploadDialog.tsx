@@ -27,6 +27,9 @@ import {
 } from "@/components/ui/dialog";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
+// Plafond par envoi : au-delà, le nombre de requêtes (≈3/photo) dépasse le
+// rate limiter de l'API et une partie des uploads échoue silencieusement.
+const MAX_FILES = 30;
 const FORMAT_LABEL = "JPG · PNG · HEIC · WebP";
 
 interface UploadDialogProps {
@@ -71,9 +74,18 @@ export function UploadDialog({ open, onOpenChange }: UploadDialogProps) {
     setIsUploading(false);
   }, []);
 
+  // Fermeture/annulation : on vide la sélection en cours (sauf pendant un upload,
+  // qu'on ne veut pas interrompre). Centralisé pour que la croix, l'Échap, le clic
+  // hors-modale et le bouton Annuler aient tous le même comportement.
+  const requestClose = useCallback(() => {
+    if (isUploading) return;
+    reset();
+    onOpenChange(false);
+  }, [isUploading, reset, onOpenChange]);
+
   const addFiles = useCallback((incoming: FileList | File[]) => {
     const allowed = new Set<string>(ALLOWED_IMAGE_TYPES);
-    const accepted: SelectedFile[] = [];
+    const valid: File[] = [];
     const errors: string[] = [];
 
     Array.from(incoming).forEach((file) => {
@@ -85,17 +97,29 @@ export function UploadDialog({ open, onOpenChange }: UploadDialogProps) {
         errors.push(`${file.name} : trop volumineux (max 50 MB)`);
         return;
       }
-      accepted.push({
-        id: crypto.randomUUID(),
-        file,
-        previewUrl: URL.createObjectURL(file),
-        progress: 0,
-      });
+      valid.push(file);
     });
 
+    // On ne dépasse jamais MAX_FILES : le surplus est ignoré avec un message clair.
+    const remainingSlots = Math.max(0, MAX_FILES - files.length);
+    const toAdd = valid.slice(0, remainingSlots);
+    if (valid.length > remainingSlots) {
+      errors.push(`Maximum ${MAX_FILES} photos par envoi — ${valid.length - remainingSlots} ignorée(s).`);
+    }
+
     if (errors.length) toast.error(errors.join("\n"));
-    if (accepted.length) setFiles((prev) => [...prev, ...accepted]);
-  }, []);
+    if (toAdd.length) {
+      setFiles((prev) => [
+        ...prev,
+        ...toAdd.map((file) => ({
+          id: crypto.randomUUID(),
+          file,
+          previewUrl: URL.createObjectURL(file),
+          progress: 0,
+        })),
+      ]);
+    }
+  }, [files.length]);
 
   const removeFile = (id: string) => {
     setFiles((prev) => {
@@ -249,9 +273,11 @@ export function UploadDialog({ open, onOpenChange }: UploadDialogProps) {
     <Dialog
       open={open}
       onOpenChange={(nextOpen) => {
-        if (isUploading) return;
-        if (!nextOpen) reset();
-        onOpenChange(nextOpen);
+        if (nextOpen) {
+          onOpenChange(true);
+          return;
+        }
+        requestClose();
       }}
     >
       <DialogContent className="sm:max-w-xl">
@@ -283,7 +309,7 @@ export function UploadDialog({ open, onOpenChange }: UploadDialogProps) {
           <div className="space-y-1 text-center">
             <p className="text-sm font-medium">Glissez vos photos ici</p>
             <p className="text-xs text-muted-foreground">
-              ou cliquez pour parcourir
+              ou cliquez pour parcourir · jusqu&apos;à {MAX_FILES} par envoi
             </p>
           </div>
           <span className="rounded-full bg-muted px-3 py-1 text-[10px] font-medium text-muted-foreground">
@@ -389,7 +415,7 @@ export function UploadDialog({ open, onOpenChange }: UploadDialogProps) {
         <div className="flex items-center justify-end gap-2">
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={requestClose}
             disabled={isUploading}
           >
             Annuler

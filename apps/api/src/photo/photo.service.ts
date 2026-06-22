@@ -3,10 +3,19 @@ import { randomBytes } from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { ErrorCode, PhotoStatus, QuotaResponseDto } from '@repo/shared';
+import {
+  ColorAtlasCellDto,
+  ColorCellPhotosResponseDto,
+  ErrorCode,
+  PhotoStatus,
+  QuotaResponseDto,
+  getAtlasCells,
+} from '@repo/shared';
 
 import { AwsService } from '@app/aws/aws.service';
+import { RedisService } from '@app/redis/redis.service';
 import { ApiException } from '@app/common/api.exception';
+import { AlbumPhotoRepository } from '@app/album/repositories/album-photo.repository';
 import { Photo } from './entities/photo.entity';
 import { PhotoRepository } from './repositories/photo.repository';
 import { PhotoListQueryDto } from './dto/photo-list-query.dto';
@@ -14,97 +23,15 @@ import { PhotoListQueryDto } from './dto/photo-list-query.dto';
 export interface OptimizeJobData {
   photoId: string;
   rawKey: string;
+  userId: string;
 }
 
-// ─── K-means clustering RGB ───────────────────────────────────────────────────
-
-interface ColorPoint { red: number; green: number; blue: number }
-
-function convertHexToColorPoint(hex: string): ColorPoint {
-  return {
-    red:   parseInt(hex.slice(1, 3), 16),
-    green: parseInt(hex.slice(3, 5), 16),
-    blue:  parseInt(hex.slice(5, 7), 16),
-  };
+// Clé de cache de l'atlas couleur d'un utilisateur (purgée à l'ajout/suppression).
+export function colorAtlasCacheKey(userId: string): string {
+  return `colors:atlas:${userId}`;
 }
 
-function convertColorPointToHex({ red, green, blue }: ColorPoint): string {
-  return `#${Math.round(red).toString(16).padStart(2, '0')}${Math.round(green).toString(16).padStart(2, '0')}${Math.round(blue).toString(16).padStart(2, '0')}`;
-}
-
-function squaredDistanceBetweenColors(colorA: ColorPoint, colorB: ColorPoint): number {
-  return (colorA.red - colorB.red) ** 2 + (colorA.green - colorB.green) ** 2 + (colorA.blue - colorB.blue) ** 2;
-}
-
-function findNearestCentroidIndex(color: ColorPoint, centroids: ColorPoint[]): number {
-  return centroids.reduce(
-    (nearestIndex, candidate, candidateIndex) =>
-      squaredDistanceBetweenColors(color, candidate) < squaredDistanceBetweenColors(color, centroids[nearestIndex])
-        ? candidateIndex
-        : nearestIndex,
-    0,
-  );
-}
-
-function clusterColorsByKmeans(
-  colorPoints: ColorPoint[],
-  numberOfClusters: number,
-  maxIterations = 20,
-): { centroid: ColorPoint; photoIndices: number[] }[] {
-  if (colorPoints.length <= numberOfClusters) {
-    return colorPoints.map((point, index) => ({ centroid: point, photoIndices: [index] }));
-  }
-
-  // Initialisation k-means++ : choisir des centroïdes de départ bien espacés
-  // (évite que tous les centroïdes se retrouvent dans la même zone de couleur)
-  const centroids: ColorPoint[] = [colorPoints[Math.floor(Math.random() * colorPoints.length)]];
-
-  while (centroids.length < numberOfClusters) {
-    const distanceToNearestCentroid = colorPoints.map(
-      (point) => Math.min(...centroids.map((centroid) => squaredDistanceBetweenColors(point, centroid))),
-    );
-    const totalDistance = distanceToNearestCentroid.reduce((sum, distance) => sum + distance, 0);
-
-    // Sélection probabiliste : plus un point est loin des centroïdes existants, plus il a de chances d'être choisi
-    let remainingDistance = Math.random() * totalDistance;
-    let selectedPoint = colorPoints[colorPoints.length - 1];
-    for (let i = 0; i < colorPoints.length; i++) {
-      remainingDistance -= distanceToNearestCentroid[i];
-      if (remainingDistance <= 0) { selectedPoint = colorPoints[i]; break; }
-    }
-    centroids.push(selectedPoint);
-  }
-
-  // Chaque photo reçoit l'index du centroïde dont elle est la plus proche
-  let clusterAssignments = colorPoints.map((point) => findNearestCentroidIndex(point, centroids));
-
-  for (let iteration = 0; iteration < maxIterations; iteration++) {
-    // Déplacer chaque centroïde au barycentre de ses membres
-    for (let clusterIndex = 0; clusterIndex < numberOfClusters; clusterIndex++) {
-      const membersOfCluster = colorPoints.filter((_, photoIndex) => clusterAssignments[photoIndex] === clusterIndex);
-      if (membersOfCluster.length === 0) continue;
-      centroids[clusterIndex] = {
-        red:   membersOfCluster.reduce((sum, point) => sum + point.red,   0) / membersOfCluster.length,
-        green: membersOfCluster.reduce((sum, point) => sum + point.green, 0) / membersOfCluster.length,
-        blue:  membersOfCluster.reduce((sum, point) => sum + point.blue,  0) / membersOfCluster.length,
-      };
-    }
-
-    // Réassigner chaque photo au centroïde le plus proche après déplacement
-    const newAssignments = colorPoints.map((point) => findNearestCentroidIndex(point, centroids));
-
-    // Si aucune photo n'a changé de cluster : l'algorithme a convergé
-    if (newAssignments.every((assignment, index) => assignment === clusterAssignments[index])) break;
-    clusterAssignments = newAssignments;
-  }
-
-  return Array.from({ length: numberOfClusters }, (_, clusterIndex) => ({
-    centroid: centroids[clusterIndex],
-    photoIndices: clusterAssignments
-      .map((assignment, photoIndex) => (assignment === clusterIndex ? photoIndex : -1))
-      .filter((index) => index >= 0),
-  })).filter((cluster) => cluster.photoIndices.length > 0);
-}
+const COLOR_ATLAS_CACHE_TTL_SECONDS = 300;
 
 // ─── Service ──────────────────────────────────────────────────────────────────
 
@@ -115,6 +42,8 @@ export class PhotoService {
     @InjectQueue('image-queue') private readonly imageQueue: Queue<OptimizeJobData>,
     private readonly aws: AwsService,
     private readonly config: ConfigService,
+    private readonly redis: RedisService,
+    private readonly albumPhotoRepo: AlbumPhotoRepository,
   ) {}
 
   private getMaxStorageBytes(): number {
@@ -153,7 +82,7 @@ export class PhotoService {
 
     await this.imageQueue.add(
       'optimize',
-      { photoId: photo.id, rawKey: input.key },
+      { photoId: photo.id, rawKey: input.key, userId },
       {
         attempts: 3,
         backoff: { type: 'exponential', delay: 2000 },
@@ -184,38 +113,72 @@ export class PhotoService {
     };
   }
 
-  async listByColors(userId: string) {
-    const photos = await this.photoRepo.find({
-      where: { userId, status: PhotoStatus.COMPLETED },
-      order: { createdAt: 'DESC' },
-    });
+  /**
+   * Atlas couleur de l'utilisateur : la grille fixe de cellules, chacune assortie
+   * du nombre de photos qui la contiennent. Léger (agrégat SQL, pas d'URL signée)
+   * et mis en cache par utilisateur.
+   */
+  async getColorAtlas(userId: string, albumId?: string): Promise<ColorAtlasCellDto[]> {
+    // Cache réservé à l'atlas non filtré : les variantes par album sont peu
+    // fréquentes et leur mise en cache multiplierait les clés à invalider.
+    const cacheKey = albumId ? null : colorAtlasCacheKey(userId);
+    if (cacheKey) {
+      const cached = await this.redis.get(cacheKey).catch(() => null);
+      if (cached) return JSON.parse(cached) as ColorAtlasCellDto[];
+    }
 
-    const photosWithDominantColor = photos.filter((photo) => photo.dominantColor);
-    if (photosWithDominantColor.length === 0) return [];
+    // L'agrégat (et le filtre album, scopé user_id donc sans fuite) vit dans le
+    // repository ; le service se contente d'orchestrer cache + assemblage.
+    const rows = await this.photoRepo.countByColorCell(userId, albumId);
+    const countByCell = new Map(rows.map((row) => [row.cellId, Number(row.count)]));
 
-    const dominantColorPoints = photosWithDominantColor.map((photo) =>
-      convertHexToColorPoint(photo.dominantColor!),
-    );
+    const atlas = getAtlasCells().map((cell) => ({
+      ...cell,
+      count: countByCell.get(cell.cellId) ?? 0,
+    }));
 
-    // k augmente avec le nombre de photos : 3 clusters pour 18 photos, 7 pour 98, 10 max
-    const numberOfClusters = Math.max(3, Math.min(10, Math.round(Math.sqrt(photosWithDominantColor.length / 2))));
-    const colorClusters = clusterColorsByKmeans(dominantColorPoints, numberOfClusters);
+    if (cacheKey) {
+      await this.redis
+        .set(cacheKey, JSON.stringify(atlas), 'EX', COLOR_ATLAS_CACHE_TTL_SECONDS)
+        .catch(() => undefined);
+    }
 
-    return colorClusters.map(({ centroid, photoIndices }) => {
-      const photosInCluster = photoIndices.map((index) => photosWithDominantColor[index]);
-      const representativeColor = convertColorPointToHex(centroid);
-      return {
-        family: representativeColor,
-        representativeColor,
-        count: photosInCluster.length,
-        photos: photosInCluster.slice(0, 50).map((photo) => ({
-          id: photo.id,
-          url: this.aws.getSignedImageUrl(photo.s3Key),
-          originalName: photo.originalName,
-          dominantColor: photo.dominantColor,
-        })),
-      };
-    });
+    return atlas;
+  }
+
+  /**
+   * Photos d'une cellule d'atlas, paginées. Les URLs S3 ne sont signées que pour
+   * la page demandée (et non pour toute la collection).
+   */
+  async listByCell(
+    userId: string,
+    cellId: string,
+    query: PhotoListQueryDto,
+    albumId?: string,
+  ): Promise<ColorCellPhotosResponseDto> {
+    const { page, limit } = query;
+
+    // Filtré par album : on part de la table de liaison (où vit album_id) ; sinon
+    // requête directe sur les photos. Dans les deux cas la couche repository gère
+    // l'accès aux données ; le service se contente de mapper la réponse.
+    let photos: Photo[];
+    let total: number;
+    if (albumId) {
+      const [albumPhotos, count] = await this.albumPhotoRepo.findPhotosByCellPage(albumId, userId, cellId, query);
+      photos = albumPhotos.map((albumPhoto) => albumPhoto.photo);
+      total = count;
+    } else {
+      [photos, total] = await this.photoRepo.findByColorCellPage(userId, cellId, query);
+    }
+
+    return {
+      cellId,
+      items: photos.map((photo) => this.toPhotoResponse(photo)),
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async listForUser(userId: string, query: PhotoListQueryDto) {
@@ -229,17 +192,22 @@ export class PhotoService {
     });
 
     return {
-      items: photos.map((photo) => ({
-        id: photo.id,
-        url: this.aws.getSignedImageUrl(photo.s3Key),
-        originalName: photo.originalName,
-        createdAt: photo.createdAt,
-        shareToken: photo.shareToken,
-      })),
+      items: photos.map((photo) => this.toPhotoResponse(photo)),
       page,
       limit,
       total,
       totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /** Forme commune d'une photo dans les listes (galerie, exploration couleur). */
+  private toPhotoResponse(photo: Photo) {
+    return {
+      id: photo.id,
+      url: this.aws.getSignedImageUrl(photo.s3Key),
+      originalName: photo.originalName,
+      createdAt: photo.createdAt,
+      shareToken: photo.shareToken,
     };
   }
 
@@ -259,6 +227,8 @@ export class PhotoService {
     // pointant vers un objet inexistant, plus problématique.
     await this.photoRepo.delete(photo.id);
     await this.aws.deleteObject(photo.s3Key).catch(() => undefined);
+    // L'atlas couleur a changé → on purge le cache de l'utilisateur.
+    await this.redis.del(colorAtlasCacheKey(userId)).catch(() => undefined);
   }
 
   async sharePhoto(id: string, userId: string): Promise<{ shareToken: string }> {

@@ -17,8 +17,8 @@ code. Les principaux écarts avec la conception initiale sont :
 | --- | --- |
 | Table `LIEN` (token + expiration) rattachée à l'album | Pas de table dédiée. Le partage public est un **`share_token`** porté par la photo ; l'expiration n'est pas implémentée (« could have ») |
 | `ALBUM(title, shared:boolean)` | `albums(name, …)` — le partage collaboratif passe par la table **`album_members`** |
-| `PHOTO(title, type_mime)` | `photos(s3_key, original_name, status, file_size_bytes, **dominant_color**, share_token)` |
-| Pas de rôle, pas de statut | Ajout du **`role`** (RBAC), du **`status`** de traitement et de la **`dominant_color`** (exploration chromatique) |
+| `PHOTO(title, type_mime)` | `photos(s3_key, original_name, status, file_size_bytes, dominant_color, **palette**, **color_cells**, share_token)` |
+| Pas de rôle, pas de statut | Ajout du **`role`** (RBAC), du **`status`** de traitement et des colonnes couleur (**`palette`** + **`color_cells`** indexée GIN) pour l'**exploration chromatique** ; `dominant_color` conservée pour rétrocompatibilité |
 | Pas de gestion de session | Ajout de la table **`refresh_token`** (révocation des jetons) |
 
 ---
@@ -43,6 +43,8 @@ erDiagram
         int taille
         string statut
         string couleur_dominante
+        json palette
+        string_array cellules_couleur
         string jeton_partage
         date date_creation
     }
@@ -79,7 +81,7 @@ erDiagram
 utilisateur (__id__, email, mot_de_passe, role, prenom, nom, date_creation)
 
 photo (__id__, s3_key, nom_original, statut, taille_octets, couleur_dominante,
-       jeton_partage, #utilisateur_id, date_creation, date_maj)
+       palette, cellules_couleur, jeton_partage, #utilisateur_id, date_creation, date_maj)
 
 album (__id__, nom, #utilisateur_id, date_creation, date_maj)
 
@@ -117,9 +119,11 @@ erDiagram
         UUID id PK
         VARCHAR s3_key
         VARCHAR original_name
-        ENUM status "PENDING | COMPLETED | FAILED"
+        ENUM status "PENDING | PROCESSING | COMPLETED | FAILED"
         INT file_size_bytes "NULL, indexé"
         VARCHAR dominant_color "char(7) #RRGGBB, NULL"
+        JSONB palette "NULL, [{hex,cellId,weight}]"
+        TEXT_ARRAY color_cells "NULL, index GIN"
         VARCHAR share_token UK "char(32), NULL"
         UUID user_id FK
         TIMESTAMP created_at
@@ -164,6 +168,8 @@ erDiagram
 - **Identifiants UUID** générés en base : non devinables, utiles pour les accès par lien.
 - **Types ENUM PostgreSQL** pour `role` et `status` (intégrité au niveau du SGBD).
 - **Index** sur `photos.file_size_bytes` (calcul du quota), `albums.user_id` et `album_members.user_id` (listes par utilisateur).
+- **Index GIN** sur `photos.color_cells` (colonne tableau) : adapté à la recherche d'appartenance d'une valeur dans un tableau, il prépare la montée en charge de l'exploration chromatique (« quelles photos contiennent la cellule X ? »).
+- **Colonnes couleur** (`palette` en `jsonb`, `color_cells` en `text[]`) : une photo porte une palette de 3–5 couleurs pondérées et appartient donc à **plusieurs** cellules d'atlas — d'où le tableau plutôt qu'une simple colonne scalaire.
 - Les tables de liaison `album_photos` / `album_members` portent leur date (`added_at` / `created_at`) pour l'historique et le tri.
 
 ---
@@ -196,6 +202,8 @@ classDiagram
         +status: PhotoStatus
         +fileSizeBytes: int
         +dominantColor: string
+        +palette: jsonb
+        +colorCells: string[]
         +shareToken: string
         +createdAt: DateTime
         +updatedAt: DateTime
@@ -237,6 +245,7 @@ classDiagram
     class PhotoStatus {
         <<enumeration>>
         PENDING
+        PROCESSING
         COMPLETED
         FAILED
     }
@@ -253,7 +262,7 @@ classDiagram
 ```
 
 **Notes de conception :**
-- `Photo.dominantColor` alimente l'**exploration chromatique** (regroupement k-means côté service).
+- `Photo.palette` (jsonb, 3–5 couleurs OKLab pondérées) et `Photo.colorCells` (tableau indexé en GIN des cellules d'atlas couvertes) alimentent l'**exploration chromatique** ; une photo peut appartenir à plusieurs couleurs. `dominantColor` (= couleur de poids max) est conservé pour rétrocompatibilité.
 - `Photo.shareToken` matérialise le **partage public** d'une photo (jeton révocable, accès sans compte).
 - `AlbumMember` matérialise les **albums collaboratifs** (partage d'un album avec d'autres comptes).
 - `RefreshToken.isRevoked` + `tokenHash` permettent la **révocation** explicite d'une session.

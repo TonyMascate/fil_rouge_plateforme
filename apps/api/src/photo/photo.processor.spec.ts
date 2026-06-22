@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PhotoProcessor } from './photo.processor';
 import { PhotoRepository } from './repositories/photo.repository';
 import { AwsService } from '@app/aws/aws.service';
+import { RedisService } from '@app/redis/redis.service';
 import { PhotoStatus } from '@repo/shared';
 
 jest.mock('sharp', () => jest.fn());
@@ -35,9 +36,13 @@ const mockAwsService = {
   headObject: jest.fn(),
 };
 
+const mockRedisService = {
+  del: jest.fn().mockResolvedValue(1),
+};
+
 const fakeJob = {
   id: 'job-1',
-  data: { photoId: 'photo-uuid', rawKey: 'raw/photo.jpg' },
+  data: { photoId: 'photo-uuid', rawKey: 'raw/photo.jpg', userId: 'user-uuid' },
 } as any;
 
 describe('PhotoProcessor', () => {
@@ -69,12 +74,14 @@ describe('PhotoProcessor', () => {
     mockAwsService.deleteObject.mockResolvedValue({});
     mockAwsService.headObject.mockResolvedValue({ ContentLength: 500_000 });
     mockPhotoRepo.update.mockResolvedValue({});
+    mockRedisService.del.mockResolvedValue(1);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PhotoProcessor,
         { provide: PhotoRepository, useValue: mockPhotoRepo },
         { provide: AwsService, useValue: mockAwsService },
+        { provide: RedisService, useValue: mockRedisService },
       ],
     }).compile();
 
@@ -86,17 +93,24 @@ describe('PhotoProcessor', () => {
   });
 
   describe('process()', () => {
-    it('optimise la photo et met à jour le statut COMPLETED avec la couleur dominante', async () => {
+    it('optimise la photo, extrait la palette et met à jour le statut COMPLETED', async () => {
       await processor.process(fakeJob);
 
       expect(mockPhotoRepo.update).toHaveBeenCalledWith('photo-uuid', { status: PhotoStatus.PROCESSING });
       expect(mockAwsService.downloadStream).toHaveBeenCalledWith('raw/photo.jpg');
       expect(mockAwsService.uploadStream).toHaveBeenCalled();
       expect(mockAwsService.deleteObject).toHaveBeenCalledWith('raw/photo.jpg');
-      expect(mockPhotoRepo.update).toHaveBeenCalledWith(
-        'photo-uuid',
-        expect.objectContaining({ status: PhotoStatus.COMPLETED, dominantColor: '#ff0000' }),
+
+      const completedUpdate = mockPhotoRepo.update.mock.calls.find(
+        ([, payload]) => payload.status === PhotoStatus.COMPLETED,
       );
+      expect(completedUpdate).toBeDefined();
+      const payload = completedUpdate![1];
+      expect(payload.dominantColor).toMatch(/^#[0-9a-f]{6}$/);
+      expect(Array.isArray(payload.palette)).toBe(true);
+      expect(Array.isArray(payload.colorCells)).toBe(true);
+      // Le cache atlas de l'utilisateur est invalidé.
+      expect(mockRedisService.del).toHaveBeenCalledWith('colors:atlas:user-uuid');
     });
 
     it('calcule la couleur dominante depuis des pixels gris (fallback niveaux de gris)', async () => {

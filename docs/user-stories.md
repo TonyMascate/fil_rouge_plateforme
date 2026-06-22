@@ -71,9 +71,9 @@
 
 | #     | User Story                                                                                                                                                                                                        | Priorité | Statut |
 | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------: | :----: |
-| US-22 | En tant que **photographe**, je veux **accéder à une vue qui regroupe automatiquement mes photos par couleur dominante**, afin de **visualiser d'un coup d'œil la cohérence colorimétrique de mes séries**.       |    🔴    | ✅ |
-| US-23 | En tant que **photographe**, je veux **déplacer et réorganiser les nœuds de couleur**, afin d'**organiser l'espace selon ma propre logique**.                                                                     |    🔴    | ❌ Disposition statique actuellement |
-| US-24 | En tant que **photographe**, je veux **cliquer sur un nœud pour voir les photos associées à cette couleur dominante**, afin d'**explorer rapidement une teinte particulière**.                                    |    🔴    | ✅ |
+| US-22 | En tant que **photographe**, je veux **accéder à un nuancier qui range automatiquement mes photos par la couleur**, afin de **visualiser d'un coup d'œil la cohérence colorimétrique de mes séries**.             |    🔴    | ✅ |
+| US-23 | En tant que **photographe**, je veux **restreindre l'exploration chromatique à un album précis**, afin de **n'analyser que les couleurs d'une série donnée**.                                                     |    🔴    | ✅ |
+| US-24 | En tant que **photographe**, je veux **cliquer sur une case du nuancier pour voir les photos de cette teinte**, afin d'**explorer rapidement une couleur particulière**.                                          |    🔴    | ✅ |
 | US-25 | En tant que **photographe**, je veux **sélectionner des photos depuis l'exploration et créer un album directement**, afin que **mon travail de tri devienne immédiatement un album partageable**.                 |    🟠    | ❌ |
 | US-26 | En tant que **photographe**, je veux **filtrer l'exploration par album ou par période**, afin de **travailler sur un sous-ensemble de mes photos**.                                                               |    🟡    | ❌ |
 

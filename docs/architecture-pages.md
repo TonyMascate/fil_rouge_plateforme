@@ -71,7 +71,7 @@ flowchart TD
 ## Notes
 
 - La **galerie** (`/galerie`) est le hub central — toutes les pages app en partent.
-- L'**exploration chromatique** (`/explore`) regroupe les photos par couleur dominante via K-means.
+- L'**exploration chromatique** (`/explore`) range les couleurs des photos dans un atlas fixe (palette OKLab) et présente un nuancier filtrable par album.
 - Le **détail photo** et l'**upload** sont des composants (modal/dialog) intégrés dans les pages, sans route propre.
 - Le **partage public** (`/p/[token]`) concerne les **photos** individuelles, pas les albums.
 - Le groupe `/(public)` contient aussi `/mockups/*` (pages de développement, hors production).
