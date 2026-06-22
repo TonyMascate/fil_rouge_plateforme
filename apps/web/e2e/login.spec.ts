@@ -40,13 +40,16 @@ test.describe('Page de connexion (/login)', () => {
     // Pour exécuter localement : arrêtez votre dev server avant de lancer `bun run test:e2e`.
     test.skip(!process.env.CI, "Dev server local réutilisé : arrêtez-le d'abord ou exécutez en CI");
 
+    // Playwright évalue les routes dans l'ordre inverse d'enregistrement (la dernière gagne).
+    // Le catch-all doit donc être enregistré AVANT la route /auth/login, sinon il intercepte
+    // aussi /auth/login et loginAs() n'est jamais appelé → pas de cookie → redirect /login.
+    await page.route(`${API_URL}/**`, (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '{"data":[],"total":0}' }),
+    );
     await page.route(`${API_URL}/auth/login`, async (route) => {
       await loginAs(context);
       await route.fulfill({ status: 201, contentType: 'application/json', body: '{}' });
     });
-    await page.route(`${API_URL}/**`, (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: '{"data":[],"total":0}' }),
-    );
 
     await page.goto('/login');
     await page.getByLabel('Adresse e-mail').fill('user@example.com');

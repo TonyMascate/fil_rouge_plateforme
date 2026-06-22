@@ -45,5 +45,3 @@ yarn-error.log*
 *.pem
 
 dossier/
-
-docs/notes-dev/

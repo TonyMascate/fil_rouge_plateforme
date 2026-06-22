@@ -132,7 +132,7 @@ sequenceDiagram
 
     U->>F: Clique sur une cellule du nuancier
     F->>A: GET /photos/colors/{cellId}?page[&albumId]
-    A->>DB: photos WHERE cellId = ANY(color_cells), paginées
+    A->>DB: photos WHERE color_cells @> ARRAY[cellId], paginées (index GIN)
     A-->>F: page de photos (URLs S3 signées)
     U->>F: Clique sur une photo → modale détail
 ```

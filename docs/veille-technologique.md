@@ -17,7 +17,7 @@
 6. [Bases de données & cache](#6-bases-de-données--cache)
 7. [Infrastructure & DevOps](#7-infrastructure--devops)
 8. [Observabilité](#8-observabilité)
-9. [Killer feature — Whiteboard interactif](#9-killer-feature--whiteboard-interactif)
+9. [Killer feature — Exploration chromatique](#9-killer-feature--exploration-chromatique)
 10. [Recommandations](#10-recommandations)
 11. [Sources](#11-sources)
 
@@ -88,7 +88,7 @@ Les informations issues de sources de type enquête (S2, S3) ont été recoupée
 
 **Contexte :** L'IA Act est entré en vigueur en août 2024 avec une application progressive jusqu'en 2026. Il classe les systèmes d'IA par niveau de risque.
 
-**Pertinence pour le projet :** La killer feature (whiteboard de classification par couleur) n'implémente pas de modèle d'IA au sens strict (pas d'apprentissage automatique, pas de prise de décision autonome). Elle reste dans la catégorie **risque minimal** du règlement.
+**Pertinence pour le projet :** La killer feature (exploration chromatique — classement des photos par palette de couleurs extraite en espace OKLab) n'implémente pas de modèle d'IA au sens strict : il s'agit d'un calcul algorithmique déterministe (conversion colorimétrique + k-means), sans apprentissage automatique ni prise de décision autonome. Elle reste dans la catégorie **risque minimal** du règlement.
 
 **Anticipation :** Si l'application devait intégrer une fonctionnalité de reconnaissance de couleurs automatique (ex. : tagging automatique des photos par palette dominante), cela constituerait un système d'IA de **faible risque** soumis aux obligations de transparence envers l'utilisateur (article 52 de l'IA Act).
 
@@ -526,64 +526,84 @@ Push sur main
 
 ---
 
-## 9. Killer Feature — Whiteboard interactif
+## 9. Killer Feature — Exploration chromatique
 
 ### 9.1 Analyse du besoin
 
-La killer feature est un **whiteboard interactif** permettant de créer des nœuds colorés organisés en carte mentale, chaque nœud regroupant les photos associées à sa couleur. Les contraintes techniques identifiées sont :
+La killer feature permet de **naviguer dans sa bibliothèque par la couleur** : à l'ingestion, chaque photo se voit extraire une **palette représentative** (3 à 5 couleurs pondérées), classée dans un **nuancier** (atlas de cases couleur) navigable. Les contraintes techniques identifiées sont :
 
-- **Drag & drop** de nœuds sur un canvas
-- **Couleur paramétrable** par nœud
-- **Association photos ↔ nœud** (relation many-to-many)
-- **Rendu performant** avec potentiellement plusieurs dizaines de nœuds et vignettes
-- **Intégration React** (Next.js, Client Component)
+- **Extraction d'une palette** fidèle à la perception humaine (pas une moyenne grisâtre)
+- **Classement stable et nommable** des couleurs (« bleu clair », « vert sombre ») pour une carte mémorisable
+- **Déterminisme** : même photo ⇒ même palette ⇒ résultat **cacheable**
+- **Traitement côté serveur** (worker asynchrone), sans bloquer l'utilisateur
+- **Logique partageable** API ↔ web (même calcul couleur des deux côtés)
 
-### 9.2 Analyse comparative des solutions
+Trois décisions technologiques structurent la feature : l'**espace colorimétrique**, l'**algorithme d'extraction**, et la **bibliothèque de traitement d'image**.
 
-**Source principale :** Documentation officielle de chaque librairie (S1), npm Trends (S4), GitHub (S5)
+### 9.2 Choix de l'espace colorimétrique (décision centrale)
 
-| Critère                     | React Flow                      | Konva.js / react-konva    | D3.js     | Excalidraw                   | SVG custom         |
-| --------------------------- | ------------------------------- | ------------------------- | --------- | ---------------------------- | ------------------ |
-| Paradigme                   | Composants React (nœuds/arêtes) | Canvas HTML5              | SVG + DOM | Canvas Whiteboard            | SVG pur            |
-| Drag & drop natif           | Oui                             | Oui                       | Manuel    | Oui                          | Manuel             |
-| Nœuds personnalisables      | Totalement (JSX)                | Oui (Canvas API)          | Complexe  | Non (format fixe)            | Oui                |
-| Courbe d'apprentissage      | Faible                          | Moyenne                   | Élevée    | Faible (mais non extensible) | Élevée             |
-| Performance (50+ nœuds)     | Bonne (virtualisation)          | Excellente (Canvas)       | Bonne     | Bonne                        | Variable           |
-| Bundle size                 | ~50 KB                          | ~70 KB                    | ~80 KB    | ~300 KB                      | 0                  |
-| Intégration React           | Native                          | Native (react-konva)      | Partielle | Via composant                | Native             |
-| Cas d'usage principal       | Flow editors, mind maps         | Jeux, éditeurs graphiques | Data viz  | Whiteboard collaboratif      | Diagrammes simples |
-| Adoption 2024 (npm/semaine) | ~1.2M                           | ~200K                     | ~3M       | ~150K                        | N/A                |
+**Source principale :** Spécification CSS Color Module 4 du W3C (S1), article de référence OKLab de B. Ottosson (S14), documentation MDN (S1).
 
-**Excalidraw** est une solution complète de whiteboard mais ne permet pas d'embarquer des composants React arbitraires dans ses nœuds — il est difficilement extensible pour afficher des vignettes photos.
+| Critère                          | RGB            | HSL / HSV          | CIELAB (1976)        | **OKLab / OKLCH (2020)**   |
+| -------------------------------- | -------------- | ------------------ | -------------------- | -------------------------- |
+| Perceptuellement uniforme        | Non            | Non                | Approximativement    | **Oui**                    |
+| Distances ≈ différences perçues  | Non            | Non                | Correct (sauf bleus) | **Oui (corrige les bleus)**|
+| Coordonnées « rangeables »       | Non            | Teinte/saturation  | a/b cartésien        | **OKLCH : teinte/chroma/clarté** |
+| Moyennes fidèles (pas de ternes) | Non            | Non                | Oui                  | **Oui**                    |
+| Standard web                     | Oui            | Oui (`hsl()`)      | Via `lab()`          | **Oui (`oklch()`, CSS 4)** |
+| Complexité d'implémentation      | Nulle          | Faible             | Moyenne              | Moyenne (2 matrices)       |
 
-**D3.js** est la référence pour la data visualisation, mais son API bas niveau (manipulation directe du DOM SVG) est inadaptée à une intégration React sans surcharge d'architecture.
+**RGB / HSL** décrivent la couleur pour l'écran, pas pour l'œil : un même écart chiffré ne correspond pas à une même différence ressentie, et les moyennes de couleurs vives tirent vers le terne. Inadaptés à un regroupement ou à un classement perceptuels.
 
-**Konva.js** excelle pour les applications graphiques intensives (>1000 éléments) grâce au rendu Canvas, mais l'absence de composants React natifs pour les nœuds complexifie l'affichage de vignettes photos avec métadonnées.
+**CIELAB** est l'espace perceptuel historique, mais il sur-estime la luminosité des bleus saturés et présente des distorsions de teinte (« shift » bleu→violet) gênantes pour un classement par teinte.
 
-### 9.3 Recommandation
+**OKLab** (et sa forme polaire **OKLCH**) corrige précisément ces défauts ; il est récent, adopté par le standard CSS Color 4 (`oklch()`), donc **interopérable** : une couleur calculée côté serveur est identique à son rendu CSS côté navigateur.
 
-**React Flow** est la solution la plus adaptée à ce besoin.
+### 9.3 Choix de l'algorithme d'extraction de palette
 
-- Les nœuds sont des **composants React à part entière** — un nœud peut contenir une vignette photo, un sélecteur de couleur, un compteur, exactement comme n'importe quel composant Next.js.
-- Le drag & drop, le zoom, le pan et la connexion entre nœuds sont **gérés nativement**.
-- La virtualisation intégrée assure de bonnes performances jusqu'à quelques centaines de nœuds, ce qui couvre largement le besoin.
-- L'API `useNodes` / `useEdges` expose un state gérable avec React Query pour la persistance serveur.
+**Source principale :** Littérature classique sur la quantification de couleurs (median cut — Heckbert 1982 ; octree — Gervautz 1988) et le clustering (k-means / k-means++).
 
-**Architecture proposée pour la killer feature :**
+| Approche                | Qualité perceptuelle | Déterministe        | Coût        | Verdict                                  |
+| ----------------------- | -------------------- | ------------------- | ----------- | ---------------------------------------- |
+| Moyenne naïve (1×1 px)  | Très faible (terne)  | Oui                 | Trivial     | Rejetée (couleur grisâtre insignifiante) |
+| Histogramme de teinte   | Moyenne              | Oui                 | Faible      | POC v1 (1 seule couleur dominante)       |
+| Median cut / Octree     | Bonne                | Oui                 | Moyen       | Adapté, mais buckets figés en RGB        |
+| **k-means (en OKLab)**  | **Élevée**           | **Oui (init fixe)** | Moyen (50×50)| **Retenu**                              |
+
+Le **k-means** regroupe les pixels en *k* couleurs représentatives par proximité perceptuelle (en OKLab). Son seul défaut — le non-déterminisme dû à l'initialisation aléatoire — est neutralisé par une **initialisation déterministe** (*farthest-first* à partir du pixel le plus central), ce qui rend la palette reproductible donc cacheable. Le calcul tourne sur une vignette réduite (50×50 = 2500 px) pour rester rapide.
+
+### 9.4 Choix de la bibliothèque de traitement d'image (serveur)
+
+**Source principale :** Documentation officielle et benchmarks Sharp/libvips (S1, S5).
+
+| Critère              | **Sharp (libvips)** | Jimp (pur JS)   | ImageMagick / gm | node-canvas        |
+| -------------------- | ------------------- | --------------- | ---------------- | ------------------ |
+| Performance          | **Excellente**      | Faible          | Bonne            | Moyenne            |
+| Streaming / pipeline | **Oui (`clone()`)** | Non             | Partiel          | Non                |
+| Dépendance externe   | Binaire libvips embarqué | Aucune     | Binaire système  | Cairo natif        |
+| Déjà dans le projet  | **Oui (upload WebP)**| Non            | Non              | Non                |
+
+**Sharp** est déjà au cœur du pipeline d'optimisation (redimensionnement + WebP). Son support du *streaming* permet de **forker le pipeline** via `clone()` : l'image n'est téléchargée de S3 **qu'une fois**, et l'extraction couleur (vignette 50×50 RAW) tourne **en parallèle** de la conversion WebP — aucun téléchargement ni surcoût mémoire supplémentaire.
+
+### 9.5 Recommandation
+
+La killer feature retient une combinaison **OKLab + k-means déterministe + atlas fixe**, opérée par **Sharp** :
 
 ```
-Client Component (React Flow)
-  ├── Nœuds ColorNode (composant JSX custom)
-  │     ├── Sélecteur de couleur (shadcn/ui ColorPicker)
-  │     └── Grille de vignettes (photos associées)
-  ├── React Query → GET /api/boards/:id (chargement initial)
-  └── React Query useMutation → PATCH /api/boards/:id (sauvegarde auto)
+Worker BullMQ (NestJS)
+  ├── Sharp : fork clone() → vignette 50×50 RAW  (en parallèle de l'upload WebP)
+  ├── extractPalette() (module pur) :
+  │     ├── conversion sRGB → OKLab (matrices spec Ottosson)
+  │     ├── k-means k=5, init déterministe (farthest-first)
+  │     └── classement de chaque couleur dans l'atlas fixe (53 cellules)
+  └── PostgreSQL : photos.palette (jsonb) + photos.color_cells (text[], index GIN)
 
-Backend (NestJS)
-  ├── GET  /api/boards/:id    → renvoie nœuds + associations photos
-  ├── PATCH /api/boards/:id   → persiste l'état du whiteboard (JSON)
-  └── PostgreSQL : table `boards`, table `board_nodes`, table `node_photos`
+Frontend (Next.js)
+  ├── Nuancier (grille teintes × clartés + neutres), thème de l'app
+  └── React Query → GET /photos/colors  &  GET /photos/colors/:cellId (paginé)
 ```
+
+> Choix de conception clé : toute la **science des couleurs** vit dans un module **pur partagé** (`packages/shared/src/color.ts`), sans I/O — utilisable identiquement par l'API (classement à l'ingestion) et le web (rendu des pastilles). Une seule source de vérité.
 
 ---
 
@@ -607,7 +627,7 @@ Backend (NestJS)
 | Logs                 | Pino + Loki             | Standard          | OpenTelemetry (tendance)         |
 | Métriques            | Prometheus + Grafana    | Standard          | OpenTelemetry Collector          |
 | Orchestration        | Docker Swarm            | Projet solo       | Kubernetes (entreprise)          |
-| Killer feature       | React Flow              | Recommandé        | Konva.js (si >500 nœuds)         |
+| Killer feature       | OKLab + k-means + Sharp | Recommandé        | CIELAB / median-cut (alternatives écartées) |
 
 ### 10.2 Points de vigilance réglementaires
 
@@ -632,7 +652,7 @@ Backend (NestJS)
 
 | Ref | Document                                                                                                                                                                                       | Type                     | URL / Localisation                                                                                                                                                 |
 | --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| S1  | Documentations officielles des technologies (NestJS, Next.js, React, PostgreSQL, Redis, Docker, Prometheus, Grafana, Loki, Turborepo, Bun, Radix UI, TanStack, Zod, Pino, React Flow, TypeORM) | Primaire                 | docs.nestjs.com, nextjs.org/docs, react.dev, postgresql.org/docs, redis.io/docs, docs.docker.com, prometheus.io/docs, grafana.com/docs, turborepo.dev, bun.sh/docs |
+| S1  | Documentations officielles des technologies (NestJS, Next.js, React, PostgreSQL, Redis, Docker, Prometheus, Grafana, Loki, Turborepo, Bun, Radix UI, TanStack, Zod, Pino, TypeORM, Sharp, CSS Color Module 4) | Primaire                 | docs.nestjs.com, nextjs.org/docs, react.dev, postgresql.org/docs, redis.io/docs, docs.docker.com, prometheus.io/docs, grafana.com/docs, turborepo.dev, bun.sh/docs, sharp.pixelplumbing.com, w3.org/TR/css-color-4 |
 | S2  | State of JavaScript 2024                                                                                                                                                                       | Enquête communautaire    | stateofjs.com/2024                                                                                                                                                 |
 | S3  | Stack Overflow Developer Survey 2024                                                                                                                                                           | Enquête communautaire    | survey.stackoverflow.co/2024                                                                                                                                       |
 | S4  | npm Trends — comparatifs de téléchargements                                                                                                                                                    | Statistiques             | npmtrends.com                                                                                                                                                      |
@@ -645,6 +665,7 @@ Backend (NestJS)
 | S11 | Clarifying Lawful Overseas Use of Data Act (H.R.4943, 2018)                                                                                                                                    | Loi fédérale US          | congress.gov                                                                                                                                                       |
 | S12 | Référentiel Général d'Amélioration de l'Accessibilité v4.1 (RGAA)                                                                                                                              | Standard national        | accessibilite.numerique.gouv.fr                                                                                                                                    |
 | S13 | Tests pratiques et expérimentations assistées par IA (Claude Sonnet, GitHub Copilot)                                                                                                           | Expérimentation          | N/A                                                                                                                                                                |
+| S14 | Björn Ottosson — « A perceptual color space for image processing » (OKLab, 2020)                                                                                                               | Article de référence     | bottosson.github.io/posts/oklab                                                                                                                                    |
 
 ---
 
