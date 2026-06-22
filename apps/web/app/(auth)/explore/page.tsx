@@ -1,8 +1,8 @@
-import ChromaticExplorer from '../../../components/ChromaticExplorer';
+import ChromaticExplorer from "@/components/ChromaticExplorer";
 
 export default function ExplorePage() {
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen bg-background">
       <ChromaticExplorer />
     </div>
   );

@@ -8,6 +8,7 @@ import { PublicPhotoController } from './public-photo.controller';
 import { PhotoService } from './photo.service';
 import { PhotoProcessor } from './photo.processor';
 import { PhotoRepository } from './repositories/photo.repository';
+import { AlbumPhotoRepository } from '@app/album/repositories/album-photo.repository';
 
 @Module({
   imports: [
@@ -15,6 +16,8 @@ import { PhotoRepository } from './repositories/photo.repository';
     AwsModule,
   ],
   controllers: [PhotoController, PublicPhotoController],
-  providers: [PhotoService, PhotoProcessor, PhotoRepository],
+  // AlbumPhotoRepository ne dépend que de DataSource : on le fournit ici pour
+  // l'exploration chromatique filtrée par album, sans coupler les modules.
+  providers: [PhotoService, PhotoProcessor, PhotoRepository, AlbumPhotoRepository],
 })
 export class PhotoModule {}

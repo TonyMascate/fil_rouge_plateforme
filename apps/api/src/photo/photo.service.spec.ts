@@ -6,6 +6,8 @@ import { PhotoRepository } from './repositories/photo.repository';
 import { AwsService } from '@app/aws/aws.service';
 import { PhotoStatus } from '@repo/shared';
 import { ApiException } from '@app/common/api.exception';
+import { RedisService } from '@app/redis/redis.service';
+import { AlbumPhotoRepository } from '@app/album/repositories/album-photo.repository';
 
 const mockPhotoRepository = {
   storageUsedByUser: jest.fn(),
@@ -14,6 +16,8 @@ const mockPhotoRepository = {
   find: jest.fn(),
   findAndCount: jest.fn(),
   delete: jest.fn(),
+  countByColorCell: jest.fn(),
+  findByColorCellPage: jest.fn(),
 };
 
 const mockImageQueue = {
@@ -31,6 +35,16 @@ const mockConfigService = {
   getOrThrow: jest.fn(),
 };
 
+const mockRedisService = {
+  get: jest.fn().mockResolvedValue(null),
+  set: jest.fn().mockResolvedValue('OK'),
+  del: jest.fn().mockResolvedValue(1),
+};
+
+const mockAlbumPhotoRepository = {
+  findPhotosByCellPage: jest.fn(),
+};
+
 describe('PhotoService', () => {
   let service: PhotoService;
 
@@ -38,6 +52,7 @@ describe('PhotoService', () => {
     jest.clearAllMocks();
     mockConfigService.get.mockReturnValue(String(500 * 1024 * 1024));
     mockAwsService.getSignedImageUrl.mockReturnValue('https://cdn.example.com/photo.jpg');
+    mockRedisService.get.mockResolvedValue(null);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -46,6 +61,8 @@ describe('PhotoService', () => {
         { provide: getQueueToken('image-queue'), useValue: mockImageQueue },
         { provide: AwsService, useValue: mockAwsService },
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: RedisService, useValue: mockRedisService },
+        { provide: AlbumPhotoRepository, useValue: mockAlbumPhotoRepository },
       ],
     }).compile();
 
@@ -238,43 +255,88 @@ describe('PhotoService', () => {
     });
   });
 
-  describe('listByColors', () => {
-    it('retourne un tableau vide si aucune photo n\'a de couleur dominante', async () => {
-      mockPhotoRepository.find.mockResolvedValue([{ id: '1', dominantColor: null, s3Key: 'a.jpg' }]);
+  describe('getColorAtlas', () => {
+    it('renvoie la grille complète d\'atlas avec les counts par cellule (cache miss)', async () => {
+      mockRedisService.get.mockResolvedValue(null);
+      mockPhotoRepository.countByColorCell.mockResolvedValue([
+        { cellId: 'c-0-1', count: 3 },
+        { cellId: 'n-4', count: 5 },
+      ]);
 
-      const result = await service.listByColors('user-uuid');
+      const result = await service.getColorAtlas('user-uuid');
 
-      expect(result).toEqual([]);
+      // Grille fixe : toutes les cellules sont présentes (53), counts injectés.
+      expect(result.length).toBeGreaterThan(40);
+      expect(result.find((cell) => cell.cellId === 'c-0-1')?.count).toBe(3);
+      expect(result.find((cell) => cell.cellId === 'n-4')?.count).toBe(5);
+      // Une cellule sans photo est à 0.
+      expect(result.find((cell) => cell.cellId === 'c-5-0')?.count).toBe(0);
+      // Le résultat est mis en cache.
+      expect(mockRedisService.set).toHaveBeenCalled();
     });
 
-    it('groupe les photos par clusters de couleurs (chemin normal avec k-means)', async () => {
-      const photos = Array.from({ length: 9 }, (_, index) => ({
-        id: String(index),
-        dominantColor: index % 3 === 0 ? '#ff0000' : index % 3 === 1 ? '#00ff00' : '#0000ff',
-        s3Key: `photo-${index}.jpg`,
-        userId: 'user-uuid',
-        status: PhotoStatus.COMPLETED,
-      }));
-      mockPhotoRepository.find.mockResolvedValue(photos);
+    it('sert le cache sans requêter la base si présent', async () => {
+      const cached = [{ cellId: 'c-0-0', kind: 'chromatic', hueIndex: 0, lightIndex: 0, hex: '#000', label: 'x', count: 2 }];
+      mockRedisService.get.mockResolvedValue(JSON.stringify(cached));
 
-      const result = await service.listByColors('user-uuid');
+      const result = await service.getColorAtlas('user-uuid');
 
-      expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBeGreaterThan(0);
-      expect(result[0]).toHaveProperty('family');
-      expect(result[0]).toHaveProperty('count');
+      expect(result).toEqual(cached);
+      expect(mockPhotoRepository.countByColorCell).not.toHaveBeenCalled();
     });
 
-    it('retourne directement les photos si le nombre est inférieur aux clusters (retour anticipé)', async () => {
+    it('filtré par album : ne lit pas le cache et passe l\'albumId au repository', async () => {
+      mockPhotoRepository.countByColorCell.mockResolvedValue([{ cellId: 'c-4-1', count: 2 }]);
+
+      await service.getColorAtlas('user-uuid', 'album-uuid');
+
+      // Pas de cache quand filtré par album.
+      expect(mockRedisService.get).not.toHaveBeenCalled();
+      expect(mockRedisService.set).not.toHaveBeenCalled();
+      // L'albumId est délégué au repository.
+      expect(mockPhotoRepository.countByColorCell).toHaveBeenCalledWith('user-uuid', 'album-uuid');
+    });
+  });
+
+  describe('listByCell', () => {
+    it('renvoie les photos d\'une cellule, paginées', async () => {
       const photos = [
-        { id: '1', dominantColor: '#ff0000', s3Key: 'a.jpg', userId: 'user-uuid', status: PhotoStatus.COMPLETED },
-        { id: '2', dominantColor: '#00ff00', s3Key: 'b.jpg', userId: 'user-uuid', status: PhotoStatus.COMPLETED },
+        { id: '1', s3Key: 'a.jpg', originalName: 'a.jpg', createdAt: new Date(), shareToken: null },
       ];
-      mockPhotoRepository.find.mockResolvedValue(photos);
+      mockPhotoRepository.findByColorCellPage.mockResolvedValue([photos, 1]);
 
-      const result = await service.listByColors('user-uuid');
+      const result = await service.listByCell('user-uuid', 'c-8-2', { page: 1, limit: 20, order: 'desc' } as any);
 
-      expect(Array.isArray(result)).toBe(true);
+      expect(mockPhotoRepository.findByColorCellPage).toHaveBeenCalledWith('user-uuid', 'c-8-2', { page: 1, limit: 20, order: 'desc' });
+      expect(result.cellId).toBe('c-8-2');
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0]).toHaveProperty('url');
+      expect(result.total).toBe(1);
+      expect(result.totalPages).toBe(1);
+      // Sans album : on requête directement la table photos, pas le chemin album.
+      expect(mockAlbumPhotoRepository.findPhotosByCellPage).not.toHaveBeenCalled();
+    });
+
+    it('passe par le chemin album (findPhotosByCellPage) quand un albumId est fourni', async () => {
+      mockAlbumPhotoRepository.findPhotosByCellPage.mockResolvedValue([
+        [{ photo: { id: '9', s3Key: 'z.jpg', originalName: 'z.jpg', createdAt: new Date(), shareToken: null } }],
+        1,
+      ]);
+
+      const result = await service.listByCell('user-uuid', 'c-8-2', { page: 1, limit: 20, order: 'desc' } as any, 'album-uuid');
+
+      expect(mockAlbumPhotoRepository.findPhotosByCellPage).toHaveBeenCalledWith(
+        'album-uuid',
+        'user-uuid',
+        'c-8-2',
+        { page: 1, limit: 20, order: 'desc' },
+      );
+      // La requête directe sur photos n'est PAS utilisée dans ce cas.
+      expect(mockPhotoRepository.findByColorCellPage).not.toHaveBeenCalled();
+      expect(result.cellId).toBe('c-8-2');
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0]).toHaveProperty('url');
+      expect(result.total).toBe(1);
     });
   });
 });

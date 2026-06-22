@@ -90,9 +90,10 @@ sequenceDiagram
 
     Q->>W: job
     W->>S: download (raw)
-    W->>W: resize + WebP + extraction couleur dominante
+    W->>W: resize + WebP + extraction palette (OKLab)
     W->>S: upload (image optimisée)
-    W->>A: status = COMPLETED (+ dominantColor)
+    W->>A: status = COMPLETED (+ palette, color_cells)
+    W->>R: DEL colors:atlas:{userId} (invalidation cache)
 
     loop polling
         F->>A: GET /photos/{id}/status
@@ -107,8 +108,9 @@ en cas d'échec du worker, le fichier brut est nettoyé et le statut passe à `F
 
 ## 3. Diagramme de séquence — Exploration chromatique
 
-> La couleur dominante est calculée **à l'upload** (section 2) ; l'exploration regroupe ensuite
-> dynamiquement les couleurs par **k-means** côté serveur. C'est la fonctionnalité différenciante.
+> À l'upload (section 2), une **palette** est extraite en espace perceptuel **OKLab** et chaque
+> couleur est classée dans un **atlas chromatique fixe** (cellules `color_cells`). L'exploration
+> agrège ensuite ces cellules. C'est la fonctionnalité différenciante.
 
 ```mermaid
 sequenceDiagram
@@ -116,24 +118,28 @@ sequenceDiagram
     actor U as Utilisateur
     participant F as Frontend (ChromaticExplorer)
     participant A as API (NestJS)
+    participant R as Redis
     participant DB as PostgreSQL
 
     U->>F: Ouvre la page /explore
-    F->>A: GET /photos/colors (cookie JWT)
-    A->>DB: SELECT id, dominant_color WHERE user_id = ? AND status = COMPLETED
-    A->>A: k = max(3, min(10, round(sqrt(n/2))))
-    A->>A: k-means++ sur les couleurs RVB
-    A-->>F: groupes { centroïde, photos[] }
+    F->>A: GET /photos/colors[?albumId] (cookie JWT)
+    A->>R: GET colors:atlas:{userId}
+    alt cache absent
+        A->>DB: agrégat UNNEST(color_cells) GROUP BY cell (user, COMPLETED)
+        A->>R: SET colors:atlas:{userId} (TTL 300s)
+    end
+    A-->>F: atlas (53 cellules + nombre de photos)
 
-    U->>F: Clique sur une bulle (cluster)
-    F->>F: Affiche les sous-nuances (quantification RVB)
-    U->>F: Clique sur une sous-nuance
-    F->>F: Affiche la grille des photos de la teinte
+    U->>F: Clique sur une cellule du nuancier
+    F->>A: GET /photos/colors/{cellId}?page[&albumId]
+    A->>DB: photos WHERE cellId = ANY(color_cells), paginées
+    A-->>F: page de photos (URLs S3 signées)
+    U->>F: Clique sur une photo → modale détail
 ```
 
-**Note :** aucune couleur n'est codée en dur côté frontend — les centroïdes k-means servent
-directement de couleur d'affichage des bulles, dont la taille est proportionnelle au nombre de photos
-du cluster. Le recalcul k-means à chaque requête est une limite connue (évolution : cache Redis).
+**Note :** le nuancier (atlas fixe de 53 cellules) est **déterministe** — la même photo retombe
+toujours dans la même cellule, ce qui rend l'atlas **cacheable** (Redis, invalidé à l'upload et à la
+suppression) et la carte **stable**. Les URLs S3 ne sont signées que pour la page visible.
 
 ---
 

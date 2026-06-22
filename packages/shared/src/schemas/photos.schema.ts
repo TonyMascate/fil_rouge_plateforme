@@ -7,6 +7,25 @@ export enum PhotoStatus {
   FAILED = "FAILED",
 }
 
+// --- Exploration chromatique : atlas de couleurs fixe ---
+//
+// La logique de l'atlas (cellules, conversions OKLCH, classement) vit dans
+// `../color`. Ici on ne déclare que les contrats d'API (DTO).
+
+export const ColorAtlasCellSchema = z.object({
+  cellId: z.string(),
+  kind: z.enum(["chromatic", "neutral"]),
+  hueIndex: z.number().int().nullable(),
+  lightIndex: z.number().int(),
+  hex: z.string(),
+  label: z.string(),
+  count: z.number().int().min(0),
+});
+export type ColorAtlasCellDto = z.infer<typeof ColorAtlasCellSchema>;
+
+export const ColorAtlasResponseSchema = z.array(ColorAtlasCellSchema);
+export type ColorAtlasResponseDto = z.infer<typeof ColorAtlasResponseSchema>;
+
 export const PhotoStatusResponseSchema = z.object({
   id: z.uuid(),
   status: z.enum([PhotoStatus.PENDING, PhotoStatus.PROCESSING, PhotoStatus.COMPLETED, PhotoStatus.FAILED]),
@@ -49,6 +68,18 @@ export const PhotoListResponseSchema = z.object({
 });
 
 export type PhotoListResponseDto = z.infer<typeof PhotoListResponseSchema>;
+
+// Photos d'une cellule de l'atlas (mêmes items que la galerie → réutilise PhotoGrid).
+export const ColorCellPhotosResponseSchema = z.object({
+  cellId: z.string(),
+  items: z.array(PhotoResponseSchema),
+  page: z.number().int(),
+  limit: z.number().int(),
+  total: z.number().int(),
+  totalPages: z.number().int(),
+});
+
+export type ColorCellPhotosResponseDto = z.infer<typeof ColorCellPhotosResponseSchema>;
 
 export const QuotaResponseSchema = z.object({
   usedBytes: z.number().int().min(0),

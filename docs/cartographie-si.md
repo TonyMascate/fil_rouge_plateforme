@@ -80,7 +80,7 @@ flowchart LR
         F2["Gestion des photos<br/>(upload, quota, suppression)"]
         F3["Gestion des albums<br/>(CRUD, membres)"]
         F4["Partage<br/>(lien public, collaboration)"]
-        F5["Exploration chromatique<br/>(couleur dominante, regroupement)"]
+        F5["Exploration chromatique<br/>(palette OKLab, atlas de couleurs)"]
         F6["Diffusion des médias<br/>(stockage, CDN)"]
         F7["Observabilité<br/>(métriques, logs, dashboards)"]
     end
@@ -92,7 +92,7 @@ flowchart LR
 | Gestion des photos              | Importer ses photos       | Upload résilient, quota, statut de traitement, suppression      |
 | Gestion des albums              | Organiser sa bibliothèque | Création, contenu, renommage, couverture, membres               |
 | Partage                         | Partager                  | Lien public révocable, albums collaboratifs                     |
-| Exploration chromatique         | Explorer par la couleur   | Extraction de la couleur dominante, regroupement k-means        |
+| Exploration chromatique         | Explorer par la couleur   | Extraction de palette OKLab, classement en atlas chromatique fixe |
 | Diffusion des médias            | (transverse)              | Stockage objet, distribution CDN par URL signée                 |
 | Observabilité                   | Superviser la plateforme  | Métriques, logs corrélés, tableaux de bord (alerting à configurer) |
 
@@ -435,13 +435,13 @@ sont placés selon leur cotation brute. La couleur de la case indique la critici
 
 ### 6.3 Point de vigilance — Exploration chromatique (killer feature)
 
-L'exploration chromatique repose sur une interface visuelle de bulles colorées (chaque bulle = un cluster de couleurs). Ce type d'interface, fondé sur la couleur, pose des défis d'accessibilité spécifiques :
+L'exploration chromatique repose sur un nuancier (atlas fixe de cases colorées, chaque case = une cellule de couleur). Ce type d'interface, fondé sur la couleur, pose des défis d'accessibilité spécifiques :
 
-| Limitation                                            | Impact                                    | Mitigation prévue                                                                                        |
+| Limitation                                            | Impact                                    | Mitigation                                                                                               |
 | ----------------------------------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Identification par la seule couleur                   | Utilisateurs daltoniens                   | Ajouter une étiquette textuelle sur chaque bulle (nom de la teinte) et le nombre de photos               |
-| Bulles non vocalisées par les lecteurs d'écran        | Utilisateurs malvoyants                   | Exposer une alternative textuelle (liste des groupes de couleur et de leurs photos) hors du rendu visuel |
-| Navigation à la souris (clic sur bulle / sous-nuance) | Utilisateurs moteurs / navigation clavier | Rendre les bulles focalisables et activables au clavier (Tab + Entrée), avec un ordre de focus logique   |
+| Identification par la seule couleur                   | Utilisateurs daltoniens                   | Nom de la teinte + nombre de photos exposés en infobulle et `aria-label` sur chaque case (en place) ; étiquette visible à compléter |
+| Cases non vocalisées par les lecteurs d'écran         | Utilisateurs malvoyants                   | `aria-label` « {nom de teinte} — N photos » sur chaque case ; alternative textuelle de la répartition à compléter |
+| Navigation à la souris (clic sur une case)            | Utilisateurs moteurs / navigation clavier | Cases rendues comme `<button>` focalisables et activables au clavier (Tab + Entrée)                      |
 
 > **Note :** L'accessibilité complète de l'exploration chromatique représente une contrainte significative (interface intrinsèquement visuelle). Le niveau AA sur cet écran sera atteint partiellement, avec les alternatives textuelles comme priorité.
 

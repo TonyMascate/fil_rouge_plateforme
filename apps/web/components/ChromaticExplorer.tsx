@@ -1,246 +1,374 @@
-'use client';
-import { useState, useMemo } from 'react';
-import { useColoredPhotos, ColorGroup, ColoredPhoto } from '../lib/useColoredPhotos';
+"use client";
 
-interface SubShade {
-  hex: string;
-  photos: ColoredPhoto[];
-}
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { ImageOff, Palette } from "lucide-react";
+import type { ColorAtlasCellDto } from "@repo/shared";
 
-function getSubShades(photos: ColoredPhoto[]): SubShade[] {
-  const map = new Map<string, ColoredPhoto[]>();
-  for (const p of photos) {
-    const hex = p.dominantColor ?? '#808080';
-    const r = Math.min(255, Math.round(parseInt(hex.slice(1, 3), 16) / 32) * 32);
-    const g = Math.min(255, Math.round(parseInt(hex.slice(3, 5), 16) / 32) * 32);
-    const b = Math.min(255, Math.round(parseInt(hex.slice(5, 7), 16) / 32) * 32);
-    const key = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-    if (!map.has(key)) map.set(key, []);
-    map.get(key)!.push(p);
-  }
-  return Array.from(map.entries())
-    .sort((a, b) => b[1].length - a[1].length)
-    .slice(0, 8)
-    .map(([hex, photos]) => ({ hex, photos }));
-}
+import api from "@/lib/axios";
+import { cn } from "@/lib/utils";
+import { useColorAtlas, useColorCellPhotos } from "@/lib/useColoredPhotos";
+import { useAlbums } from "@/lib/useAlbums";
+import type { GalleryPhoto } from "@/lib/useGalleryPhotos";
+import { PhotoDetailModal } from "@/components/gallery/PhotoDetailModal";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function ChromaticExplorer() {
-  const { groups, loading, error } = useColoredPhotos();
-  const [selectedFamily, setSelectedFamily] = useState<string | null>(null);
-  const [selectedShade, setSelectedShade] = useState<string | null>(null);
+  const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
+  const [selectedCellId, setSelectedCellId] = useState<string | null>(null);
 
-  const selectedGroup = useMemo(
-    () => groups.find((g) => g.family === selectedFamily) ?? null,
-    [groups, selectedFamily],
+  const { data: atlas, isLoading, isError } = useColorAtlas(selectedAlbumId);
+  const { data: albums } = useAlbums();
+  // On ne propose que les albums dont on est propriétaire : ce sont les seuls qui
+  // contiennent nos propres photos (l'exploration est scopée à notre bibliothèque).
+  const ownedAlbums = useMemo(() => albums?.filter((album) => album.isOwner) ?? [], [albums]);
+
+  const totalPhotos = useMemo(
+    () => atlas?.reduce((sum, cell) => sum + cell.count, 0) ?? 0,
+    [atlas],
   );
+  const selectedCell = atlas?.find((cell) => cell.cellId === selectedCellId) ?? null;
 
-  const subShades = useMemo(
-    () => (selectedGroup ? getSubShades(selectedGroup.photos) : []),
-    [selectedGroup],
-  );
-
-  const shadePhotos = useMemo(
-    () => subShades.find((s) => s.hex === selectedShade)?.photos ?? [],
-    [subShades, selectedShade],
-  );
-
-  const handleFamilyClick = (family: string) => {
-    setSelectedFamily(family);
-    setSelectedShade(null);
+  // Changer d'album remet la sélection à zéro (les counts ne correspondent plus).
+  const handleAlbumChange = (albumId: string | null) => {
+    setSelectedAlbumId(albumId);
+    setSelectedCellId(null);
   };
 
-  const handleBack = () => {
-    if (selectedShade) setSelectedShade(null);
-    else setSelectedFamily(null);
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-gray-400">
-        Chargement...
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
+        <Skeleton className="mb-6 h-8 w-64" />
+        <Skeleton className="h-64 w-full rounded-2xl" />
       </div>
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-red-400">{error}</div>
-    );
-  }
-
-  if (groups.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-gray-400 gap-4">
-        <p className="text-lg">Aucune photo disponible.</p>
-        <p className="text-sm">Uploadez des photos pour commencer l&apos;exploration.</p>
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-2 text-muted-foreground">
+        <ImageOff className="size-8" />
+        <p>Impossible de charger l&apos;exploration chromatique.</p>
       </div>
     );
   }
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen bg-gray-950 text-white overflow-hidden">
-      <div className="absolute top-6 left-6 flex items-center gap-6">
-        {selectedFamily && (
-          <button
-            onClick={handleBack}
-            className="text-gray-400 hover:text-white transition-colors text-sm"
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Exploration chromatique</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {totalPhotos > 0
+              ? `${totalPhotos} photo${totalPhotos > 1 ? "s" : ""} réparties sur votre nuancier · choisissez une teinte`
+              : "Aucune photo dans cette vue"}
+          </p>
+        </div>
+
+        {ownedAlbums.length > 0 && (
+          <Select
+            value={selectedAlbumId ?? "all"}
+            onValueChange={(value) => handleAlbumChange(value === "all" ? null : value)}
           >
-            ← Retour
-          </button>
+            <SelectTrigger className="h-9 w-[200px]" aria-label="Filtrer par album">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les photos</SelectItem>
+              {ownedAlbums.map((album) => (
+                <SelectItem key={album.id} value={album.id}>
+                  {album.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
-        <h1 className="text-xl font-light tracking-widest uppercase text-gray-300">
-          Exploration Chromatique
-        </h1>
-        {selectedFamily && (
-          <span
-            className="text-xs font-mono px-2 py-1 rounded"
-            style={{ backgroundColor: selectedFamily + '33', color: selectedFamily }}
-          >
-            {selectedFamily}
-          </span>
-        )}
+      </header>
+
+      {totalPhotos === 0 ? (
+        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-center text-muted-foreground">
+          <Palette className="size-9" strokeWidth={1.2} />
+          <div>
+            <p className="text-base font-medium text-foreground">
+              {selectedAlbumId ? "Aucune photo dans cet album" : "Aucune photo à explorer"}
+            </p>
+            <p className="text-sm">
+              {selectedAlbumId
+                ? "Choisissez un autre album ou « Toutes les photos »."
+                : "Importez des photos pour révéler votre palette de couleurs."}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <>
+          <ColorAtlas
+            cells={atlas ?? []}
+            selectedCellId={selectedCellId}
+            onSelect={(cellId) => setSelectedCellId((current) => (current === cellId ? null : cellId))}
+          />
+
+          {selectedCell && <CellResults cell={selectedCell} albumId={selectedAlbumId} />}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── Le nuancier (grille fixe de cellules) ───────────────────────────────────
+
+function ColorAtlas({
+  cells,
+  selectedCellId,
+  onSelect,
+}: {
+  cells: ColorAtlasCellDto[];
+  selectedCellId: string | null;
+  onSelect: (cellId: string) => void;
+}) {
+  const chromatic = cells.filter((cell) => cell.kind === "chromatic");
+  const neutrals = cells.filter((cell) => cell.kind === "neutral");
+  const maxCount = Math.max(1, ...cells.map((cell) => cell.count));
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
+      {/* Cellules chromatiques : 12 teintes (colonnes) × 4 clartés (lignes).
+          Placement explicite pour garantir l'agencement quel que soit l'ordre du tableau.
+          Sur mobile, 12 colonnes seraient illisibles → colonnes à largeur fixe + scroll
+          horizontal ; à partir de `sm`, la grille se répartit sur toute la largeur. */}
+      <div className="-mx-1 overflow-x-auto px-1 pb-1 sm:mx-0 sm:overflow-visible sm:px-0 sm:pb-0">
+        <div className="grid grid-cols-[repeat(12,2.5rem)] gap-1.5 sm:grid-cols-[repeat(12,minmax(0,1fr))]">
+          {chromatic.map((cell) => (
+            <div key={cell.cellId} style={{ gridColumn: (cell.hueIndex ?? 0) + 1, gridRow: cell.lightIndex + 1 }}>
+              <Swatch
+                cell={cell}
+                maxCount={maxCount}
+                selected={cell.cellId === selectedCellId}
+                onSelect={onSelect}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
-      {!selectedFamily && <ColorFamilyCloud groups={groups} onSelect={handleFamilyClick} />}
+      {/* Neutres (noir → blanc) sur leur propre rangée. */}
+      <div className="mt-4 border-t border-border pt-4">
+        <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Noir &amp; blanc
+        </div>
+        <div className="grid max-w-xs grid-cols-5 gap-1.5">
+          {neutrals.map((cell) => (
+            <Swatch
+              key={cell.cellId}
+              cell={cell}
+              maxCount={maxCount}
+              selected={cell.cellId === selectedCellId}
+              onSelect={onSelect}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
-      {selectedFamily && !selectedShade && selectedGroup && (
-        <SubShadeCloud
-          representativeColor={selectedGroup.representativeColor}
-          subShades={subShades}
-          onSelect={setSelectedShade}
+function Swatch({
+  cell,
+  maxCount,
+  selected,
+  onSelect,
+}: {
+  cell: ColorAtlasCellDto;
+  maxCount: number;
+  selected: boolean;
+  onSelect: (cellId: string) => void;
+}) {
+  const isEmpty = cell.count === 0;
+  // Les cellules peuplées sont opaques ; les vides s'estompent. L'intensité de
+  // la lueur suit le nombre de photos → la collection « éclaire » le nuancier.
+  const fill = Math.min(1, cell.count / maxCount);
+
+  return (
+    <button
+      type="button"
+      disabled={isEmpty}
+      onClick={() => onSelect(cell.cellId)}
+      aria-label={`${cell.label} — ${cell.count} photo${cell.count > 1 ? "s" : ""}`}
+      title={`${cell.label} · ${cell.count}`}
+      className={cn(
+        "group relative aspect-square w-full rounded-md transition-all duration-200",
+        isEmpty ? "cursor-default opacity-20" : "cursor-pointer hover:scale-[1.08] hover:z-10",
+        selected && "ring-2 ring-foreground ring-offset-2 ring-offset-card",
+      )}
+      style={{
+        backgroundColor: cell.hex,
+        boxShadow: isEmpty ? undefined : `0 0 ${4 + fill * 16}px ${cell.hex}`,
+      }}
+    >
+      {!isEmpty && (
+        <span className="absolute inset-x-0 bottom-0.5 text-center text-[10px] font-semibold text-white/90 opacity-0 drop-shadow transition-opacity group-hover:opacity-100">
+          {cell.count}
+        </span>
+      )}
+    </button>
+  );
+}
+
+// ─── Résultats : photos de la cellule sélectionnée ──────────────────────────
+
+function CellResults({ cell, albumId }: { cell: ColorAtlasCellDto; albumId: string | null }) {
+  const queryClient = useQueryClient();
+  const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage } = useColorCellPhotos(cell.cellId, albumId);
+
+  const [activePhoto, setActivePhoto] = useState<GalleryPhoto | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const photos: GalleryPhoto[] = useMemo(
+    () =>
+      data?.pages.flatMap((page) =>
+        page.items.map((item) => ({
+          id: item.id,
+          url: item.url,
+          originalName: item.originalName,
+          createdAt: String(item.createdAt),
+          shareToken: item.shareToken,
+        })),
+      ) ?? [],
+    [data],
+  );
+  const total = data?.pages[0]?.total ?? 0;
+
+  // Scroll infini
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) fetchNextPage();
+      },
+      { rootMargin: "600px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  async function confirmDelete() {
+    const id = pendingDeleteId;
+    if (!id) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/photos/${id}`);
+      await queryClient.invalidateQueries({ queryKey: ["colors"] });
+      await queryClient.invalidateQueries({ queryKey: ["photos"] });
+      if (activePhoto?.id === id) setActivePhoto(null);
+      setPendingDeleteId(null);
+    } catch {
+      toast.error("Échec de la suppression");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <section className="mt-8">
+      <div className="mb-4 flex items-center gap-3">
+        <span className="inline-block size-5 rounded-full border border-border" style={{ backgroundColor: cell.hex }} />
+        <h2 className="text-lg font-semibold capitalize tracking-tight">{cell.label}</h2>
+        <span className="text-sm text-muted-foreground">
+          {total} photo{total > 1 ? "s" : ""}
+        </span>
+      </div>
+
+      {isLoading ? (
+        <div className="grid grid-cols-3 gap-1 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+          {Array.from({ length: 12 }).map((_, index) => (
+            <Skeleton key={index} className="aspect-square rounded-md" />
+          ))}
+        </div>
+      ) : isError ? (
+        <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
+          <ImageOff className="size-7" />
+          <p>Impossible de charger ces photos.</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-3 gap-1 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            {photos.map((photo) => (
+              <button
+                key={photo.id}
+                onClick={() => setActivePhoto(photo)}
+                className="group relative aspect-square cursor-pointer overflow-hidden rounded-md bg-muted"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={photo.url}
+                  alt={photo.originalName}
+                  loading="lazy"
+                  className="size-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+                />
+                <div className="absolute inset-0 transition-colors group-hover:bg-black/15" />
+              </button>
+            ))}
+          </div>
+          <div ref={sentinelRef} className="h-1" />
+          {isFetchingNextPage && (
+            <div className="mt-1 grid grid-cols-3 gap-1 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <Skeleton key={index} className="aspect-square rounded-md" />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {activePhoto && (
+        <PhotoDetailModal
+          key={activePhoto.id}
+          photo={activePhoto}
+          photos={photos}
+          onClose={() => setActivePhoto(null)}
+          onNavigate={setActivePhoto}
+          onRequestDelete={() => setPendingDeleteId(activePhoto.id)}
         />
       )}
 
-      {selectedShade && <PhotoGrid photos={shadePhotos} />}
-    </div>
-  );
-}
-
-function ColorFamilyCloud({
-  groups,
-  onSelect,
-}: {
-  groups: ColorGroup[];
-  onSelect: (f: string) => void;
-}) {
-  const SIZE = 600;
-  const CENTER = SIZE / 2;
-  const RADIUS = 210;
-
-  return (
-    <div className="relative" style={{ width: SIZE, height: SIZE }}>
-      {groups.map((group, i) => {
-        const angle = (i / groups.length) * 2 * Math.PI - Math.PI / 2;
-        const x = Math.cos(angle) * RADIUS + CENTER;
-        const y = Math.sin(angle) * RADIUS + CENTER;
-        const size = Math.max(72, Math.min(120, 56 + group.count * 2));
-
-        return (
-          <button
-            key={group.family}
-            onClick={() => onSelect(group.family)}
-            className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300 hover:scale-110 flex items-center justify-center cursor-pointer"
-            style={{
-              left: x,
-              top: y,
-              width: size,
-              height: size,
-              backgroundColor: group.representativeColor,
-              boxShadow: `0 0 28px ${group.representativeColor}55, 0 0 8px ${group.representativeColor}33`,
-            }}
-          >
-            <span className="text-white/80 text-sm font-medium drop-shadow">{group.count}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function SubShadeCloud({
-  representativeColor,
-  subShades,
-  onSelect,
-}: {
-  representativeColor: string;
-  subShades: SubShade[];
-  onSelect: (shade: string) => void;
-}) {
-  const SIZE = 600;
-  const CENTER = SIZE / 2;
-  const RADIUS = 200;
-
-  return (
-    <div className="relative" style={{ width: SIZE, height: SIZE }}>
-      {/* Nœud central */}
-      <div
-        className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center"
-        style={{
-          left: CENTER,
-          top: CENTER,
-          width: 96,
-          height: 96,
-          backgroundColor: representativeColor,
-          boxShadow: `0 0 48px ${representativeColor}77`,
-        }}
-      />
-
-      {subShades.map((shade, i) => {
-        const angle = (i / subShades.length) * 2 * Math.PI - Math.PI / 2;
-        const x = Math.cos(angle) * RADIUS + CENTER;
-        const y = Math.sin(angle) * RADIUS + CENTER;
-        const size = Math.max(56, Math.min(96, 44 + shade.photos.length * 4));
-
-        return (
-          <button
-            key={shade.hex}
-            onClick={() => onSelect(shade.hex)}
-            className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300 hover:scale-110 flex items-center justify-center cursor-pointer"
-            style={{
-              left: x,
-              top: y,
-              width: size,
-              height: size,
-              backgroundColor: shade.hex,
-              boxShadow: `0 0 20px ${shade.hex}55`,
-            }}
-          >
-            <span className="text-white/80 text-xs drop-shadow">{shade.photos.length}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function PhotoGrid({ photos }: { photos: ColoredPhoto[] }) {
-  return (
-    <div className="w-full max-w-5xl px-8 pt-20 pb-8">
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-        {photos.map((p) => (
-          <div
-            key={p.id}
-            className="aspect-square rounded-lg overflow-hidden bg-gray-800 relative group"
-          >
-            {p.url ? (
-              <img
-                src={p.url}
-                alt={p.originalName}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-            ) : (
-              <div className="w-full h-full" style={{ backgroundColor: p.dominantColor ?? '#808080' }} />
-            )}
-            {p.dominantColor && (
-              <div
-                className="absolute bottom-1 right-1 w-3 h-3 rounded-full border border-white/20"
-                style={{ backgroundColor: p.dominantColor }}
-                title={p.dominantColor}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
+      <AlertDialog open={pendingDeleteId !== null} onOpenChange={(open) => { if (!open && !deleting) setPendingDeleteId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette photo ?</AlertDialogTitle>
+            <AlertDialogDescription>Cette action est définitive et supprime la photo de votre bibliothèque.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => { event.preventDefault(); confirmDelete(); }}
+              disabled={deleting}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </section>
   );
 }

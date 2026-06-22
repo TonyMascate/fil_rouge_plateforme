@@ -38,7 +38,7 @@
 | Édition photo intégrée                |        ✅        |      ✅       |        ⚠️        |   ⚠️   |      ⚠️      |        ❌        |
 | Favoris                               |        ✅        |      ✅       |        ✅        |   ✅   |      ✅      |        ✅        |
 | Vue chronologique                     |        ✅        |      ✅       |        ✅        |   ✅   |      ✅      |        ✅        |
-| **Vue carte mentale / whiteboard**    |        ❌        |      ❌       |        ❌        |   ❌   |      ❌      |        ❌        |
+| **Exploration par la couleur**        |        ❌        |      ❌       |        ❌        |   ❌   |      ❌      |        ❌        |
 | **Organisation visuelle par couleur** |        ❌        |      ❌       |        ❌        |   ❌   |      ❌      |        ❌        |
 | Application mobile                    | ✅ (iOS/Android) |   ✅ (iOS)    | ✅ (iOS/Android) |   ✅   |      ✅      |        ✅        |
 | Gestion des doublons                  |        ✅        |      ✅       |        ✅        |   ❌   |      ✅      |        ❌        |
@@ -106,7 +106,7 @@ Notation de 1 à 5 par domaine.
 | Nextcloud Photos     |        2        |     4     |   2   |   5   |    **13**     |
 | **Notre plateforme** |      **5**      |   **4**   | **5** | **5** |    **19**     |
 
-> Notre plateforme cible un score maximal grâce à la killer feature (whiteboard visuel) et au self-hosting RGPD-compliant, ce qu'aucune solution existante ne combine aujourd'hui.
+> Notre plateforme cible un score maximal grâce à la killer feature (exploration chromatique) et au self-hosting RGPD-compliant, ce qu'aucune solution existante ne combine aujourd'hui.
 
 ---
 
@@ -114,9 +114,9 @@ Notation de 1 à 5 par domaine.
 
 ### Gap 1 — Organisation visuelle libre (non linéaire)
 
-**Toutes les solutions existantes** organisent les photos de manière chronologique ou par album traditionnel. Aucune ne propose une organisation **spatiale et visuelle libre**, de type carte mentale ou whiteboard.
+**Toutes les solutions existantes** organisent les photos de manière chronologique ou par album traditionnel. Aucune ne propose une entrée **par la couleur**, transverse aux dates et aux albums.
 
-→ **Mon point fort :** Whiteboard interactif avec nœuds colorés (React Flow), où chaque nœud représente une couleur dominante et regroupe les photos associées. L'utilisateur organise visuellement ses photos selon sa propre logique, pas celle de l'algorithme.
+→ **Mon point fort :** l'exploration chromatique — un nuancier (atlas de couleurs) où chaque photo est rangée selon sa palette extraite en espace perceptuel OKLab. L'utilisateur parcourt sa bibliothèque par ambiance colorielle, une dimension absente des plateformes concurrentes.
 
 ---
 

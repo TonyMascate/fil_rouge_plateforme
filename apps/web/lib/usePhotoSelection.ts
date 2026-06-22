@@ -32,6 +32,8 @@ export function usePhotoSelection() {
 
   const clearSelection = useCallback(() => setSelected(new Set()), []);
 
+  const selectAll = useCallback((ids: string[]) => setSelected(new Set(ids)), []);
+
   const removeFromSelection = useCallback((ids: string[]) => {
     setSelected((cur) => {
       const next = new Set(cur);
@@ -76,6 +78,7 @@ export function usePhotoSelection() {
     selectionMode,
     toggleSelect,
     clearSelection,
+    selectAll,
     removeFromSelection,
     handlePointerDown,
     handlePointerMove,

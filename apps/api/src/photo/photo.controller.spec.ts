@@ -13,7 +13,8 @@ const mockPhotoService = {
   deletePhoto: jest.fn(),
   sharePhoto: jest.fn(),
   unsharePhoto: jest.fn(),
-  listByColors: jest.fn(),
+  getColorAtlas: jest.fn(),
+  listByCell: jest.fn(),
 };
 
 const mockAwsService = {
@@ -90,15 +91,50 @@ describe('PhotoController', () => {
     });
   });
 
-  describe('getColorGroups', () => {
-    it('retourne les groupes de couleurs', async () => {
-      const colorGroups = [{ family: '#ff0000', count: 3, photos: [] }];
-      mockPhotoService.listByColors.mockResolvedValue(colorGroups);
+  describe('getColorAtlas', () => {
+    it('retourne l\'atlas couleur de l\'utilisateur', async () => {
+      const atlas = [{ cellId: 'c-0-1', kind: 'chromatic', hueIndex: 0, lightIndex: 1, hex: '#e0382b', label: 'rouge moyen', count: 3 }];
+      mockPhotoService.getColorAtlas.mockResolvedValue(atlas);
 
-      const result = await controller.getColorGroups(currentUser);
+      const result = await controller.getColorAtlas(currentUser);
 
-      expect(mockPhotoService.listByColors).toHaveBeenCalledWith('user-uuid');
-      expect(result).toEqual(colorGroups);
+      expect(mockPhotoService.getColorAtlas).toHaveBeenCalledWith('user-uuid', undefined);
+      expect(result).toEqual(atlas);
+    });
+
+    it('transmet l\'albumId quand il est fourni', async () => {
+      mockPhotoService.getColorAtlas.mockResolvedValue([]);
+
+      await controller.getColorAtlas(currentUser, 'album-uuid');
+
+      expect(mockPhotoService.getColorAtlas).toHaveBeenCalledWith('user-uuid', 'album-uuid');
+    });
+  });
+
+  describe('getColorCellPhotos', () => {
+    it('retourne les photos d\'une cellule valide', async () => {
+      const response = { cellId: 'c-8-2', items: [], page: 1, limit: 20, total: 0, totalPages: 0 };
+      mockPhotoService.listByCell.mockResolvedValue(response);
+
+      const result = await controller.getColorCellPhotos('c-8-2', { page: 1, limit: 20, order: 'desc' } as any, currentUser);
+
+      expect(mockPhotoService.listByCell).toHaveBeenCalledWith('user-uuid', 'c-8-2', { page: 1, limit: 20, order: 'desc' }, undefined);
+      expect(result).toEqual(response);
+    });
+
+    it('transmet l\'albumId à listByCell quand il est fourni', async () => {
+      mockPhotoService.listByCell.mockResolvedValue({ cellId: 'c-8-2', items: [], page: 1, limit: 20, total: 0, totalPages: 0 });
+
+      await controller.getColorCellPhotos('c-8-2', { page: 1, limit: 20, order: 'desc' } as any, currentUser, 'album-uuid');
+
+      expect(mockPhotoService.listByCell).toHaveBeenCalledWith('user-uuid', 'c-8-2', { page: 1, limit: 20, order: 'desc' }, 'album-uuid');
+    });
+
+    it('lève une erreur 400 si le cellId est inconnu', () => {
+      expect(() =>
+        controller.getColorCellPhotos('pas-une-cellule', { page: 1, limit: 20, order: 'desc' } as any, currentUser),
+      ).toThrow();
+      expect(mockPhotoService.listByCell).not.toHaveBeenCalled();
     });
   });
 

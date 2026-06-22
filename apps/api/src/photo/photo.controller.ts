@@ -15,7 +15,7 @@ import { JwtAuthGuard } from '@app/auth/guards/jwt-auth.guard';
 import { AwsService } from '@app/aws/aws.service';
 import { ApiException } from '@app/common/api.exception';
 import { RedisService } from '@app/redis/redis.service';
-import { ErrorCode } from '@repo/shared';
+import { ErrorCode, isValidCellId } from '@repo/shared';
 import { PhotoService } from './photo.service';
 import { PhotoListQueryDto } from './dto/photo-list-query.dto';
 import {
@@ -146,11 +146,34 @@ export class PhotoController {
   }
 
   @Get('colors')
-  @ApiOperation({ summary: 'Exploration chromatique — photos groupées par famille de couleur' })
-  @ApiResponse({ status: 200, description: 'Tableau de groupes couleur avec photos' })
+  @ApiOperation({ summary: 'Exploration chromatique — atlas de couleurs avec le nombre de photos par cellule' })
+  @ApiQuery({ name: 'albumId', required: false, type: String, format: 'uuid', description: 'Restreint l\'atlas à un album' })
+  @ApiResponse({ status: 200, description: 'Grille fixe de cellules couleur, chacune avec son count' })
   @ApiResponse({ status: 401, description: 'Non authentifié', type: ApiErrorDto })
-  getColorGroups(@CurrentUser() user: { userId: string }) {
-    return this.photoService.listByColors(user.userId);
+  getColorAtlas(
+    @CurrentUser() user: { userId: string },
+    @Query('albumId', new ParseUUIDPipe({ optional: true })) albumId?: string,
+  ) {
+    return this.photoService.getColorAtlas(user.userId, albumId);
+  }
+
+  @Get('colors/:cellId')
+  @ApiOperation({ summary: 'Photos d\'une cellule de l\'atlas (paginées)' })
+  @ApiParam({ name: 'cellId', type: String, example: 'c-8-2' })
+  @ApiQuery({ name: 'albumId', required: false, type: String, format: 'uuid', description: 'Restreint la cellule à un album' })
+  @ApiResponse({ status: 200, description: 'Photos de la cellule, paginées' })
+  @ApiResponse({ status: 400, description: 'cellId inconnu', type: ApiErrorDto })
+  @ApiResponse({ status: 401, description: 'Non authentifié', type: ApiErrorDto })
+  getColorCellPhotos(
+    @Param('cellId') cellId: string,
+    @Query() query: PhotoListQueryDto,
+    @CurrentUser() user: { userId: string },
+    @Query('albumId', new ParseUUIDPipe({ optional: true })) albumId?: string,
+  ) {
+    if (!isValidCellId(cellId)) {
+      throw new ApiException(ErrorCode.VALIDATION_ERROR, HttpStatus.BAD_REQUEST, 'Cellule couleur inconnue', []);
+    }
+    return this.photoService.listByCell(user.userId, cellId, query, albumId);
   }
 
   @Get(':id/status')

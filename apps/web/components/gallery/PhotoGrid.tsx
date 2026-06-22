@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Check, LayoutGrid, Grid3x3, ImageOff, X } from "lucide-react";
+import { Check, CheckCheck, LayoutGrid, Grid3x3, ImageOff, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { type GalleryPhoto, type PhotoListPage, type SortOrder } from "@/lib/useGalleryPhotos";
@@ -90,9 +90,10 @@ export function PhotoGrid({
   const [pendingIds, setPendingIds] = useState<string[] | null>(null);
   const [running, setRunning] = useState(false);
 
-  const { selected, selectionMode, toggleSelect, clearSelection, removeFromSelection, handlePointerDown, handlePointerMove, handlePointerUp, handleCellClick } = usePhotoSelection();
+  const { selected, selectionMode, toggleSelect, clearSelection, selectAll, removeFromSelection, handlePointerDown, handlePointerMove, handlePointerUp, handleCellClick } = usePhotoSelection();
 
   const photos = useMemo(() => data?.pages.flatMap((p) => p.items) ?? [], [data]);
+  const allSelected = photos.length > 0 && selected.size === photos.length;
   const total = data?.pages[0]?.total ?? 0;
   const monthGroups = useMemo(() => groupByMonth(photos), [photos]);
   const yearGroups = useMemo(() => groupByYear(monthGroups), [monthGroups]);
@@ -143,6 +144,15 @@ export function PhotoGrid({
               <span className="text-sm font-medium">
                 {selected.size} sélectionnée{selected.size > 1 ? "s" : ""}
               </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => (allSelected ? clearSelection() : selectAll(photos.map((photo) => photo.id)))}
+              >
+                <CheckCheck className="size-4" />
+                <span className="hidden sm:inline">{allSelected ? "Tout désélectionner" : "Tout sélectionner"}</span>
+              </Button>
               <div className="flex-1" />
               {selectionActions(Array.from(selected), setPendingIds, clearSelection)}
             </>
