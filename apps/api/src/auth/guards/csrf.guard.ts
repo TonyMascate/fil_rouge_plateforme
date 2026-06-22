@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 
@@ -19,8 +19,11 @@ export class CsrfGuard implements CanActivate {
     const secretHeader = request.headers['x-xsrf-token'];
     const secretCookie = request.cookies['XSRF-TOKEN'];
 
+    // 403 et non 401 : un échec CSRF n'est pas une session expirée. Renvoyer 401
+    // pousserait le client à tenter un refresh de token inutile (et déclencherait
+    // la cascade refresh → rotation cookies → nouveaux échecs CSRF).
     if (!secretCookie || !secretHeader || secretCookie !== secretHeader) {
-      throw new UnauthorizedException('CSRF token invalide');
+      throw new ForbiddenException('CSRF token invalide');
     }
     return true;
   }

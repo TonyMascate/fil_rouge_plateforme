@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { CsrfGuard } from './csrf.guard';
 
@@ -69,7 +69,7 @@ describe('CsrfGuard', () => {
     expect(guard.canActivate(context as any)).toBe(true);
   });
 
-  it('lève UnauthorizedException si le cookie CSRF est absent', () => {
+  it('lève ForbiddenException si le cookie CSRF est absent', () => {
     const context = buildContext({
       method: 'POST',
       headers: { 'x-xsrf-token': 'token' },
@@ -77,10 +77,10 @@ describe('CsrfGuard', () => {
     });
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(false);
 
-    expect(() => guard.canActivate(context as any)).toThrow(UnauthorizedException);
+    expect(() => guard.canActivate(context as any)).toThrow(ForbiddenException);
   });
 
-  it('lève UnauthorizedException si les tokens ne correspondent pas', () => {
+  it('lève ForbiddenException si les tokens ne correspondent pas', () => {
     const context = buildContext({
       method: 'DELETE',
       headers: { 'x-xsrf-token': 'token-a' },
@@ -88,6 +88,6 @@ describe('CsrfGuard', () => {
     });
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(false);
 
-    expect(() => guard.canActivate(context as any)).toThrow(UnauthorizedException);
+    expect(() => guard.canActivate(context as any)).toThrow(ForbiddenException);
   });
 });

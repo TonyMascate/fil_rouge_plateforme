@@ -133,13 +133,13 @@ sequenceDiagram
     U->>F: Clique sur une cellule du nuancier
     F->>A: GET /photos/colors/{cellId}?page[&albumId]
     A->>DB: photos WHERE color_cells @> ARRAY[cellId], paginées (index GIN)
-    A-->>F: page de photos (URLs S3 signées)
+    A-->>F: page de photos (URLs CloudFront signées)
     U->>F: Clique sur une photo → modale détail
 ```
 
 **Note :** le nuancier (atlas fixe de 53 cellules) est **déterministe** — la même photo retombe
 toujours dans la même cellule, ce qui rend l'atlas **cacheable** (Redis, invalidé à l'upload et à la
-suppression) et la carte **stable**. Les URLs S3 ne sont signées que pour la page visible.
+suppression) et la carte **stable**. Les URLs CloudFront ne sont signées que pour la page visible.
 
 ---
 
