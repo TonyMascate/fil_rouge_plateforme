@@ -93,16 +93,16 @@
 
 | Priorité       | Nombre de stories |
 | -------------- | :---------------: |
-| 🔴 Must Have   |        16         |
+| 🔴 Must Have   |        15         |
 | 🟠 Should Have |         9         |
-| 🟡 Could Have  |         4         |
+| 🟡 Could Have  |         5         |
 | **Total**      |      **29**       |
 
 | Statut | Nombre |
 | ------ | :----: |
-| ✅ Implémenté | 14 |
+| ✅ Implémenté | 17 |
 | ⚠️ Partiel    |  1 |
-| ❌ À implémenter | 14 |
+| ❌ À implémenter | 11 |
 
 ---
 

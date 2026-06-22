@@ -25,7 +25,11 @@ export class AuthController {
     private configService: ConfigService,
   ) {}
 
-  private setCookies(res: Response, accesToken: string, refreshToken: string) {
+  // rotateCsrf : à false sur le refresh. Régénérer le cookie XSRF-TOKEN à chaque
+  // refresh désynchronise toutes les requêtes concurrentes en vol (le header
+  // X-XSRF-TOKEN qu'elles ont capturé ne correspond plus au nouveau cookie),
+  // ce qui provoque une cascade d'échecs CSRF pendant les uploads multiples.
+  private setCookies(res: Response, accesToken: string, refreshToken: string, rotateCsrf = true) {
     const isProduction = this.configService.get('NODE_ENV') === 'production';
     const opts = {
       httpOnly: true,
@@ -45,10 +49,12 @@ export class AuthController {
       maxAge: ms(this.configService.getOrThrow<StringValue>('JWT_REFRESH_EXPIRES_IN')),
     });
 
-    res.cookie('XSRF-TOKEN', uuidv4(), {
-      ...opts,
-      httpOnly: false,
-    });
+    if (rotateCsrf) {
+      res.cookie('XSRF-TOKEN', uuidv4(), {
+        ...opts,
+        httpOnly: false,
+      });
+    }
   }
 
   @Post('register')
@@ -99,7 +105,7 @@ export class AuthController {
       throw new UnauthorizedException();
     }
     const { accessToken, refreshToken: newRefreshToken } = await this.authService.refreshTokens(refreshToken);
-    this.setCookies(res, accessToken, newRefreshToken);
+    this.setCookies(res, accessToken, newRefreshToken, false);
     return { message: 'Refreshed' };
   }
 

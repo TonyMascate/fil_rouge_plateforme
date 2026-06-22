@@ -384,7 +384,7 @@ NestJS maintient sa position de framework Node.js le plus adopté en entreprise 
 | Performance lectures              | Très bonne  | Bonne       | Bonne (local) | Très bonne |
 | Modèle de données                 | Relationnel | Relationnel | Relationnel   | Document   |
 
-**Recommandation :** PostgreSQL est le choix standard pour une application nécessitant intégrité référentielle, types avancés et performances équilibrées en lecture/écriture.
+**Recommandation :** PostgreSQL est le choix standard pour une application nécessitant intégrité référentielle, types avancés et performances équilibrées en lecture/écriture. Le projet déploie **PostgreSQL 15-alpine** (image stable et légère, `stack.yml` / `docker-compose.yaml`) ; la montée vers la 17 est une évolution possible mais non requise.
 
 ---
 
@@ -413,7 +413,7 @@ Une connexion côté PostgreSQL est allouée uniquement pendant la durée d'une 
 
 **Contexte :** Redis 7.x (LTS) maintient sa position de référence pour les caches in-memory et les stores de state distribués. La version Redis Stack intègre des modules additionnels (RedisJSON, RediSearch) mais introduit une licence non open-source (depuis Redis 7.4 avec la licence SSPL).
 
-**Décision sur la licence :** Pour ce projet, Redis 7.2 (LTS, licence BSD 3-Clause) est utilisé. La migration vers Redis 8.0 (retour au modèle open-source AGPLv3 annoncé en 2025) est à envisager.
+**Décision sur la licence :** Le déploiement utilise l'image officielle `redis:alpine` (`stack.yml` / `docker-compose.yaml`). Point de vigilance : le tag n'est pas épinglé, alors que Redis 7.4–7.x est passé sous **SSPL** (non libre). Pour la reproductibilité **et** la conformité de licence, il est recommandé d'**épingler une version au modèle libre** — `redis:7.2-alpine` (BSD 3-Clause) ou Redis 8.x (retour à l'open source sous AGPLv3 en 2025).
 
 | Critère                | Redis                                | Memcached         | Base de données (PostgreSQL) | In-memory Node.js |
 | ---------------------- | ------------------------------------ | ----------------- | ---------------------------- | ----------------- |
@@ -620,8 +620,8 @@ Frontend (Next.js)
 | Backend framework    | NestJS                  | Standard 2025     | Hono (à surveiller pour 2026)    |
 | ORM                  | TypeORM                 | Stable            | Drizzle ORM (évolution probable) |
 | Validation           | Zod                     | Standard 2025     | Valibot (plus léger)             |
-| Base de données      | PostgreSQL 17           | Standard          | —                                |
-| Cache                | Redis 7.2 (BSD)         | Standard          | Redis 8.0 AGPLv3                 |
+| Base de données      | PostgreSQL 15-alpine    | Stable (17 = montée possible) | PostgreSQL 17                |
+| Cache                | Redis (`redis:alpine`)  | Épingler une version (cf. §6.3) | redis:7.2-alpine BSD / 8.x AGPLv3 |
 | Hachage MDP          | Argon2id                | OWASP #1          | —                                |
 | Authentification     | JWT + HTTP-only cookies | OWASP recommended | Passkeys (FIDO2, futur)          |
 | Logs                 | Pino + Loki             | Standard          | OpenTelemetry (tendance)         |
@@ -633,7 +633,7 @@ Frontend (Next.js)
 
 1. **RGPD** : Implémenter le droit à l'effacement complet (suppression en cascade photos → albums → tokens → compte).
 2. **IA Act** : Toute future fonctionnalité de classification automatique (ex. tagging couleur IA) requiert une notice de transparence utilisateur (article 52).
-3. **Licences open-source** : Redis 7.4+ est sous SSPL (non libre). Utiliser Redis 7.2 LTS (BSD) ou migrer vers Redis 8.0 (AGPLv3) dès disponibilité stable.
+3. **Licences open-source** : l'image `redis:alpine` n'est pas épinglée, or Redis 7.4+ est sous SSPL (non libre). Épingler `redis:7.2-alpine` (BSD) ou Redis 8.x (AGPLv3) pour maîtriser la licence et garantir la reproductibilité.
 4. **Cloud Act** : Maintenir l'hébergement VPS hors juridiction US pour les données utilisateurs.
 
 ### 10.3 Axes d'évolution technique à moyen terme

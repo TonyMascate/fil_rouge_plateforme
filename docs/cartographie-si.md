@@ -228,9 +228,11 @@ graph TB
       Next2["«container»\nNext.js :3000"]
     end
 
-    subgraph APISvc["Service : api (2 réplicas)"]
+    subgraph APISvc["Service : api (4 réplicas)"]
       API1["«container»\nNestJS :4000"]
       API2["«container»\nNestJS :4000"]
+      API3["«container»\nNestJS :4000"]
+      API4["«container»\nNestJS :4000"]
     end
 
     subgraph DBSvc["Service : données"]
@@ -327,7 +329,7 @@ graph TB
 | --------------------------- | ------------------------------------------- | ------------------------ |
 | PostgreSQL                  | Base de données relationnelle (nœud unique) | Toutes                   |
 | Amazon S3                   | Stockage objet externe (AWS eu-west-3)      | Photos                   |
-| API NestJS                  | Serveur d'application (2 réplicas Swarm)    | Toutes                   |
+| API NestJS                  | Serveur d'application (4 réplicas Swarm)    | Toutes                   |
 | Redis                       | Cache + verrous d'upload multipart          | Service, Auth            |
 | VPS Docker Swarm            | Infrastructure d'hébergement (nœud unique)  | Toutes                   |
 | Service Auth (JWT + Argon2) | Composant applicatif d'authentification     | Comptes                  |
