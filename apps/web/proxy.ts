@@ -46,11 +46,27 @@ export async function proxy(req: NextRequest) {
       });
 
       if (refreshResponse.ok) {
-        const response = isAuthOnly ? NextResponse.redirect(new URL("/galerie", req.url)) : NextResponse.next();
-
         const setCookies = refreshResponse.headers.getSetCookie();
-        for (const cookie of setCookies) {
-          response.headers.append("Set-Cookie", cookie);
+
+        // Propager les nouveaux tokens à la requête courante pour que les Server
+        // Components en aval (GetSession dans le root layout) lisent le NOUVEL
+        // access_token, et non l'ancien expiré. Sans ça, la navbar s'affiche
+        // déconnectée jusqu'au prochain full reload (le navigateur a bien reçu le
+        // cookie, mais le rendu en cours utilisait encore le token périmé).
+        for (const setCookie of setCookies) {
+          const firstPart = setCookie.split(";")[0];
+          const separatorIndex = firstPart.indexOf("=");
+          if (separatorIndex === -1) continue;
+          const cookieName = firstPart.slice(0, separatorIndex).trim();
+          const cookieValue = firstPart.slice(separatorIndex + 1).trim();
+          req.cookies.set(cookieName, cookieValue);
+        }
+
+        const response = isAuthOnly ? NextResponse.redirect(new URL("/galerie", req.url)) : NextResponse.next({ request: { headers: req.headers } });
+
+        // Renvoyer aussi les cookies au navigateur pour les requêtes suivantes.
+        for (const setCookie of setCookies) {
+          response.headers.append("Set-Cookie", setCookie);
         }
 
         return response;
