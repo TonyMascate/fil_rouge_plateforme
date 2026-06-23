@@ -176,8 +176,17 @@ export function PhotoGrid({
                 return (
                   <div
                     key={photo.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={photo.originalName}
                     onClick={() => handleCellClick(photo, setActivePhoto)}
-                    onPointerDown={(e) => handlePointerDown(e, photo.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        handleCellClick(photo, setActivePhoto);
+                      }
+                    }}
+                    onPointerDown={(event) => handlePointerDown(event, photo.id)}
                     onPointerMove={handlePointerMove}
                     onPointerUp={handlePointerUp}
                     onPointerCancel={handlePointerUp}

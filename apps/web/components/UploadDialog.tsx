@@ -53,6 +53,14 @@ function bytesToMb(bytes: number): number {
   return Math.round(bytes / (1024 * 1024));
 }
 
+// Récupère le statut d'une photo ; renvoie "FAILED" si l'appel échoue.
+function fetchPhotoStatus(photoId: string): Promise<string> {
+  return api
+    .get<{ status: string }>(`/photos/${photoId}/status`)
+    .then((response) => response.data.status)
+    .catch(() => "FAILED");
+}
+
 export function UploadDialog({ open, onOpenChange }: Readonly<UploadDialogProps>) {
   const [files, setFiles] = useState<SelectedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -150,17 +158,19 @@ export function UploadDialog({ open, onOpenChange }: Readonly<UploadDialogProps>
     let attempts = 0;
     const interval = setInterval(async () => {
       attempts++;
-      const statuses = await Promise.all(
-        photoIds.map((id) =>
-          api.get<{ status: string }>(`/photos/${id}/status`).then((r) => r.data.status).catch(() => "FAILED"),
-        ),
-      );
-      const allDone = statuses.every((s) => s === "COMPLETED" || s === "FAILED");
+      const statuses = await Promise.all(photoIds.map(fetchPhotoStatus));
+      const allDone = statuses.every((status) => status === "COMPLETED" || status === "FAILED");
       if (allDone || attempts >= 15) {
         clearInterval(interval);
         queryClient.invalidateQueries({ queryKey: ["photos"] });
       }
     }, 2000);
+  };
+
+  // Met à jour la progression d'un fichier sélectionné (extrait pour éviter
+  // une imbrication de callbacks trop profonde dans le handler Uppy).
+  const updateFileProgress = (localId: string, pct: number) => {
+    setFiles((prev) => prev.map((selectedFile) => (selectedFile.id === localId ? { ...selectedFile, progress: pct } : selectedFile)));
   };
 
   const handleUpload = async () => {
@@ -226,16 +236,8 @@ export function UploadDialog({ open, onOpenChange }: Readonly<UploadDialogProps>
     uppy.on("upload-progress", (file, progress) => {
       const localId = (file?.meta as { localId?: string } | undefined)?.localId;
       if (!localId || !progress.bytesTotal) return;
-      const pct = Math.round(
-        (progress.bytesUploaded / progress.bytesTotal) * 100,
-      );
-      setFiles((prev) =>
-        prev.map((selectedFile) =>
-          selectedFile.id === localId
-            ? { ...selectedFile, progress: pct }
-            : selectedFile,
-        ),
-      );
+      const pct = Math.round((progress.bytesUploaded / progress.bytesTotal) * 100);
+      updateFileProgress(localId, pct);
     });
 
     files.forEach((selectedFile) => {

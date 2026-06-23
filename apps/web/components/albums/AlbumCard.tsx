@@ -70,7 +70,8 @@ export function AlbumCard({ album, onRename, onShare, onDelete }: Readonly<Album
 
           {menuOpen && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+              {/* backdrop : bouton natif volontaire (click-catcher invisible) */}
+              <button type="button" aria-label="Fermer le menu" className="fixed inset-0 z-40 cursor-default" onClick={() => setMenuOpen(false)} />
               <div className="absolute right-2 top-10 z-50 min-w-40 overflow-hidden rounded-xl border border-border bg-white shadow-xl">
                 <button
                   className="block w-full px-3.5 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
