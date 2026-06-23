@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { DownloadButton } from "./DownloadButton";
 
 export const dynamic = "force-dynamic";
 
@@ -20,9 +21,9 @@ function formatDate(iso: string): string {
 
 export default async function SharedPhotoPage({
   params,
-}: {
+}: Readonly<{
   params: Promise<{ token: string }>;
-}) {
+}>) {
   const { token } = await params;
 
   const response = await fetch(
@@ -44,14 +45,15 @@ export default async function SharedPhotoPage({
             className="max-h-[70vh] w-auto rounded-lg object-contain"
           />
         </div>
-        <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-4">
+        <div className="flex flex-col gap-3 border-t border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-foreground">{photo.originalName}</p>
             <p className="text-xs text-muted-foreground">{formatDate(photo.createdAt)}</p>
           </div>
-          <span className="shrink-0 text-xs text-muted-foreground">Partagé via PhotoApp</span>
+          <DownloadButton url={photo.url} filename={photo.originalName} />
         </div>
       </div>
+      <p className="text-xs text-muted-foreground">Partagé via PhotoApp</p>
     </main>
   );
 }

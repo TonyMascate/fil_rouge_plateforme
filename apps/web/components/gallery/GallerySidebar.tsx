@@ -11,7 +11,7 @@ interface GallerySidebarProps {
   onJumpToMonth: (key: string) => void;
 }
 
-export function GallerySidebar({ total, years, onJumpToMonth }: GallerySidebarProps) {
+export function GallerySidebar({ total, years, onJumpToMonth }: Readonly<GallerySidebarProps>) {
   const [closedYears, setClosedYears] = useState<Record<string, boolean>>({});
 
   function toggleYear(year: string) {

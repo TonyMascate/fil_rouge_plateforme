@@ -67,7 +67,7 @@ export function oklabToRgb({ lightness, aAxis, bAxis }: Oklab): Rgb {
 }
 
 export function oklabToOklch({ lightness, aAxis, bAxis }: Oklab): Oklch {
-  const chroma = Math.sqrt(aAxis * aAxis + bAxis * bAxis);
+  const chroma = Math.hypot(aAxis, bAxis);
   let hue = (Math.atan2(bAxis, aAxis) * 180) / Math.PI;
   if (hue < 0) hue += 360;
   return { lightness, chroma, hue };
@@ -87,9 +87,9 @@ export function rgbToHex({ red, green, blue }: Rgb): string {
 
 export function hexToRgb(hex: string): Rgb {
   return {
-    red: parseInt(hex.slice(1, 3), 16),
-    green: parseInt(hex.slice(3, 5), 16),
-    blue: parseInt(hex.slice(5, 7), 16),
+    red: Number.parseInt(hex.slice(1, 3), 16),
+    green: Number.parseInt(hex.slice(3, 5), 16),
+    blue: Number.parseInt(hex.slice(5, 7), 16),
   };
 }
 
@@ -120,7 +120,7 @@ interface LightnessBand { name: string; min: number; max: number; center: number
 // 4 niveaux de clarté pour les cellules chromatiques. `chroma` = chroma
 // d'illustration de la pastille (les tons pâles sont volontairement moins saturés).
 const CHROMATIC_LIGHTNESS_BANDS: LightnessBand[] = [
-  { name: 'sombre', min: 0.0, max: 0.45, center: 0.36, chroma: 0.11 },
+  { name: 'sombre', min: 0, max: 0.45, center: 0.36, chroma: 0.11 },
   { name: 'moyen', min: 0.45, max: 0.62, center: 0.54, chroma: 0.15 },
   { name: 'clair', min: 0.62, max: 0.78, center: 0.7, chroma: 0.13 },
   { name: 'pâle', min: 0.78, max: 1.01, center: 0.87, chroma: 0.07 },
@@ -128,7 +128,7 @@ const CHROMATIC_LIGHTNESS_BANDS: LightnessBand[] = [
 
 // 5 niveaux de gris du noir au blanc.
 const NEUTRAL_LIGHTNESS_BANDS: Array<{ name: string; min: number; max: number; center: number }> = [
-  { name: 'noir', min: 0.0, max: 0.22, center: 0.12 },
+  { name: 'noir', min: 0, max: 0.22, center: 0.12 },
   { name: 'gris foncé', min: 0.22, max: 0.45, center: 0.34 },
   { name: 'gris', min: 0.45, max: 0.65, center: 0.55 },
   { name: 'gris clair', min: 0.65, max: 0.85, center: 0.74 },

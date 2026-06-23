@@ -9,7 +9,7 @@ import { UsersService } from '@app/users/users.service';
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     configService: ConfigService,
-    private usersService: UsersService,
+    private readonly usersService: UsersService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([(req: Request) => req.cookies['access_token']]),

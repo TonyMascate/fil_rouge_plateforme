@@ -26,23 +26,9 @@ function UploadVisual() {
   );
 }
 
-function ChromaVisual() {
-  return (
-    <MacWindow>
-      <AppPreviewImage />
-    </MacWindow>
-  );
-}
-
-function ShareVisual() {
-  return (
-    <MacWindow>
-      <AppPreviewImage />
-    </MacWindow>
-  );
-}
-
-function AlbumsVisual() {
+// Aperçu générique partagé par les sections Chroma / Partage / Albums
+// (UploadVisual reste distinct car il porte le badge d'optimisation).
+function PreviewVisual() {
   return (
     <MacWindow>
       <AppPreviewImage />
@@ -70,7 +56,7 @@ export function UploadFeature() {
           Essayer l'upload →
         </Link>
       </FeatureText>
-      <div className="flex-[1.4]">
+      <div className="flex-[1.4] mt-8">
         <UploadVisual />
       </div>
     </FeatureRow>
@@ -96,7 +82,7 @@ export function ChromaFeature() {
         </Button>
       </FeatureText>
       <div className="flex-[1.4]">
-        <ChromaVisual />
+        <PreviewVisual />
       </div>
     </FeatureRow>
   );
@@ -121,7 +107,7 @@ export function ShareFeature() {
         </Link>
       </FeatureText>
       <div className="flex-[1.4]">
-        <ShareVisual />
+        <PreviewVisual />
       </div>
     </FeatureRow>
   );
@@ -145,7 +131,7 @@ export function AlbumsFeature() {
         </Link>
       </FeatureText>
       <div className="flex-[1.4]">
-        <AlbumsVisual />
+        <PreviewVisual />
       </div>
     </FeatureRow>
   );

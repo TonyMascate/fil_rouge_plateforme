@@ -11,6 +11,7 @@ import { GallerySidebar } from "./GallerySidebar";
 import { PhotoDetailModal } from "./PhotoDetailModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 type Density = "dense" | "large";
@@ -72,6 +73,9 @@ interface PhotoGridProps {
   renderCellOverlay?: (photo: GalleryPhoto) => ReactNode;
 }
 
+const GRID_SKELETON_KEYS = Array.from({ length: 18 }, (_, index) => `grid-sk-${index}`);
+const NEXT_GRID_SKELETON_KEYS = Array.from({ length: 6 }, (_, index) => `grid-next-sk-${index}`);
+
 export function PhotoGrid({
   query,
   order,
@@ -82,7 +86,7 @@ export function PhotoGrid({
   destructiveAction,
   emptyState,
   renderCellOverlay,
-}: PhotoGridProps) {
+}: Readonly<PhotoGridProps>) {
   const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage } = query;
 
   const [density, setDensity] = useState<Density>("dense");
@@ -129,6 +133,81 @@ export function PhotoGrid({
     }
   }
 
+  let body: ReactNode;
+  if (isLoading) {
+    body = (
+      <div className={cn("grid gap-1", GRID_CLASS[density])}>
+        {GRID_SKELETON_KEYS.map((skeletonKey) => <Skeleton key={skeletonKey} className="aspect-square rounded-md" />)}
+      </div>
+    );
+  } else if (isError) {
+    body = (
+      <div className="flex flex-col items-center justify-center gap-2 py-24 text-muted-foreground">
+        <ImageOff className="size-8" />
+        <p>Impossible de charger les photos.</p>
+      </div>
+    );
+  } else if (photos.length === 0) {
+    body = (
+      <div className="flex flex-col items-center justify-center gap-4 py-24 text-center text-muted-foreground">
+        <ImageOff className="size-8" />
+        <div>
+          <p className="text-base font-medium text-foreground">{emptyState.title}</p>
+          <p className="text-sm">{emptyState.description}</p>
+        </div>
+        {emptyState.cta}
+      </div>
+    );
+  } else {
+    body = (
+      <>
+        {monthGroups.map((group) => (
+          <section key={group.key} id={`month-${group.key}`} className="mb-8 scroll-mt-32">
+            <div className="mb-3.5 flex items-baseline gap-2">
+              <h2 className="text-base font-semibold tracking-tight">{group.label}</h2>
+              <span className="text-sm text-muted-foreground">· {group.photos.length} photo{group.photos.length > 1 ? "s" : ""}</span>
+            </div>
+            <div className={cn("grid gap-1", GRID_CLASS[density])}>
+              {group.photos.map((photo) => {
+                const isSelected = selected.has(photo.id);
+                let checkboxClass = "border-white bg-black/20 opacity-0 group-hover:opacity-100";
+                if (isSelected) checkboxClass = "border-primary bg-primary opacity-100";
+                else if (selectionMode) checkboxClass = "border-white bg-black/40 opacity-100";
+                return (
+                  <div
+                    key={photo.id}
+                    onClick={() => handleCellClick(photo, setActivePhoto)}
+                    onPointerDown={(e) => handlePointerDown(e, photo.id)}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
+                    onPointerCancel={handlePointerUp}
+                    className={cn("group relative aspect-square cursor-pointer overflow-hidden rounded-md bg-muted select-none touch-pan-y [-webkit-touch-callout:none]", isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background")}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={photo.url} alt={photo.originalName} loading="lazy" className="size-full object-cover transition-transform duration-200 group-hover:scale-[1.03]" />
+                    <div className={cn("absolute inset-0 transition-colors", isSelected ? "bg-primary/25" : "group-hover:bg-black/15")} />
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleSelect(photo.id); }}
+                      className={cn("absolute left-1.5 top-1.5 z-[2] flex size-5 items-center justify-center rounded-full border-2 transition-opacity", checkboxClass)}
+                      aria-label={isSelected ? "Désélectionner" : "Sélectionner"}>
+                      {isSelected && <Check className="size-3 text-white" />}
+                    </button>
+                    {renderCellOverlay?.(photo)}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+        <div ref={sentinelRef} className="h-1" />
+        {isFetchingNextPage && (
+          <div className={cn("mt-1 grid gap-1", GRID_CLASS[density])}>
+            {NEXT_GRID_SKELETON_KEYS.map((skeletonKey) => <Skeleton key={skeletonKey} className="aspect-square rounded-md" />)}
+          </div>
+        )}
+      </>
+    );
+  }
+
   return (
     <div className="flex flex-1 min-h-0">
       <GallerySidebar total={total} years={yearGroups} onJumpToMonth={(key) => document.getElementById(`month-${key}`)?.scrollIntoView({ behavior: "smooth", block: "start" })} />
@@ -161,10 +240,15 @@ export function PhotoGrid({
               {toolbarStart}
               <div className="flex-1" />
               {ownerActions}
-              <select value={order} onChange={(e) => onOrderChange(e.target.value as SortOrder)} className="h-8 rounded-lg border border-border bg-card px-2 text-sm outline-none" aria-label="Trier">
-                <option value="desc">Plus récentes</option>
-                <option value="asc">Plus anciennes</option>
-              </select>
+              <Select value={order} onValueChange={(value) => onOrderChange(value as SortOrder)}>
+                <SelectTrigger size="sm" className="min-w-0" aria-label="Trier">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="desc">Plus récentes</SelectItem>
+                  <SelectItem value="asc">Plus anciennes</SelectItem>
+                </SelectContent>
+              </Select>
               <div className="hidden items-center gap-1 md:flex">
                 <Button variant="ghost" size="icon-sm" className={cn(density === "dense" && "bg-primary/8 text-primary")} onClick={() => setDensity("dense")} aria-label="Grille serrée">
                   <Grid3x3 className="size-4" />
@@ -178,68 +262,7 @@ export function PhotoGrid({
         </div>
 
         {/* Contenu */}
-        {isLoading ? (
-          <div className={cn("grid gap-1", GRID_CLASS[density])}>
-            {Array.from({ length: 18 }).map((_, i) => <Skeleton key={i} className="aspect-square rounded-md" />)}
-          </div>
-        ) : isError ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-24 text-muted-foreground">
-            <ImageOff className="size-8" />
-            <p>Impossible de charger les photos.</p>
-          </div>
-        ) : photos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-4 py-24 text-center text-muted-foreground">
-            <ImageOff className="size-8" />
-            <div>
-              <p className="text-base font-medium text-foreground">{emptyState.title}</p>
-              <p className="text-sm">{emptyState.description}</p>
-            </div>
-            {emptyState.cta}
-          </div>
-        ) : (
-          <>
-            {monthGroups.map((group) => (
-              <section key={group.key} id={`month-${group.key}`} className="mb-8 scroll-mt-32">
-                <div className="mb-3.5 flex items-baseline gap-2">
-                  <h2 className="text-base font-semibold tracking-tight">{group.label}</h2>
-                  <span className="text-sm text-muted-foreground">· {group.photos.length} photo{group.photos.length > 1 ? "s" : ""}</span>
-                </div>
-                <div className={cn("grid gap-1", GRID_CLASS[density])}>
-                  {group.photos.map((photo) => {
-                    const isSelected = selected.has(photo.id);
-                    return (
-                      <div
-                        key={photo.id}
-                        onClick={() => handleCellClick(photo, setActivePhoto)}
-                        onPointerDown={(e) => handlePointerDown(e, photo.id)}
-                        onPointerMove={handlePointerMove}
-                        onPointerUp={handlePointerUp}
-                        onPointerCancel={handlePointerUp}
-                        className={cn("group relative aspect-square cursor-pointer overflow-hidden rounded-md bg-muted select-none touch-pan-y [-webkit-touch-callout:none]", isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background")}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={photo.url} alt={photo.originalName} loading="lazy" className="size-full object-cover transition-transform duration-200 group-hover:scale-[1.03]" />
-                        <div className={cn("absolute inset-0 transition-colors", isSelected ? "bg-primary/25" : "group-hover:bg-black/15")} />
-                        <button
-                          onClick={(e) => { e.stopPropagation(); toggleSelect(photo.id); }}
-                          className={cn("absolute left-1.5 top-1.5 z-[2] flex size-5 items-center justify-center rounded-full border-2 transition-opacity", isSelected ? "border-primary bg-primary opacity-100" : selectionMode ? "border-white bg-black/40 opacity-100" : "border-white bg-black/20 opacity-0 group-hover:opacity-100")}
-                          aria-label={isSelected ? "Désélectionner" : "Sélectionner"}>
-                          {isSelected && <Check className="size-3 text-white" />}
-                        </button>
-                        {renderCellOverlay?.(photo)}
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
-            <div ref={sentinelRef} className="h-1" />
-            {isFetchingNextPage && (
-              <div className={cn("mt-1 grid gap-1", GRID_CLASS[density])}>
-                {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="aspect-square rounded-md" />)}
-              </div>
-            )}
-          </>
-        )}
+        {body}
       </main>
 
       {activePhoto && (

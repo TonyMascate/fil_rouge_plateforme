@@ -4,7 +4,7 @@ import { Request } from 'express';
 
 @Injectable()
 export class CsrfGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
     const isSkipped = this.reflector.getAllAndOverride<boolean>('skipCsrf', [context.getHandler(), context.getClass()]);

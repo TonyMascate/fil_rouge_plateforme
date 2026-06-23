@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { readFileSync } from 'node:fs';
 
 // Code réservé au runtime Node. Importé dynamiquement par instrumentation.ts
 // uniquement quand NEXT_RUNTIME === 'nodejs' → jamais inclus dans le bundle Edge,

@@ -45,7 +45,7 @@ export class AlbumPhotoRepository extends Repository<AlbumPhoto> {
       .where('ap.albumId IN (:...albumIds)', { albumIds })
       .groupBy('ap.albumId')
       .getRawMany<{ albumId: string; count: string }>();
-    return new Map(rows.map((row) => [row.albumId, parseInt(row.count, 10)]));
+    return new Map(rows.map((row) => [row.albumId, Number.parseInt(row.count, 10)]));
   }
 
   async findPhotoIds(albumId: string): Promise<string[]> {
@@ -77,17 +77,19 @@ export class AlbumPhotoRepository extends Repository<AlbumPhoto> {
     // Tri sur ap.addedAt (colonne racine) et non p.created_at : trier sur la
     // colonne d'une entité jointe casse le getManyAndCount() de TypeORM. C'est
     // aussi l'ordre utilisé par la vue album classique (findPhotosPage).
-    return this.createQueryBuilder('ap')
-      .innerJoinAndSelect('ap.photo', 'p')
-      .where('ap.albumId = :albumId', { albumId })
-      .andWhere('p.user_id = :userId', { userId })
-      .andWhere('p.status = :status', { status: PhotoStatus.COMPLETED })
-      // `@> ARRAY[:cellId]` (« contient ») et non `= ANY(...)` : seule la forme
-      // « contient » exploite l'index GIN sur color_cells (sinon seq scan).
-      .andWhere('p.color_cells @> ARRAY[:cellId]', { cellId })
-      .orderBy('ap.addedAt', order === 'asc' ? 'ASC' : 'DESC')
-      .skip((page - 1) * limit)
-      .take(limit)
-      .getManyAndCount();
+    return (
+      this.createQueryBuilder('ap')
+        .innerJoinAndSelect('ap.photo', 'p')
+        .where('ap.albumId = :albumId', { albumId })
+        .andWhere('p.user_id = :userId', { userId })
+        .andWhere('p.status = :status', { status: PhotoStatus.COMPLETED })
+        // `@> ARRAY[:cellId]` (« contient ») et non `= ANY(...)` : seule la forme
+        // « contient » exploite l'index GIN sur color_cells (sinon seq scan).
+        .andWhere('p.color_cells @> ARRAY[:cellId]', { cellId })
+        .orderBy('ap.addedAt', order === 'asc' ? 'ASC' : 'DESC')
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getManyAndCount()
+    );
   }
 }

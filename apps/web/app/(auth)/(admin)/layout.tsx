@@ -2,7 +2,7 @@ import { GetSession } from "@/lib/auth";
 import { Role } from "@repo/shared";
 import { redirect } from "next/navigation";
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const session = await GetSession();
 
   // On sait qu'il est connecté (grâce au layout parent), on check le rôle

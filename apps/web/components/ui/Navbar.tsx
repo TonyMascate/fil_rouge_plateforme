@@ -33,7 +33,7 @@ export interface NavbarUser {
   email: string;
 }
 
-export default function Navbar({ user }: { user: NavbarUser | null }) {
+export default function Navbar({ user }: Readonly<{ user: NavbarUser | null }>) {
   if (user) return <AuthedNavbar user={user} />;
   return <PublicNavbar />;
 }
@@ -48,7 +48,7 @@ function PublicNavbar() {
 
   return (
     <header className="sticky top-0 z-50">
-      <nav className="w-full flex items-center justify-between px-10 h-16 bg-card backdrop-blur-sm border-b border-border">
+      <nav className="w-full flex items-center justify-between px-5 sm:px-10 h-16 bg-card backdrop-blur-sm border-b border-border">
         <Link href="/" className="text-lg font-semibold text-foreground">
           PhotoApp
         </Link>
@@ -116,7 +116,7 @@ function getInitials(firstName?: string, lastName?: string): string {
   return (f + l).toUpperCase() || "?";
 }
 
-function AuthedNavbar({ user }: { user: NavbarUser }) {
+function AuthedNavbar({ user }: Readonly<{ user: NavbarUser }>) {
   const pathname = usePathname();
   const router = useRouter();
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -151,7 +151,7 @@ function AuthedNavbar({ user }: { user: NavbarUser }) {
   return (
     <>
       <header className="sticky top-0 z-50">
-      <nav className="w-full flex items-center justify-between px-8 h-16 bg-card backdrop-blur-sm border-b border-border">
+      <nav className="w-full flex items-center justify-between px-4 sm:px-8 h-16 bg-card backdrop-blur-sm border-b border-border">
         {/* Brand + nav links */}
         <div className="flex items-center gap-6">
           <Link href="/galerie" className="flex items-center gap-2">

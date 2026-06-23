@@ -6,7 +6,7 @@ interface AlbumPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function AlbumPage({ params }: AlbumPageProps) {
+export default async function AlbumPage({ params }: Readonly<AlbumPageProps>) {
   const { id } = await params;
   return <AlbumGallery albumId={id} />;
 }

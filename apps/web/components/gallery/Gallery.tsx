@@ -37,7 +37,7 @@ export default function Gallery() {
         toolbarStart={
           <>
             <h1 className="text-lg font-bold tracking-tight">Galerie</h1>
-            <span className="text-sm text-muted-foreground">{total} photo{total > 1 ? "s" : ""}</span>
+            <span className="hidden text-sm text-muted-foreground sm:inline">{total} photo{total > 1 ? "s" : ""}</span>
           </>
         }
         selectionActions={(selectedIds, requestConfirm, clearSelection) => (

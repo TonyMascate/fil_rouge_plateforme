@@ -15,11 +15,11 @@ export class AuthService {
 
   constructor(
     @InjectRepository(User)
-    private userRepository: Repository<User>,
+    private readonly userRepository: Repository<User>,
     @InjectRepository(RefreshToken)
-    private refreshTokenRepository: Repository<RefreshToken>,
-    private jwtService: JwtService,
-    private configService: ConfigService,
+    private readonly refreshTokenRepository: Repository<RefreshToken>,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async validateUser(dto: UserLoginDto): Promise<User | null> {
@@ -102,7 +102,13 @@ export class AuthService {
 
       // Suppresion de l'ancien refresh token et création du nouveau
       await this.refreshTokenRepository.delete(storedToken.id);
-      const tokens = await this.generateTokens(storedToken.user.id, storedToken.user.role, storedToken.user.email, storedToken.user.firstName, storedToken.user.lastName);
+      const tokens = await this.generateTokens(
+        storedToken.user.id,
+        storedToken.user.role,
+        storedToken.user.email,
+        storedToken.user.firstName,
+        storedToken.user.lastName,
+      );
       await this.refreshTokenRepository.save({
         id: tokens.tokenId,
         user: storedToken.user,
@@ -111,7 +117,8 @@ export class AuthService {
       });
       return tokens;
     } catch (error) {
-      throw new UnauthorizedException('Impossible de refresh le token jwt');
+      this.logger.warn(`Échec du refresh du token JWT : ${error instanceof Error ? error.message : error}`);
+      throw new UnauthorizedException('Impossible de refresh le token jwt', { cause: error });
     }
   }
 }

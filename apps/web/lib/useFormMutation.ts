@@ -5,14 +5,14 @@ import { toast } from "sonner";
 import { ERROR_MESSAGES } from "./error-messages";
 import { handleApiFormErrors } from "./form-errors";
 
-interface useFormMutationOptions<TData, TVariables, TFormValues extends Record<string, any>> {
+interface UseFormMutationOptions<TData, TVariables, TFormValues extends Record<string, any>> {
   mutationFn: (variables: TVariables) => Promise<TData>;
   setError?: UseFormSetError<TFormValues>;
   onSuccess?: (data: TData) => void;
   successMessage?: string;
 }
 
-export const useFormMutation = <TData, TVariables, TFormValues extends Record<string, any>>({ mutationFn, setError, onSuccess, successMessage }: useFormMutationOptions<TData, TVariables, TFormValues>) => {
+export const useFormMutation = <TData, TVariables, TFormValues extends Record<string, any>>({ mutationFn, setError, onSuccess, successMessage }: UseFormMutationOptions<TData, TVariables, TFormValues>) => {
   return useMutation({
     mutationFn,
     onSuccess: (data) => {

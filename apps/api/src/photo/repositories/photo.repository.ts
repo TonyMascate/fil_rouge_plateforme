@@ -16,7 +16,7 @@ export class PhotoRepository extends Repository<Photo> {
       .where('photo.userId = :userId', { userId })
       .andWhere('photo.status = :status', { status: PhotoStatus.COMPLETED })
       .getRawOne<{ total: string }>();
-    return parseInt(result?.total ?? '0', 10);
+    return Number.parseInt(result?.total ?? '0', 10);
   }
 
   /**

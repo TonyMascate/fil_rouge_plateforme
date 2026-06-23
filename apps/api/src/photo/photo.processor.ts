@@ -1,15 +1,14 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
-import { PassThrough } from 'stream';
+import { PassThrough } from 'node:stream';
 import sharp from 'sharp';
 import { PhotoStatus } from '@repo/shared';
 
 import { AwsService } from '@app/aws/aws.service';
 import { RedisService } from '@app/redis/redis.service';
 import { PhotoRepository } from './repositories/photo.repository';
-import { OptimizeJobData } from './photo.service';
-import { colorAtlasCacheKey } from './photo.service';
+import { OptimizeJobData, colorAtlasCacheKey } from './photo.service';
 import { extractPalette, cellsFromPalette, PaletteEntry } from './color';
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -16,7 +16,7 @@ interface AddToAlbumModalProps {
   onDone?: () => void;
 }
 
-export function AddToAlbumModal({ photoIds, onClose, onDone }: AddToAlbumModalProps) {
+export function AddToAlbumModal({ photoIds, onClose, onDone }: Readonly<AddToAlbumModalProps>) {
   const { data: albums, isLoading } = useAlbums();
   const addPhotos = useAddPhotosToAlbum();
   const createAlbum = useCreateAlbum();
@@ -28,8 +28,8 @@ export function AddToAlbumModal({ photoIds, onClose, onDone }: AddToAlbumModalPr
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
     }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    globalThis.addEventListener("keydown", onKey);
+    return () => globalThis.removeEventListener("keydown", onKey);
   }, [onClose]);
 
   useEffect(() => {
@@ -83,8 +83,8 @@ export function AddToAlbumModal({ photoIds, onClose, onDone }: AddToAlbumModalPr
 
         <div className="flex max-h-80 flex-col overflow-y-auto py-2">
           {isLoading ? (
-            Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 px-6 py-3">
+            ["sk-1", "sk-2", "sk-3"].map((skeletonKey) => (
+              <div key={skeletonKey} className="flex items-center gap-3 px-6 py-3">
                 <Skeleton className="size-10 rounded-lg" />
                 <Skeleton className="h-4 w-32" />
               </div>
@@ -107,7 +107,7 @@ export function AddToAlbumModal({ photoIds, onClose, onDone }: AddToAlbumModalPr
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-sm font-medium">{album.name}</span>
-                    <span className="text-xs text-muted-foreground">{album.photoCount} photo{album.photoCount !== 1 ? "s" : ""}</span>
+                    <span className="text-xs text-muted-foreground">{album.photoCount} photo{album.photoCount === 1 ? "" : "s"}</span>
                   </div>
                   <Plus className="size-4 shrink-0 text-muted-foreground" />
                 </button>

@@ -9,7 +9,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 export class UsersService {
   constructor(
     @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    private readonly usersRepository: Repository<User>,
   ) {}
   async create(createUserDto: CreateUserDto) {
     const existingUser = await this.usersRepository.findOneBy({

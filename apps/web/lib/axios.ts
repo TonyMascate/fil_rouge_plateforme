@@ -21,26 +21,24 @@ api.interceptors.response.use(
     const originalRequest = error.config;
     if (error.response?.status === 401 && originalRequest.url?.includes("/auth/refresh")) {
       console.error("Le token de rafraîchissement est invalide ou a expiré. Veuillez vous reconnecter.");
-      window.location.href = "/login";
-      return Promise.reject(error);
+      globalThis.location.href = "/login";
+      throw error;
     }
     if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes("/auth/login")) {
       originalRequest._retry = true;
       try {
-        if (!refreshPromise) {
-          refreshPromise = api.post("/auth/refresh").finally(() => {
-            refreshPromise = null;
-          });
-        }
+        refreshPromise ??= api.post("/auth/refresh").finally(() => {
+          refreshPromise = null;
+        });
         await refreshPromise;
         return api(originalRequest);
       } catch (refreshError) {
         console.error("Erreur lors du rafraîchissement du token. Veuillez vous reconnecter.", refreshError);
-        window.location.href = "/login";
-        return Promise.reject(refreshError);
+        globalThis.location.href = "/login";
+        throw refreshError;
       }
     }
-    return Promise.reject(error);
+    throw error;
   },
 );
 

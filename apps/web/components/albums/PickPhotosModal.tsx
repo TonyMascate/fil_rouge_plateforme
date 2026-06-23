@@ -13,12 +13,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const MAX_PHOTOS_PER_BATCH = 200;
 
+const SKELETON_KEYS = Array.from({ length: 18 }, (_, index) => `pick-sk-${index}`);
+const NEXT_SKELETON_KEYS = Array.from({ length: 6 }, (_, index) => `pick-next-sk-${index}`);
+
 interface PickPhotosModalProps {
   albumId: string;
   onClose: () => void;
 }
 
-export function PickPhotosModal({ albumId, onClose }: PickPhotosModalProps) {
+export function PickPhotosModal({ albumId, onClose }: Readonly<PickPhotosModalProps>) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const addPhotos = useAddPhotosToAlbum();
   const { data: existingIds = [] } = useAlbumPhotoIds(albumId);
@@ -41,8 +44,8 @@ export function PickPhotosModal({ albumId, onClose }: PickPhotosModalProps) {
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    globalThis.addEventListener("keydown", onKey);
+    return () => globalThis.removeEventListener("keydown", onKey);
   }, [onClose]);
 
   function toggleSelect(id: string) {
@@ -76,6 +79,85 @@ export function PickPhotosModal({ albumId, onClose }: PickPhotosModalProps) {
   }
 
   const selectedCount = selected.size;
+  const pluralSuffix = selectedCount > 1 ? "s" : "";
+  const confirmLabel = selectedCount > 0 ? `Ajouter ${selectedCount} photo${pluralSuffix}` : "Ajouter";
+
+  let gridContent: React.ReactNode;
+  if (isLoading) {
+    gridContent = (
+      <div className="grid grid-cols-4 gap-1 sm:grid-cols-5 md:grid-cols-6">
+        {SKELETON_KEYS.map((skeletonKey) => (
+          <Skeleton key={skeletonKey} className="aspect-square rounded-md" />
+        ))}
+      </div>
+    );
+  } else if (isError) {
+    gridContent = (
+      <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
+        <ImageOff className="size-8" />
+        <p>Impossible de charger les photos.</p>
+      </div>
+    );
+  } else if (photos.length === 0) {
+    gridContent = (
+      <div className="flex flex-col items-center justify-center gap-2 py-16 text-center text-muted-foreground">
+        <ImageOff className="size-8" />
+        <p className="text-sm">Aucune photo dans votre galerie.</p>
+      </div>
+    );
+  } else {
+    gridContent = (
+      <>
+        <div className="grid grid-cols-4 gap-1 sm:grid-cols-5 md:grid-cols-6">
+          {photos.map((photo) => {
+            const alreadyAdded = existingSet.has(photo.id);
+            const isSelected = selected.has(photo.id);
+
+            return (
+              <button
+                key={photo.id}
+                onClick={() => toggleSelect(photo.id)}
+                disabled={alreadyAdded}
+                className={cn(
+                  "group relative aspect-square overflow-hidden rounded-md bg-muted transition-transform active:scale-95",
+                  isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background",
+                  alreadyAdded && "cursor-default opacity-60",
+                )}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photo.url} alt={photo.originalName} loading="lazy" className="size-full object-cover" />
+
+                {alreadyAdded ? (
+                  /* Déjà dans l'album */
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                    <div className="flex size-6 items-center justify-center rounded-full bg-primary shadow-sm">
+                      <Check className="size-3.5 text-white" />
+                    </div>
+                  </div>
+                ) : (
+                  /* Sélectionnable */
+                  <>
+                    <div className={cn("absolute inset-0 transition-colors", isSelected ? "bg-primary/25" : "group-hover:bg-black/10")} />
+                    <div className={cn(
+                      "absolute left-1.5 top-1.5 flex size-5 items-center justify-center rounded-full border-2 transition-all",
+                      isSelected ? "border-primary bg-primary" : "border-white bg-black/20 opacity-0 group-hover:opacity-100",
+                    )}>
+                      {isSelected && <Check className="size-3 text-white" />}
+                    </div>
+                  </>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <div ref={sentinelRef} className="mt-2 h-1" />
+        {isFetchingNextPage && (
+          <div className="mt-1 grid grid-cols-4 gap-1 sm:grid-cols-5 md:grid-cols-6">
+            {NEXT_SKELETON_KEYS.map((skeletonKey) => <Skeleton key={skeletonKey} className="aspect-square rounded-md" />)}
+          </div>
+        )}
+      </>
+    );
+  }
 
   return (
     <div
@@ -99,73 +181,7 @@ export function PickPhotosModal({ albumId, onClose }: PickPhotosModalProps) {
 
         {/* Grid */}
         <div className="flex-1 overflow-y-auto p-4">
-          {isLoading ? (
-            <div className="grid grid-cols-4 gap-1 sm:grid-cols-5 md:grid-cols-6">
-              {Array.from({ length: 18 }).map((_, i) => (
-                <Skeleton key={i} className="aspect-square rounded-md" />
-              ))}
-            </div>
-          ) : isError ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
-              <ImageOff className="size-8" />
-              <p>Impossible de charger les photos.</p>
-            </div>
-          ) : photos.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-16 text-center text-muted-foreground">
-              <ImageOff className="size-8" />
-              <p className="text-sm">Aucune photo dans votre galerie.</p>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-4 gap-1 sm:grid-cols-5 md:grid-cols-6">
-                {photos.map((photo) => {
-                  const alreadyAdded = existingSet.has(photo.id);
-                  const isSelected = selected.has(photo.id);
-
-                  return (
-                    <button
-                      key={photo.id}
-                      onClick={() => toggleSelect(photo.id)}
-                      disabled={alreadyAdded}
-                      className={cn(
-                        "group relative aspect-square overflow-hidden rounded-md bg-muted transition-transform active:scale-95",
-                        isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background",
-                        alreadyAdded && "cursor-default opacity-60",
-                      )}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={photo.url} alt={photo.originalName} loading="lazy" className="size-full object-cover" />
-
-                      {alreadyAdded ? (
-                        /* Déjà dans l'album */
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                          <div className="flex size-6 items-center justify-center rounded-full bg-primary shadow-sm">
-                            <Check className="size-3.5 text-white" />
-                          </div>
-                        </div>
-                      ) : (
-                        /* Sélectionnable */
-                        <>
-                          <div className={cn("absolute inset-0 transition-colors", isSelected ? "bg-primary/25" : "group-hover:bg-black/10")} />
-                          <div className={cn(
-                            "absolute left-1.5 top-1.5 flex size-5 items-center justify-center rounded-full border-2 transition-all",
-                            isSelected ? "border-primary bg-primary" : "border-white bg-black/20 opacity-0 group-hover:opacity-100",
-                          )}>
-                            {isSelected && <Check className="size-3 text-white" />}
-                          </div>
-                        </>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-              <div ref={sentinelRef} className="mt-2 h-1" />
-              {isFetchingNextPage && (
-                <div className="mt-1 grid grid-cols-4 gap-1 sm:grid-cols-5 md:grid-cols-6">
-                  {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="aspect-square rounded-md" />)}
-                </div>
-              )}
-            </>
-          )}
+          {gridContent}
         </div>
 
         {/* Footer */}
@@ -178,7 +194,7 @@ export function PickPhotosModal({ albumId, onClose }: PickPhotosModalProps) {
               Annuler
             </Button>
             <Button className="rounded-full" onClick={handleConfirm} disabled={selectedCount === 0 || addPhotos.isPending}>
-              {selectedCount > 0 ? `Ajouter ${selectedCount} photo${selectedCount > 1 ? "s" : ""}` : "Ajouter"}
+              {confirmLabel}
             </Button>
           </div>
         </div>
