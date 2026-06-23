@@ -17,7 +17,7 @@ export default function Home() {
           <DotBackground />
           <div className="flex flex-col items-center text-center gap-6 pt-16 pb-12 px-8 z-10">
             <span className="px-4 py-1.5 rounded-full bg-card border border-border text-sm text-muted-foreground shadow-sm">✦ Explorez vos souvenirs autrement</span>
-            <h1 className="text-7xl font-bold leading-[1.05] tracking-tight max-w-3xl">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold leading-[1.05] tracking-tight max-w-3xl">
               Vos photos,
               <br />
               <span className="text-primary">par ambiance.</span>
@@ -26,13 +26,13 @@ export default function Home() {
             <Button asChild size="lg" className="rounded-full shadow-lg shadow-primary/30">
               <Link href="/register">Commencer gratuitement</Link>
             </Button>
-            <div className="flex items-center gap-8 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
               <span>⭐ 4,9/5</span>
               <span>+2 000 utilisateurs</span>
               <span>500 MB gratuits dès l'inscription</span>
             </div>
           </div>
-          <div className="relative z-10 flex-1 flex items-end justify-center px-16 pb-0">
+          <div className="relative z-10 flex-1 flex items-end justify-center px-4 sm:px-8 md:px-16 pb-0">
             <MacWindow className="w-full max-w-5xl rounded-b-none shadow-2xl">
               <div className="p-4 grid grid-cols-6 gap-2 h-72 content-start">
                 {["bg-violet-300", "bg-rose-300", "bg-indigo-400", "bg-pink-300", "bg-violet-500", "bg-amber-300", "bg-rose-400", "bg-violet-400", "bg-pink-400", "bg-indigo-300", "bg-amber-400", "bg-rose-300", "bg-violet-300", "bg-indigo-400", "bg-pink-300", "bg-rose-400", "bg-violet-400", "bg-amber-300"].map((c, i) => (

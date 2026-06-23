@@ -19,7 +19,7 @@ export default function TarifsPage() {
           <DotBackground />
           <div className="relative z-10 flex flex-col items-center text-center gap-6 pt-20 pb-12 px-8">
             <span className="px-4 py-1.5 rounded-full bg-card border border-border text-xs font-semibold tracking-widest uppercase text-primary shadow-sm">✦ Tarifs</span>
-            <h1 className="text-6xl font-bold leading-[1.05] tracking-tight max-w-xl">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.05] tracking-tight max-w-xl">
               Simple, <span className="text-primary">transparent.</span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-md leading-relaxed">Commencez gratuitement. Passez au Pro quand vous en avez besoin. Aucune surprise.</p>
@@ -32,6 +32,8 @@ export default function TarifsPage() {
         {/* Comparison table */}
         <section className="w-full max-w-5xl px-8 pb-20 relative z-10">
           <div className="rounded-3xl border border-border overflow-hidden shadow-sm bg-white">
+            <div className="overflow-x-auto">
+              <div className="min-w-[34rem]">
             <div className="grid grid-cols-[2fr_1fr_1fr_1fr] border-b border-border">
               <div className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-widest">Fonctionnalité</div>
               {["Starter", "Pro", "Équipe"].map((name, i) => (
@@ -59,6 +61,8 @@ export default function TarifsPage() {
                 ))}
               </div>
             ))}
+              </div>
+            </div>
           </div>
         </section>
 

@@ -219,7 +219,7 @@ export function PricingSection() {
       </div>
 
       {/* Cards */}
-      <div className="w-full max-w-5xl grid grid-cols-3 gap-5 items-start">
+      <div className="w-full max-w-5xl grid grid-cols-1 gap-5 items-start md:grid-cols-3">
         {PLANS[billing].map((plan) => (
           <PlanCard key={plan.id} plan={plan} />
         ))}

@@ -6,7 +6,7 @@ export function FeatureText({ tag, title, description, children }: { tag: string
   return (
     <div className="flex-1 flex flex-col gap-5 max-w-sm">
       <span className="text-xs font-semibold tracking-widest text-primary uppercase">{tag}</span>
-      <h2 className="text-4xl font-bold leading-tight tracking-tight">{title}</h2>
+      <h2 className="text-3xl sm:text-4xl font-bold leading-tight tracking-tight">{title}</h2>
       <p className="text-muted-foreground leading-relaxed text-sm">{description}</p>
       {children}
     </div>
@@ -27,7 +27,7 @@ export function CheckList({ items }: { items: string[] }) {
 }
 
 export function FeatureRow({ reverse, children }: { reverse?: boolean; children: ReactNode }) {
-  return <section className={`w-full flex items-center gap-16 ${reverse ? "flex-row-reverse" : ""}`}>{children}</section>;
+  return <section className={`w-full flex flex-col items-center gap-10 md:flex-row md:gap-16 ${reverse ? "md:flex-row-reverse" : ""}`}>{children}</section>;
 }
 
 export function DotBackground() {
@@ -53,7 +53,7 @@ interface CtaSectionProps {
 export function CtaSection({ title, subtitle, footnote, className = "" }: CtaSectionProps) {
   return (
     <div className={`flex flex-col items-center gap-6 text-center ${className}`}>
-      <h2 className="text-5xl font-bold tracking-tight">{title}</h2>
+      <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">{title}</h2>
       <p className="text-muted-foreground max-w-md">{subtitle}</p>
       <Button asChild size="lg" className="rounded-full shadow-lg shadow-primary/30">
         <Link href="/register">Créer un compte gratuit</Link>

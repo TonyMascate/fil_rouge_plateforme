@@ -11,6 +11,7 @@ import { GallerySidebar } from "./GallerySidebar";
 import { PhotoDetailModal } from "./PhotoDetailModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 type Density = "dense" | "large";
@@ -161,10 +162,15 @@ export function PhotoGrid({
               {toolbarStart}
               <div className="flex-1" />
               {ownerActions}
-              <select value={order} onChange={(e) => onOrderChange(e.target.value as SortOrder)} className="h-8 rounded-lg border border-border bg-card px-2 text-sm outline-none" aria-label="Trier">
-                <option value="desc">Plus récentes</option>
-                <option value="asc">Plus anciennes</option>
-              </select>
+              <Select value={order} onValueChange={(value) => onOrderChange(value as SortOrder)}>
+                <SelectTrigger size="sm" className="min-w-0" aria-label="Trier">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="desc">Plus récentes</SelectItem>
+                  <SelectItem value="asc">Plus anciennes</SelectItem>
+                </SelectContent>
+              </Select>
               <div className="hidden items-center gap-1 md:flex">
                 <Button variant="ghost" size="icon-sm" className={cn(density === "dense" && "bg-primary/8 text-primary")} onClick={() => setDensity("dense")} aria-label="Grille serrée">
                   <Grid3x3 className="size-4" />

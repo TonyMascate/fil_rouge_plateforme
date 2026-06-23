@@ -70,7 +70,7 @@ export function UploadFeature() {
           Essayer l'upload →
         </Link>
       </FeatureText>
-      <div className="flex-[1.4]">
+      <div className="flex-[1.4] mt-8">
         <UploadVisual />
       </div>
     </FeatureRow>

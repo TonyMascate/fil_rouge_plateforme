@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Plus, FolderOpen, ImageOff } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAlbums, useCreateAlbum, useRenameAlbum, useDeleteAlbum, type Album } from "@/lib/useAlbums";
@@ -71,26 +72,27 @@ export default function AlbumGrid() {
   return (
     <div className="flex flex-1 min-h-0 flex-col">
       {/* Toolbar */}
-      <div className="sticky top-16 z-20 flex h-14 items-center gap-3 border-b border-border bg-background px-4 sm:px-8">
-        <h1 className="text-lg font-bold tracking-tight">Albums</h1>
+      <div className="sticky top-16 z-20 flex h-14 items-center gap-2 border-b border-border bg-background px-4 sm:gap-3 sm:px-8">
+        <h1 className="shrink-0 text-lg font-bold tracking-tight">Albums</h1>
         {albums && (
-          <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+          <span className="hidden shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground sm:inline">
             {albums.length} album{albums.length !== 1 ? "s" : ""}
           </span>
         )}
         <div className="flex-1" />
 
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as SortKey)}
-          className="h-8 rounded-lg border border-border bg-card px-2 text-sm outline-none"
-          aria-label="Trier">
-          <option value="date">Plus récents</option>
-          <option value="alpha">Alphabétique</option>
-          <option value="count">Nombre de photos</option>
-        </select>
+        <Select value={sort} onValueChange={(value) => setSort(value as SortKey)}>
+          <SelectTrigger size="sm" className="min-w-0" aria-label="Trier">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="date">Plus récents</SelectItem>
+            <SelectItem value="alpha">Alphabétique</SelectItem>
+            <SelectItem value="count">Nombre de photos</SelectItem>
+          </SelectContent>
+        </Select>
 
-        <Button onClick={() => setCreateOpen(true)} className="rounded-full bg-foreground text-background hover:bg-foreground/85">
+        <Button onClick={() => setCreateOpen(true)} className="shrink-0 rounded-full bg-foreground text-background hover:bg-foreground/85">
           <Plus className="size-4" />
           <span className="hidden sm:inline">Nouvel album</span>
         </Button>
