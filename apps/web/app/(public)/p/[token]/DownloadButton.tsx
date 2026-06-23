@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function DownloadButton({ url, filename }: { url: string; filename: string }) {
+export function DownloadButton({ url, filename }: Readonly<{ url: string; filename: string }>) {
   const [downloading, setDownloading] = useState(false);
 
   async function handleDownload() {
