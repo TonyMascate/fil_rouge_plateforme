@@ -33,7 +33,7 @@ export interface NavbarUser {
   email: string;
 }
 
-export default function Navbar({ user }: { user: NavbarUser | null }) {
+export default function Navbar({ user }: Readonly<{ user: NavbarUser | null }>) {
   if (user) return <AuthedNavbar user={user} />;
   return <PublicNavbar />;
 }
@@ -116,7 +116,7 @@ function getInitials(firstName?: string, lastName?: string): string {
   return (f + l).toUpperCase() || "?";
 }
 
-function AuthedNavbar({ user }: { user: NavbarUser }) {
+function AuthedNavbar({ user }: Readonly<{ user: NavbarUser }>) {
   const pathname = usePathname();
   const router = useRouter();
   const [uploadOpen, setUploadOpen] = useState(false);

@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -47,7 +47,7 @@ export class PhotoService {
   ) {}
 
   private getMaxStorageBytes(): number {
-    return parseInt(
+    return Number.parseInt(
       this.config.get<string>('MAX_STORAGE_PER_USER_BYTES') ?? String(500 * 1024 * 1024),
       10,
     );
@@ -97,7 +97,7 @@ export class PhotoService {
   async getStatus(id: string, userId: string) {
     const photo = await this.photoRepo.findOne({ where: { id } });
 
-    if (!photo || photo.userId !== userId) {
+    if (photo?.userId !== userId) {
       throw new ApiException(
         ErrorCode.PHOTO_NOT_FOUND,
         HttpStatus.NOT_FOUND,
@@ -213,7 +213,7 @@ export class PhotoService {
 
   private async findOwnedOrThrow(id: string, userId: string): Promise<Photo> {
     const photo = await this.photoRepo.findOne({ where: { id } });
-    if (!photo || photo.userId !== userId) {
+    if (photo?.userId !== userId) {
       throw new ApiException(ErrorCode.PHOTO_NOT_FOUND, HttpStatus.NOT_FOUND, 'Photo introuvable', []);
     }
     return photo;

@@ -71,16 +71,17 @@ export default function ChromaticExplorer() {
     );
   }
 
+  const photoPlural = totalPhotos > 1 ? "s" : "";
+  const summaryText = totalPhotos > 0
+    ? `${totalPhotos} photo${photoPlural} réparties sur votre nuancier · choisissez une teinte`
+    : "Aucune photo dans cette vue";
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Exploration chromatique</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {totalPhotos > 0
-              ? `${totalPhotos} photo${totalPhotos > 1 ? "s" : ""} réparties sur votre nuancier · choisissez une teinte`
-              : "Aucune photo dans cette vue"}
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{summaryText}</p>
         </div>
 
         {ownedAlbums.length > 0 && (
@@ -138,11 +139,11 @@ function ColorAtlas({
   cells,
   selectedCellId,
   onSelect,
-}: {
+}: Readonly<{
   cells: ColorAtlasCellDto[];
   selectedCellId: string | null;
   onSelect: (cellId: string) => void;
-}) {
+}>) {
   const chromatic = cells.filter((cell) => cell.kind === "chromatic");
   const neutrals = cells.filter((cell) => cell.kind === "neutral");
   const maxCount = Math.max(1, ...cells.map((cell) => cell.count));
@@ -194,12 +195,12 @@ function Swatch({
   maxCount,
   selected,
   onSelect,
-}: {
+}: Readonly<{
   cell: ColorAtlasCellDto;
   maxCount: number;
   selected: boolean;
   onSelect: (cellId: string) => void;
-}) {
+}>) {
   const isEmpty = cell.count === 0;
   // Les cellules peuplées sont opaques ; les vides s'estompent. L'intensité de
   // la lueur suit le nombre de photos → la collection « éclaire » le nuancier.
@@ -233,7 +234,10 @@ function Swatch({
 
 // ─── Résultats : photos de la cellule sélectionnée ──────────────────────────
 
-function CellResults({ cell, albumId }: { cell: ColorAtlasCellDto; albumId: string | null }) {
+const CELL_SKELETON_KEYS = Array.from({ length: 12 }, (_, index) => `cell-sk-${index}`);
+const CELL_NEXT_SKELETON_KEYS = Array.from({ length: 6 }, (_, index) => `cell-next-sk-${index}`);
+
+function CellResults({ cell, albumId }: Readonly<{ cell: ColorAtlasCellDto; albumId: string | null }>) {
   const queryClient = useQueryClient();
   const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage } = useColorCellPhotos(cell.cellId, albumId);
 
@@ -288,6 +292,55 @@ function CellResults({ cell, albumId }: { cell: ColorAtlasCellDto; albumId: stri
     }
   }
 
+  let resultsBody: React.ReactNode;
+  if (isLoading) {
+    resultsBody = (
+      <div className="grid grid-cols-3 gap-1 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        {CELL_SKELETON_KEYS.map((skeletonKey) => (
+          <Skeleton key={skeletonKey} className="aspect-square rounded-md" />
+        ))}
+      </div>
+    );
+  } else if (isError) {
+    resultsBody = (
+      <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
+        <ImageOff className="size-7" />
+        <p>Impossible de charger ces photos.</p>
+      </div>
+    );
+  } else {
+    resultsBody = (
+      <>
+        <div className="grid grid-cols-3 gap-1 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+          {photos.map((photo) => (
+            <button
+              key={photo.id}
+              onClick={() => setActivePhoto(photo)}
+              className="group relative aspect-square cursor-pointer overflow-hidden rounded-md bg-muted"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photo.url}
+                alt={photo.originalName}
+                loading="lazy"
+                className="size-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+              />
+              <div className="absolute inset-0 transition-colors group-hover:bg-black/15" />
+            </button>
+          ))}
+        </div>
+        <div ref={sentinelRef} className="h-1" />
+        {isFetchingNextPage && (
+          <div className="mt-1 grid grid-cols-3 gap-1 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            {CELL_NEXT_SKELETON_KEYS.map((skeletonKey) => (
+              <Skeleton key={skeletonKey} className="aspect-square rounded-md" />
+            ))}
+          </div>
+        )}
+      </>
+    );
+  }
+
   return (
     <section className="mt-8">
       <div className="mb-4 flex items-center gap-3">
@@ -298,47 +351,7 @@ function CellResults({ cell, albumId }: { cell: ColorAtlasCellDto; albumId: stri
         </span>
       </div>
 
-      {isLoading ? (
-        <div className="grid grid-cols-3 gap-1 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-          {Array.from({ length: 12 }).map((_, index) => (
-            <Skeleton key={index} className="aspect-square rounded-md" />
-          ))}
-        </div>
-      ) : isError ? (
-        <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
-          <ImageOff className="size-7" />
-          <p>Impossible de charger ces photos.</p>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-3 gap-1 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-            {photos.map((photo) => (
-              <button
-                key={photo.id}
-                onClick={() => setActivePhoto(photo)}
-                className="group relative aspect-square cursor-pointer overflow-hidden rounded-md bg-muted"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={photo.url}
-                  alt={photo.originalName}
-                  loading="lazy"
-                  className="size-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
-                />
-                <div className="absolute inset-0 transition-colors group-hover:bg-black/15" />
-              </button>
-            ))}
-          </div>
-          <div ref={sentinelRef} className="h-1" />
-          {isFetchingNextPage && (
-            <div className="mt-1 grid grid-cols-3 gap-1 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <Skeleton key={index} className="aspect-square rounded-md" />
-              ))}
-            </div>
-          )}
-        </>
-      )}
+      {resultsBody}
 
       {activePhoto && (
         <PhotoDetailModal

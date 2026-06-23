@@ -19,7 +19,7 @@ function getInitials(firstName: string, lastName: string) {
   return ((firstName[0] ?? "") + (lastName[0] ?? "")).toUpperCase() || "?";
 }
 
-export function ShareAlbumModal({ album, onClose }: ShareAlbumModalProps) {
+export function ShareAlbumModal({ album, onClose }: Readonly<ShareAlbumModalProps>) {
   const [email, setEmail] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const addMember = useAddAlbumMember();
@@ -32,8 +32,8 @@ export function ShareAlbumModal({ album, onClose }: ShareAlbumModalProps) {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
     }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    globalThis.addEventListener("keydown", onKey);
+    return () => globalThis.removeEventListener("keydown", onKey);
   }, [onClose]);
 
   async function handleAdd(e: React.FormEvent) {

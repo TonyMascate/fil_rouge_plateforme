@@ -16,7 +16,7 @@ interface AlbumGalleryProps {
   albumId: string;
 }
 
-export default function AlbumGallery({ albumId }: AlbumGalleryProps) {
+export default function AlbumGallery({ albumId }: Readonly<AlbumGalleryProps>) {
   const { data: album } = useAlbum(albumId);
   const [order, setOrder] = useState<SortOrder>("desc");
   const [sharingOpen, setSharingOpen] = useState(false);
@@ -48,7 +48,7 @@ export default function AlbumGallery({ albumId }: AlbumGalleryProps) {
               <Link href="/albums"><ChevronLeft className="size-4" /></Link>
             </Button>
             <h1 className="text-lg font-bold tracking-tight truncate">{album?.name ?? "Album"}</h1>
-            <span className="hidden text-sm text-muted-foreground shrink-0 sm:inline">{total} photo{total !== 1 ? "s" : ""}</span>
+            <span className="hidden text-sm text-muted-foreground shrink-0 sm:inline">{total} photo{total === 1 ? "" : "s"}</span>
           </>
         }
         ownerActions={album?.isOwner && (

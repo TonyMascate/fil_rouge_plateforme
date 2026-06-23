@@ -1,4 +1,4 @@
-export function MacWindow({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+export function MacWindow({ children, className = "" }: Readonly<{ children: React.ReactNode; className?: string }>) {
   return (
     <div className={`bg-white rounded-2xl shadow-xl border border-border overflow-hidden ${className}`}>
       <div className="flex items-center gap-1.5 px-4 py-3 bg-zinc-50 border-b border-border">

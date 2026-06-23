@@ -25,7 +25,7 @@ export function CreateAlbumModal({
   initialName = "",
   title = "Nouvel album",
   submitLabel = "Créer l'album",
-}: CreateAlbumModalProps) {
+}: Readonly<CreateAlbumModalProps>) {
   const { register, handleSubmit, formState: { errors, isValid } } = useForm<CreateAlbumDto>({
     resolver: zodResolver(CreateAlbumSchema),
     defaultValues: { name: initialName },
@@ -36,8 +36,8 @@ export function CreateAlbumModal({
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
     }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    globalThis.addEventListener("keydown", onKey);
+    return () => globalThis.removeEventListener("keydown", onKey);
   }, [onClose]);
 
   function onValid(data: CreateAlbumDto) {

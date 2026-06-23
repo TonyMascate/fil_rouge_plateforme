@@ -21,8 +21,8 @@ import { UsersService } from '@app/users/users.service';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private usersService: UsersService,
-    private configService: ConfigService,
+    private readonly usersService: UsersService,
+    private readonly configService: ConfigService,
   ) {}
 
   // rotateCsrf : à false sur le refresh. Régénérer le cookie XSRF-TOKEN à chaque

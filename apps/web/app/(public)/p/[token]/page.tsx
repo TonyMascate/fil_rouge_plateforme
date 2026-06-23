@@ -21,9 +21,9 @@ function formatDate(iso: string): string {
 
 export default async function SharedPhotoPage({
   params,
-}: {
+}: Readonly<{
   params: Promise<{ token: string }>;
-}) {
+}>) {
   const { token } = await params;
 
   const response = await fetch(

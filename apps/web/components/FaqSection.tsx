@@ -25,7 +25,7 @@ const FAQS = [
   },
 ];
 
-function FaqItem({ q, a }: { q: string; a: string }) {
+function FaqItem({ q, a }: Readonly<{ q: string; a: string }>) {
   const [open, setOpen] = useState(false);
   return (
     <div className="border-t border-border last:border-b">

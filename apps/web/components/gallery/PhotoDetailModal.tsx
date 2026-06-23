@@ -20,7 +20,7 @@ function formatDate(iso: string): string {
 }
 
 // Bouton icône du header de la modale (close / download / delete) — même style partout.
-function HeaderIconButton({ onClick, ariaLabel, children }: { onClick: () => void; ariaLabel: string; children: React.ReactNode }) {
+function HeaderIconButton({ onClick, ariaLabel, children }: Readonly<{ onClick: () => void; ariaLabel: string; children: React.ReactNode }>) {
   return (
     <button onClick={onClick} aria-label={ariaLabel} className="flex size-9 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white">
       {children}
@@ -36,7 +36,7 @@ interface PhotoDetailModalProps {
   onRequestDelete: () => void;
 }
 
-export function PhotoDetailModal({ photo, photos, onClose, onNavigate, onRequestDelete }: PhotoDetailModalProps) {
+export function PhotoDetailModal({ photo, photos, onClose, onNavigate, onRequestDelete }: Readonly<PhotoDetailModalProps>) {
   const queryClient = useQueryClient();
   const index = useMemo(() => photos.findIndex((candidate) => candidate.id === photo.id), [photos, photo.id]);
   const previous = index > 0 ? photos[index - 1] : null;
@@ -49,7 +49,7 @@ export function PhotoDetailModal({ photo, photos, onClose, onNavigate, onRequest
   const [addToAlbumOpen, setAddToAlbumOpen] = useState(false);
 
   const isShared = shareToken !== null;
-  const shareUrl = shareToken ? `${window.location.origin}/p/${shareToken}` : "";
+  const shareUrl = shareToken ? `${globalThis.location.origin}/p/${shareToken}` : "";
 
   // Note : le parent monte la modale avec key={photo.id} → changer de photo la remonte,
   // ce qui réinitialise shareToken/sharePanelOpen depuis les props. Pas d'effet de resync.
@@ -60,8 +60,8 @@ export function PhotoDetailModal({ photo, photos, onClose, onNavigate, onRequest
       if (event.key === "ArrowLeft" && previous) onNavigate(previous);
       if (event.key === "ArrowRight" && next) onNavigate(next);
     }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    globalThis.addEventListener("keydown", onKey);
+    return () => globalThis.removeEventListener("keydown", onKey);
   }, [previous, next, onClose, onNavigate]);
 
   // Bloque le scroll de la galerie en arrière-plan tant que la modale est ouverte.

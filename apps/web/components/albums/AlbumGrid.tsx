@@ -69,6 +69,56 @@ export default function AlbumGrid() {
     }
   }
 
+  let content: React.ReactNode;
+  if (isLoading) {
+    content = (
+      <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+        {["sk-1", "sk-2", "sk-3", "sk-4", "sk-5", "sk-6", "sk-7", "sk-8"].map((skeletonKey) => (
+          <div key={skeletonKey} className="flex flex-col gap-2">
+            <Skeleton className="aspect-square rounded-xl" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-1/2" />
+          </div>
+        ))}
+      </div>
+    );
+  } else if (isError) {
+    content = (
+      <div className="flex flex-col items-center justify-center gap-2 py-24 text-muted-foreground">
+        <ImageOff className="size-8" />
+        <p>Impossible de charger vos albums.</p>
+      </div>
+    );
+  } else if (sorted.length === 0) {
+    content = (
+      <div className="flex flex-col items-center justify-center gap-4 py-24 text-center text-muted-foreground">
+        <FolderOpen className="size-12" strokeWidth={1} />
+        <div>
+          <p className="text-base font-semibold text-foreground">Aucun album</p>
+          <p className="text-sm">Créez votre premier album pour organiser vos photos.</p>
+        </div>
+        <Button onClick={() => setCreateOpen(true)} className="rounded-full">
+          <Plus className="size-4" />
+          Créer un album
+        </Button>
+      </div>
+    );
+  } else {
+    content = (
+      <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+        {sorted.map((album) => (
+          <AlbumCard
+            key={album.id}
+            album={album}
+            onRename={(target) => setRenaming(target)}
+            onShare={(target) => setSharing(target)}
+            onDelete={(target) => setPendingDelete(target)}
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-1 min-h-0 flex-col">
       {/* Toolbar */}
@@ -76,7 +126,7 @@ export default function AlbumGrid() {
         <h1 className="shrink-0 text-lg font-bold tracking-tight">Albums</h1>
         {albums && (
           <span className="hidden shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground sm:inline">
-            {albums.length} album{albums.length !== 1 ? "s" : ""}
+            {albums.length} album{albums.length === 1 ? "" : "s"}
           </span>
         )}
         <div className="flex-1" />
@@ -100,46 +150,7 @@ export default function AlbumGrid() {
 
       {/* Contenu */}
       <main className="flex-1 overflow-y-auto px-4 pb-16 sm:px-8 pt-6">
-        {isLoading ? (
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="flex flex-col gap-2">
-                <Skeleton className="aspect-square rounded-xl" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-3 w-1/2" />
-              </div>
-            ))}
-          </div>
-        ) : isError ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-24 text-muted-foreground">
-            <ImageOff className="size-8" />
-            <p>Impossible de charger vos albums.</p>
-          </div>
-        ) : sorted.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-4 py-24 text-center text-muted-foreground">
-            <FolderOpen className="size-12" strokeWidth={1} />
-            <div>
-              <p className="text-base font-semibold text-foreground">Aucun album</p>
-              <p className="text-sm">Créez votre premier album pour organiser vos photos.</p>
-            </div>
-            <Button onClick={() => setCreateOpen(true)} className="rounded-full">
-              <Plus className="size-4" />
-              Créer un album
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
-            {sorted.map((album) => (
-              <AlbumCard
-                key={album.id}
-                album={album}
-                onRename={(a) => setRenaming(a)}
-                onShare={(a) => setSharing(a)}
-                onDelete={(a) => setPendingDelete(a)}
-              />
-            ))}
-          </div>
-        )}
+        {content}
       </main>
 
       {/* Modals */}

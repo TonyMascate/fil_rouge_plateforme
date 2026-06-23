@@ -1,14 +1,14 @@
 import { MacWindow } from "@/components/ui/MacWindow";
-import Navbar from "@/components/ui/Navbar";
 import { DotBackground, CtaSection } from "@/components/ui/FeatureSection";
 import { UploadFeature, ChromaFeature, AlbumsFeature, GlowBoxes } from "@/components/ui/Features";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
+const HERO_SWATCHES = ["bg-violet-300", "bg-rose-300", "bg-indigo-400", "bg-pink-300", "bg-violet-500", "bg-amber-300", "bg-rose-400", "bg-violet-400", "bg-pink-400", "bg-indigo-300", "bg-amber-400", "bg-rose-300", "bg-violet-300", "bg-indigo-400", "bg-pink-300", "bg-rose-400", "bg-violet-400", "bg-amber-300"].map((color, index) => ({ id: `hero-swatch-${index}`, color }));
+
 export default function Home() {
   return (
-    <>
-      <main className="relative flex flex-col justify-start items-center gap-35 pb-35 px-8 overflow-hidden">
+    <main className="relative flex flex-col justify-start items-center gap-35 pb-35 px-8 overflow-hidden">
         {/* Glows */}
         <GlowBoxes />
 
@@ -35,8 +35,8 @@ export default function Home() {
           <div className="relative z-10 flex-1 flex items-end justify-center px-4 sm:px-8 md:px-16 pb-0">
             <MacWindow className="w-full max-w-5xl rounded-b-none shadow-2xl">
               <div className="p-4 grid grid-cols-6 gap-2 h-72 content-start">
-                {["bg-violet-300", "bg-rose-300", "bg-indigo-400", "bg-pink-300", "bg-violet-500", "bg-amber-300", "bg-rose-400", "bg-violet-400", "bg-pink-400", "bg-indigo-300", "bg-amber-400", "bg-rose-300", "bg-violet-300", "bg-indigo-400", "bg-pink-300", "bg-rose-400", "bg-violet-400", "bg-amber-300"].map((c, i) => (
-                  <div key={i} className={`${c} rounded-xl h-20`} />
+                {HERO_SWATCHES.map(({ id, color }) => (
+                  <div key={id} className={`${color} rounded-xl h-20`} />
                 ))}
               </div>
             </MacWindow>
@@ -61,7 +61,6 @@ export default function Home() {
             className="relative z-10"
           />
         </section>
-      </main>
-    </>
+    </main>
   );
 }

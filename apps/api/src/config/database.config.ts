@@ -7,7 +7,7 @@ export const getDbConfig = (): TypeOrmModuleOptions => {
   return {
     type: 'postgres',
     host: process.env.DB_HOST, // 'localhost' (Dev) ou 'pgbouncer' (Prod)
-    port: parseInt(process.env.DB_PORT || '5432', 10), // 5432 (Dev) ou 6432 (Prod)
+    port: Number.parseInt(process.env.DB_PORT || '5432', 10), // 5432 (Dev) ou 6432 (Prod)
     username: readSecret('DB_USER'),
     password: readSecret('DB_PASSWORD'),
     database: readSecret('DB_NAME'),

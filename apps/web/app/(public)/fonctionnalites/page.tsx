@@ -1,5 +1,3 @@
-import Navbar from "@/components/ui/Navbar";
-import Footer from "@/components/Footer";
 import { DotBackground, CtaSection } from "@/components/ui/FeatureSection";
 import { UploadFeature, ChromaFeature, ShareFeature, AlbumsFeature, GlowBoxes } from "@/components/ui/Features";
 import { Button } from "@/components/ui/button";
@@ -7,8 +5,7 @@ import Link from "next/link";
 
 export default function FonctionnalitesPage() {
   return (
-    <>
-      <main className="relative flex flex-col items-center gap-35 pb-35 px-8 overflow-hidden">
+    <main className="relative flex flex-col items-center gap-35 pb-35 px-8 overflow-hidden">
         {/* Glows */}
         <GlowBoxes />
         {/* Hero */}
@@ -52,7 +49,6 @@ export default function FonctionnalitesPage() {
           }
           subtitle="500 MB gratuits · Aucune carte bancaire · Partage illimité"
         />
-      </main>
-    </>
+    </main>
   );
 }

@@ -28,7 +28,7 @@ import { AlbumModule } from './album/album.module';
     }),
     LoggerModule.forRoot({
       pinoHttp: {
-        transport: process.env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined,
+        transport: process.env.NODE_ENV === 'production' ? undefined : { target: 'pino-pretty' },
         autoLogging: false, // désactive le log automatique de chaque requête HTTP
         serializers: {
           req: (req) => ({
@@ -58,7 +58,7 @@ import { AlbumModule } from './album/album.module';
       useFactory: (config: ConfigService) => ({
         connection: {
           host: config.getOrThrow<string>('REDIS_HOST'),
-          port: parseInt(config.getOrThrow<string>('REDIS_PORT'), 10),
+          port: Number.parseInt(config.getOrThrow<string>('REDIS_PORT'), 10),
         },
       }),
     }),

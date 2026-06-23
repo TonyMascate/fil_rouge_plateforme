@@ -1,11 +1,11 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NextFunction, Request, Response } from 'express';
-import * as crypto from 'crypto';
+import * as crypto from 'node:crypto';
 
 @Injectable()
 export class CsrfMiddleware implements NestMiddleware {
-  constructor(private configService: ConfigService) {}
+  constructor(private readonly configService: ConfigService) {}
 
   use(req: Request, res: Response, next: NextFunction) {
     let token = req.headers['XSRF-TOKEN'];

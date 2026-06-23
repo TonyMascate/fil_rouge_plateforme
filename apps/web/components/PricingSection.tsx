@@ -147,13 +147,23 @@ const PLANS: Record<BillingPeriod, Plan[]> = {
   ],
 };
 
-function PlanCard({ plan }: { plan: Plan }) {
+function PlanCard({ plan }: Readonly<{ plan: Plan }>) {
   const { isPro } = plan;
+  const isTeam = plan.id === "team";
+
+  let badgeClass = "bg-muted text-muted-foreground";
+  if (isPro) badgeClass = "bg-white/20 text-white";
+  else if (isTeam) badgeClass = "bg-primary/10 text-primary";
+
+  let ctaClass = "bg-white text-foreground border border-border hover:shadow-md";
+  if (isPro) ctaClass = "bg-white text-primary shadow-md hover:opacity-90";
+  else if (isTeam) ctaClass = "bg-foreground text-white hover:opacity-85";
+
   return (
     <div className={`rounded-3xl border p-8 flex flex-col gap-6 transition-shadow ${isPro ? "bg-primary border-transparent text-white shadow-[0_20px_60px_oklch(0.511_0.262_276.966/0.35)] -translate-y-2" : "bg-white border-border shadow-sm hover:shadow-md"}`}>
       {/* Header */}
       <div className="flex flex-col gap-2">
-        <span className={`text-xs font-semibold tracking-widest uppercase rounded-full px-3 py-1 w-fit ${isPro ? "bg-white/20 text-white" : plan.id === "team" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+        <span className={`text-xs font-semibold tracking-widest uppercase rounded-full px-3 py-1 w-fit ${badgeClass}`}>
           {plan.badge}
         </span>
         <p className={`text-2xl font-bold tracking-tight ${isPro ? "text-white" : "text-foreground"}`}>{plan.name}</p>
@@ -173,7 +183,7 @@ function PlanCard({ plan }: { plan: Plan }) {
       {/* CTA */}
       <Link
         href={plan.ctaHref}
-        className={`flex items-center justify-center px-6 py-3 rounded-full text-sm font-semibold transition-opacity ${isPro ? "bg-white text-primary shadow-md hover:opacity-90" : plan.id === "team" ? "bg-foreground text-white hover:opacity-85" : "bg-white text-foreground border border-border hover:shadow-md"}`}>
+        className={`flex items-center justify-center px-6 py-3 rounded-full text-sm font-semibold transition-opacity ${ctaClass}`}>
         {plan.ctaLabel}
       </Link>
 
@@ -181,18 +191,20 @@ function PlanCard({ plan }: { plan: Plan }) {
 
       {/* Features */}
       <ul className="flex flex-col gap-2.5">
-        {plan.features.map((f) => (
-          <li key={f.label} className="flex items-start gap-2.5 text-sm">
-            {f.ok ? (
-              <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5 ${isPro ? "bg-white/20 text-white" : "bg-primary/10 text-primary"}`}>✓</span>
-            ) : (
-              <span className="w-4 h-4 rounded-full bg-muted flex items-center justify-center text-[9px] text-muted-foreground shrink-0 mt-0.5">✕</span>
-            )}
-            <span className={f.ok ? (isPro ? "text-white/90" : "text-foreground") : isPro ? "text-white/35" : "text-muted-foreground"}>
-              {f.label}
-            </span>
-          </li>
-        ))}
+        {plan.features.map((feature) => {
+          let labelClass = isPro ? "text-white/35" : "text-muted-foreground";
+          if (feature.ok) labelClass = isPro ? "text-white/90" : "text-foreground";
+          return (
+            <li key={feature.label} className="flex items-start gap-2.5 text-sm">
+              {feature.ok ? (
+                <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5 ${isPro ? "bg-white/20 text-white" : "bg-primary/10 text-primary"}`}>✓</span>
+              ) : (
+                <span className="w-4 h-4 rounded-full bg-muted flex items-center justify-center text-[9px] text-muted-foreground shrink-0 mt-0.5">✕</span>
+              )}
+              <span className={labelClass}>{feature.label}</span>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -213,7 +225,7 @@ export function PricingSection() {
         <button
           onClick={() => setBilling("annuel")}
           className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all ${billing === "annuel" ? "bg-foreground text-white font-semibold" : "text-muted-foreground hover:text-foreground"}`}>
-          Annuel
+          Annuel{" "}
           <span className="bg-emerald-100 text-emerald-700 text-[10px] font-semibold rounded-full px-2 py-0.5">−30%</span>
         </button>
       </div>

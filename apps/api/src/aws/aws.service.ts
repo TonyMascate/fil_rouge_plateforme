@@ -15,8 +15,8 @@ import { getSignedUrl as getCloudFrontSignedUrl } from '@aws-sdk/cloudfront-sign
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Upload } from '@aws-sdk/lib-storage';
-import { randomUUID } from 'crypto';
-import { Readable } from 'stream';
+import { randomUUID } from 'node:crypto';
+import { Readable } from 'node:stream';
 
 const EXT_FROM_CONTENT_TYPE: Record<string, string> = {
   'image/jpeg': '.jpg',
@@ -27,14 +27,14 @@ const EXT_FROM_CONTENT_TYPE: Record<string, string> = {
 
 @Injectable()
 export class AwsService {
-  private s3: S3Client;
-  private bucket: string;
-  private cloudFrontDomain: string;
-  private cloudFrontKeyPairId: string;
-  private cloudFrontPrivateKey: string;
-  private signedUrlTtl: number;
+  private readonly s3: S3Client;
+  private readonly bucket: string;
+  private readonly cloudFrontDomain: string;
+  private readonly cloudFrontKeyPairId: string;
+  private readonly cloudFrontPrivateKey: string;
+  private readonly signedUrlTtl: number;
 
-  constructor(private config: ConfigService) {
+  constructor(private readonly config: ConfigService) {
     this.bucket = this.config.getOrThrow<string>('S3_BUCKET_NAME');
     this.cloudFrontDomain = this.config.getOrThrow<string>('CLOUDFRONT_DOMAIN');
     this.cloudFrontKeyPairId = this.config.getOrThrow<string>('CLOUDFRONT_KEY_PAIR_ID');
@@ -42,7 +42,7 @@ export class AwsService {
       this.config.getOrThrow<string>('CLOUDFRONT_PRIVATE_KEY_BASE64'),
       'base64',
     ).toString('utf8');
-    this.signedUrlTtl = parseInt(
+    this.signedUrlTtl = Number.parseInt(
       this.config.get<string>('CLOUDFRONT_SIGNED_URL_TTL_SECONDS') ?? '3600',
       10,
     );

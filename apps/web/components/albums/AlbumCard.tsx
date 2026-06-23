@@ -13,7 +13,7 @@ interface AlbumCardProps {
   onDelete: (album: Album) => void;
 }
 
-export function AlbumCard({ album, onRename, onShare, onDelete }: AlbumCardProps) {
+export function AlbumCard({ album, onRename, onShare, onDelete }: Readonly<AlbumCardProps>) {
   const [menuOpen, setMenuOpen] = useState(false);
   const cnt = Math.min(album.covers.length, 4) as 0 | 1 | 2 | 3 | 4;
 
@@ -29,16 +29,16 @@ export function AlbumCard({ album, onRename, onShare, onDelete }: AlbumCardProps
               cnt === 3 && "grid grid-cols-2 gap-0.5",
               cnt === 4 && "grid grid-cols-2 gap-0.5",
             )}>
-            {album.covers.slice(0, cnt).map((src, i) => (
+            {album.covers.slice(0, cnt).map((src, coverIndex) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                key={i}
+                key={src}
                 src={src}
                 alt=""
                 loading="lazy"
                 className={cn(
                   "size-full object-cover",
-                  cnt === 3 && i === 0 && "row-span-2",
+                  cnt === 3 && coverIndex === 0 && "row-span-2",
                 )}
               />
             ))}
@@ -53,7 +53,7 @@ export function AlbumCard({ album, onRename, onShare, onDelete }: AlbumCardProps
         <div className="mt-2 flex flex-col gap-0.5">
           <span className="truncate text-sm font-semibold text-foreground">{album.name}</span>
           <span className="text-xs text-muted-foreground">
-            {album.photoCount} photo{album.photoCount !== 1 ? "s" : ""}
+            {album.photoCount} photo{album.photoCount === 1 ? "" : "s"}
             {!album.isOwner && " · Partagé avec moi"}
           </span>
         </div>

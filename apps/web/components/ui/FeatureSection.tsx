@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-export function FeatureText({ tag, title, description, children }: { tag: string; title: ReactNode; description: string; children?: ReactNode }) {
+export function FeatureText({ tag, title, description, children }: Readonly<{ tag: string; title: ReactNode; description: string; children?: ReactNode }>) {
   return (
     <div className="flex-1 flex flex-col gap-5 max-w-sm">
       <span className="text-xs font-semibold tracking-widest text-primary uppercase">{tag}</span>
@@ -13,7 +13,7 @@ export function FeatureText({ tag, title, description, children }: { tag: string
   );
 }
 
-export function CheckList({ items }: { items: string[] }) {
+export function CheckList({ items }: Readonly<{ items: string[] }>) {
   return (
     <ul className="flex flex-col gap-2.5">
       {items.map((item) => (
@@ -26,7 +26,7 @@ export function CheckList({ items }: { items: string[] }) {
   );
 }
 
-export function FeatureRow({ reverse, children }: { reverse?: boolean; children: ReactNode }) {
+export function FeatureRow({ reverse, children }: Readonly<{ reverse?: boolean; children: ReactNode }>) {
   return <section className={`w-full flex flex-col items-center gap-10 md:flex-row md:gap-16 ${reverse ? "md:flex-row-reverse" : ""}`}>{children}</section>;
 }
 
@@ -43,14 +43,13 @@ export function DotBackground() {
 }
 
 interface CtaSectionProps {
-  eyebrow?: string;
   title: ReactNode;
   subtitle: string;
   footnote?: string;
   className?: string;
 }
 
-export function CtaSection({ title, subtitle, footnote, className = "" }: CtaSectionProps) {
+export function CtaSection({ title, subtitle, footnote, className = "" }: Readonly<CtaSectionProps>) {
   return (
     <div className={`flex flex-col items-center gap-6 text-center ${className}`}>
       <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">{title}</h2>

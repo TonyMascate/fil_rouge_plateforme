@@ -53,7 +53,7 @@ function bytesToMb(bytes: number): number {
   return Math.round(bytes / (1024 * 1024));
 }
 
-export function UploadDialog({ open, onOpenChange }: UploadDialogProps) {
+export function UploadDialog({ open, onOpenChange }: Readonly<UploadDialogProps>) {
   const [files, setFiles] = useState<SelectedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
