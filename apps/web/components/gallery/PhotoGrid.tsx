@@ -176,26 +176,24 @@ export function PhotoGrid({
                 return (
                   <div
                     key={photo.id}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={photo.originalName}
-                    onClick={() => handleCellClick(photo, setActivePhoto)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        handleCellClick(photo, setActivePhoto);
-                      }
-                    }}
-                    onPointerDown={(event) => handlePointerDown(event, photo.id)}
-                    onPointerMove={handlePointerMove}
-                    onPointerUp={handlePointerUp}
-                    onPointerCancel={handlePointerUp}
-                    className={cn("group relative aspect-square cursor-pointer overflow-hidden rounded-md bg-muted select-none touch-pan-y [-webkit-touch-callout:none]", isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background")}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={photo.url} alt={photo.originalName} loading="lazy" className="size-full object-cover transition-transform duration-200 group-hover:scale-[1.03]" />
-                    <div className={cn("absolute inset-0 transition-colors", isSelected ? "bg-primary/25" : "group-hover:bg-black/15")} />
+                    className={cn("group relative aspect-square overflow-hidden rounded-md bg-muted", isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background")}>
                     <button
-                      onClick={(e) => { e.stopPropagation(); toggleSelect(photo.id); }}
+                      type="button"
+                      aria-label={photo.originalName}
+                      onClick={() => handleCellClick(photo, setActivePhoto)}
+                      onPointerDown={(event) => handlePointerDown(event, photo.id)}
+                      onPointerMove={handlePointerMove}
+                      onPointerUp={handlePointerUp}
+                      onPointerCancel={handlePointerUp}
+                      className="block size-full cursor-pointer select-none p-0 touch-pan-y [-webkit-touch-callout:none]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={photo.url} alt={photo.originalName} loading="lazy" className="size-full object-cover transition-transform duration-200 group-hover:scale-[1.03]" />
+                      <div className={cn("absolute inset-0 transition-colors", isSelected ? "bg-primary/25" : "group-hover:bg-black/15")} />
+                    </button>
+                    {/* checkbox : sibling de la cellule (pas imbriqué) pour rester un <button> valide */}
+                    <button
+                      type="button"
+                      onClick={() => toggleSelect(photo.id)}
                       className={cn("absolute left-1.5 top-1.5 z-[2] flex size-5 items-center justify-center rounded-full border-2 transition-opacity", checkboxClass)}
                       aria-label={isSelected ? "Désélectionner" : "Sélectionner"}>
                       {isSelected && <Check className="size-3 text-white" />}
