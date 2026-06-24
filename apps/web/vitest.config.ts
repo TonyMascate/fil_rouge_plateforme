@@ -24,6 +24,7 @@ export default defineConfig({
         'lib/form-errors.ts',
         'lib/useFormMutation.ts',
         'components/ui/button.tsx',
+        'proxy.ts',
       ],
       exclude: ['**/*.spec.*', '**/*.config.*', '**/node_modules/**'],
     },
