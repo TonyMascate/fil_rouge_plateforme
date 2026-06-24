@@ -1,0 +1,47 @@
+name: SonarQube
+
+on:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  sonarqube:
+    name: Analyse & Quality Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Historique complet requis par Sonar (calcul du "New Code" + blame).
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Installer les dépendances
+        run: bun install
+
+      - name: Compiler le package partagé
+        run: bun run --filter '@repo/shared' build
+
+      - name: Tests API avec couverture
+        working-directory: apps/api
+        run: bun run test:cov
+
+      - name: Tests web avec couverture
+        working-directory: apps/web
+        run: bun run test:cov
+
+      - name: Analyse SonarQube + attente du Quality Gate
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+        with:
+          # qualitygate.wait=true : le job ÉCHOUE si le Quality Gate est rouge,
+          # ce qui rend le check bloquant (combiné à la branch protection).
+          args: >
+            -Dsonar.qualitygate.wait=true
