@@ -122,11 +122,7 @@ export function PhotoDetailModal({ photo, photos, onClose, onNavigate, onRequest
   const strip = photos.slice(stripStart, stripEnd);
 
   return (
-    <div
-      className="fixed inset-0 z-[60] flex flex-col bg-black/92"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}>
+    <div className="fixed inset-0 z-[60] flex flex-col bg-black/92">
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between px-6 py-4">
         <div className="flex items-center gap-3">
@@ -147,7 +143,7 @@ export function PhotoDetailModal({ photo, photos, onClose, onNavigate, onRequest
             </button>
 
             {sharePanelOpen && (
-              <div className="fixed right-3 top-[64px] z-10 w-[min(20rem,calc(100vw-1.5rem))] rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-2xl sm:right-4 sm:top-[68px]" onClick={(event) => event.stopPropagation()}>
+              <div className="fixed right-3 top-[64px] z-10 w-[min(20rem,calc(100vw-1.5rem))] rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-2xl sm:right-4 sm:top-[68px]">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2">
                     {isShared ? <Globe className="size-4 text-primary" /> : <Lock className="size-4 text-muted-foreground" />}
@@ -190,6 +186,7 @@ export function PhotoDetailModal({ photo, photos, onClose, onNavigate, onRequest
 
       {/* Image + navigation */}
       <div className="relative flex flex-1 items-center justify-center overflow-hidden px-4 sm:px-16">
+        <button type="button" aria-label="Fermer" onClick={onClose} className="absolute inset-0" />
         {previous && (
           <button onClick={() => onNavigate(previous)} className="absolute left-4 z-10 flex size-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur transition-colors hover:bg-white/20" aria-label="Précédente">
             <ChevronLeft className="size-5" />
@@ -197,7 +194,7 @@ export function PhotoDetailModal({ photo, photos, onClose, onNavigate, onRequest
         )}
 
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img key={photo.id} src={photo.url} alt={photo.originalName} className="max-h-full max-w-full rounded-lg object-contain shadow-2xl select-none" />
+        <img key={photo.id} src={photo.url} alt={photo.originalName} className="relative max-h-full max-w-full rounded-lg object-contain shadow-2xl select-none" />
 
         {next && (
           <button onClick={() => onNavigate(next)} className="absolute right-4 z-10 flex size-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur transition-colors hover:bg-white/20" aria-label="Suivante">

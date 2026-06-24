@@ -45,10 +45,9 @@ export function CreateAlbumModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 backdrop-blur-sm animate-in fade-in"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="w-[440px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl bg-white shadow-2xl animate-in slide-in-from-bottom-2">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <button type="button" aria-label="Fermer" onClick={onClose} className="absolute inset-0 bg-black/35 backdrop-blur-sm animate-in fade-in" />
+      <div className="relative w-[440px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl bg-white shadow-2xl animate-in slide-in-from-bottom-2">
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <span className="text-base font-semibold">{title}</span>
           <button onClick={onClose} className="flex size-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted transition-colors">

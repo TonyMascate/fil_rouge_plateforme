@@ -160,10 +160,9 @@ export function PickPhotosModal({ albumId, onClose }: Readonly<PickPhotosModalPr
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex flex-col bg-black/35 backdrop-blur-sm animate-in fade-in"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="mx-auto mt-12 flex w-full max-w-3xl flex-1 flex-col overflow-hidden rounded-t-2xl bg-background shadow-2xl animate-in slide-in-from-bottom-4 sm:rounded-2xl sm:mt-16 sm:max-h-[80vh]">
+    <div className="fixed inset-0 z-50 flex flex-col">
+      <button type="button" aria-label="Fermer" onClick={onClose} className="absolute inset-0 bg-black/35 backdrop-blur-sm animate-in fade-in" />
+      <div className="relative mx-auto mt-12 flex w-full max-w-3xl flex-1 flex-col overflow-hidden rounded-t-2xl bg-background shadow-2xl animate-in slide-in-from-bottom-4 sm:rounded-2xl sm:mt-16 sm:max-h-[80vh]">
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
           <div>

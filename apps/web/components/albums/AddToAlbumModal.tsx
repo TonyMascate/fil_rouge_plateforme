@@ -68,10 +68,9 @@ export function AddToAlbumModal({ photoIds, onClose, onDone }: Readonly<AddToAlb
   const ownedAlbums = albums?.filter((a) => a.isOwner) ?? [];
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 backdrop-blur-sm animate-in fade-in"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="w-[400px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl bg-white shadow-2xl animate-in slide-in-from-bottom-2">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <button type="button" aria-label="Fermer" onClick={onClose} className="absolute inset-0 bg-black/35 backdrop-blur-sm animate-in fade-in" />
+      <div className="relative w-[400px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl bg-white shadow-2xl animate-in slide-in-from-bottom-2">
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <span className="text-base font-semibold">
             Ajouter {photoIds.length} photo{photoIds.length > 1 ? "s" : ""} à un album
