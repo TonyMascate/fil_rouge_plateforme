@@ -25,50 +25,78 @@ code. Les principaux écarts avec la conception initiale sont :
 
 ## 1. MCD — Modèle Conceptuel de Données
 
-> Vue conceptuelle (Merise) : entités et associations, sans clés techniques ni types. Le partage
-> public n'est pas une entité mais un attribut `jeton_partage` de la photo.
+> Vue entité-association présentée avec les **noms réels de tables et de colonnes** de la base
+> (fidèle au code livré) ; les types physiques, clés et index sont détaillés au MPD (§3). Les tables
+> de jointure `album_photos` et `album_members` sont modélisées en entités associatives, et le
+> partage public d'une photo est porté par sa colonne `share_token` (pas d'entité dédiée).
 
 ```mermaid
 erDiagram
-    UTILISATEUR {
+    users {
+        uuid id
         string email
-        string mot_de_passe
-        string role
-        string prenom
-        string nom
-        date date_inscription
+        string password
+        enum role
+        string firstName
+        string lastName
+        timestamp createdAt
     }
-    PHOTO {
-        string nom_original
-        int taille
-        string statut
-        string couleur_dominante
-        json palette
-        string_array cellules_couleur
-        string jeton_partage
-        date date_creation
+    photos {
+        uuid id
+        string s3_key
+        string original_name
+        enum status
+        int file_size_bytes
+        jsonb palette
+        text_array color_cells
+        string dominant_color
+        string share_token
+        uuid user_id
+        timestamp created_at
+        timestamp updated_at
     }
-    ALBUM {
-        string nom
-        date date_creation
+    albums {
+        uuid id
+        string name
+        uuid user_id
+        timestamp created_at
+        timestamp updated_at
     }
-    JETON_RAFRAICHISSEMENT {
-        boolean revoque
-        date date_expiration
+    album_photos {
+        uuid album_id
+        uuid photo_id
+        timestamp added_at
+    }
+    album_members {
+        uuid album_id
+        uuid user_id
+        timestamp created_at
+    }
+    refresh_token {
+        uuid id
+        string tokenHash
+        boolean isRevoked
+        timestamp expiresAt
+        uuid userId
+        timestamp createdAt
     }
 
-    UTILISATEUR ||--o{ PHOTO                  : "possède"
-    UTILISATEUR ||--o{ ALBUM                  : "possède"
-    UTILISATEUR ||--o{ JETON_RAFRAICHISSEMENT : "détient"
-    ALBUM       }o--o{ PHOTO                  : "contient"
-    UTILISATEUR }o--o{ ALBUM                  : "est membre de"
+    users  ||--o{ photos        : "possède"
+    users  ||--o{ albums        : "possède"
+    users  ||--o{ refresh_token : "détient"
+    albums ||--o{ album_photos  : "regroupe"
+    photos ||--o{ album_photos  : "figure dans"
+    albums ||--o{ album_members : "partagé avec"
+    users  ||--o{ album_members : "membre de"
 ```
 
 **Lecture des cardinalités :**
-- Un utilisateur possède de 0 à n photos et de 0 à n albums ; une photo / un album appartient à un et un seul utilisateur.
-- Un album contient de 0 à n photos ; une photo peut figurer dans 0 à n albums (association `contient`).
-- Un album peut être partagé avec 0 à n utilisateurs membres ; un utilisateur peut être membre de 0 à n albums (association `est membre de` → albums collaboratifs).
-- Un utilisateur détient de 0 à n jetons de rafraîchissement (sessions actives révocables).
+- Un `users` possède de 0 à n `photos` et de 0 à n `albums` ; une photo / un album appartient à un et un seul utilisateur (FK `user_id`, `ON DELETE CASCADE`).
+- L'appartenance d'une photo à un album passe par l'entité associative **`album_photos`** (clé composite `album_id` + `photo_id`) : une photo figure dans 0 à n albums, un album regroupe 0 à n photos. La colonne `added_at` date l'ajout.
+- Le partage collaboratif passe par l'entité associative **`album_members`** (clé composite `album_id` + `user_id`) : un album est partagé avec 0 à n membres, un utilisateur est membre de 0 à n albums. La colonne `created_at` date l'accès.
+- Un `users` détient de 0 à n `refresh_token` (sessions révocables) ; seule l'empreinte du jeton (`tokenHash`) est conservée, jamais sa valeur en clair.
+- La colonne `palette` (3 à 5 couleurs pondérées, `jsonb`) et le tableau `color_cells` (`text[]`) portent l'exploration chromatique : une photo appartient à plusieurs couleurs. `dominant_color` est un **attribut dérivé** (couleur de poids maximal de la palette), conservé pour rétrocompatibilité.
+- ⚠️ **Incohérence de nommage réelle** : `users` et `refresh_token` ont leurs colonnes en **camelCase** (`firstName`, `lastName`, `createdAt`, `tokenHash`, `isRevoked`, `expiresAt`, `userId`) — leurs entités TypeORM ne déclarent pas de `name:` explicite — alors que `photos`, `albums`, `album_photos` et `album_members` sont en **snake_case**. Le schéma reflète la base telle qu'elle est.
 
 ---
 
@@ -78,24 +106,23 @@ erDiagram
 > (n,n) deviennent des tables de jointure. Clés primaires soulignées `__…__`, clés étrangères `#…`.
 
 ```
-utilisateur (__id__, email, mot_de_passe, role, prenom, nom, date_creation)
+users (__id__, email, password, role, firstName, lastName, createdAt)
 
-photo (__id__, s3_key, nom_original, statut, taille_octets, couleur_dominante,
-       palette, cellules_couleur, jeton_partage, #utilisateur_id, date_creation, date_maj)
+photos (__id__, s3_key, original_name, status, file_size_bytes, dominant_color,
+        palette, color_cells, share_token, #user_id, created_at, updated_at)
 
-album (__id__, nom, #utilisateur_id, date_creation, date_maj)
+albums (__id__, name, #user_id, created_at, updated_at)
 
-album_photo (__#album_id, #photo_id__, date_ajout)
+album_photos (__#album_id, #photo_id__, added_at)
 
-album_membre (__#album_id, #utilisateur_id__, date_creation)
+album_members (__#album_id, #user_id__, created_at)
 
-jeton_rafraichissement (__id__, hash_jeton, revoque, date_expiration,
-                        #utilisateur_id, date_creation)
+refresh_token (__id__, tokenHash, isRevoked, expiresAt, #userId, createdAt)
 ```
 
 **Contraintes notables :**
-- `utilisateur.email` est **unique** ; `photo.jeton_partage` est **unique** (et peut être nul).
-- `album_photo` et `album_membre` ont une **clé primaire composite** (deux colonnes), ce qui interdit nativement les doublons.
+- `users.email` est **unique** ; `photos.share_token` est **unique** (et peut être nul).
+- `album_photos` et `album_members` ont une **clé primaire composite** (deux colonnes), ce qui interdit nativement les doublons.
 - Toutes les clés étrangères sont en **suppression cascade** (`ON DELETE CASCADE`) : supprimer un utilisateur efface l'ensemble de ses données (droit à l'oubli RGPD).
 
 ---
@@ -110,10 +137,10 @@ erDiagram
         UUID id PK
         VARCHAR email UK
         VARCHAR password "select:false"
-        ENUM role "USER | ADMIN"
-        VARCHAR first_name
-        VARCHAR last_name
-        TIMESTAMP created_at
+        ENUM role "role_user | role_admin"
+        VARCHAR firstName
+        VARCHAR lastName
+        TIMESTAMP createdAt
     }
     PHOTOS {
         UUID id PK
@@ -148,16 +175,16 @@ erDiagram
     }
     REFRESH_TOKEN {
         UUID id PK
-        VARCHAR token_hash
-        BOOLEAN is_revoked "défaut false"
-        TIMESTAMP expires_at
-        UUID user_id FK
-        TIMESTAMP created_at
+        VARCHAR tokenHash
+        BOOLEAN isRevoked "défaut false"
+        TIMESTAMP expiresAt
+        UUID userId FK
+        TIMESTAMP createdAt
     }
 
     USERS  ||--o{ PHOTOS        : "user_id (CASCADE)"
     USERS  ||--o{ ALBUMS        : "user_id (CASCADE)"
-    USERS  ||--o{ REFRESH_TOKEN : "user_id (CASCADE)"
+    USERS  ||--o{ REFRESH_TOKEN : "userId (CASCADE)"
     ALBUMS ||--o{ ALBUM_PHOTOS  : "album_id (CASCADE)"
     PHOTOS ||--o{ ALBUM_PHOTOS  : "photo_id (CASCADE)"
     ALBUMS ||--o{ ALBUM_MEMBERS : "album_id (CASCADE)"
@@ -166,7 +193,8 @@ erDiagram
 
 **Choix physiques :**
 - **Identifiants UUID** générés en base : non devinables, utiles pour les accès par lien.
-- **Types ENUM PostgreSQL** pour `role` et `status` (intégrité au niveau du SGBD).
+- **Types ENUM PostgreSQL** pour `role` (valeurs stockées `role_user` / `role_admin`) et `status` (`PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`) — intégrité au niveau du SGBD.
+- **Nommage des colonnes non uniforme** (reflété tel quel) : `photos`, `albums`, `album_photos`, `album_members` en `snake_case` ; `users` et `refresh_token` en `camelCase` (`firstName`, `lastName`, `createdAt`, `tokenHash`, `isRevoked`, `expiresAt`, `userId`), leurs entités ne fixant pas de `name:` explicite.
 - **Index** sur `photos.file_size_bytes` (calcul du quota), `albums.user_id` et `album_members.user_id` (listes par utilisateur).
 - **Index GIN** sur `photos.color_cells` (colonne tableau) : adapté à la recherche d'appartenance d'une valeur dans un tableau, il prépare la montée en charge de l'exploration chromatique (« quelles photos contiennent la cellule X ? »).
 - **Colonnes couleur** (`palette` en `jsonb`, `color_cells` en `text[]`) : une photo porte une palette de 3–5 couleurs pondérées et appartient donc à **plusieurs** cellules d'atlas — d'où le tableau plutôt qu'une simple colonne scalaire.

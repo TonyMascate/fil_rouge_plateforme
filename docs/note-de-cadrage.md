@@ -53,7 +53,6 @@ Aucune solution n'occupe le quadrant **« self-hosted RGPD-compliant + UX modern
 - Création d'album directement depuis l'exploration chromatique (US-25), filtres avancés (US-26).
 - Photo de couverture d'album (US-17), expiration des liens de partage (US-21).
 - Application mobile native, édition photo intégrée, gestion des doublons.
-- URLs CloudFront signées (en roadmap sécurité).
 
 ---
 
@@ -77,14 +76,14 @@ Aucune solution n'occupe le quadrant **« self-hosted RGPD-compliant + UX modern
 
 ## 6. Contraintes
 
-| Type              | Contrainte                                                                                                                                                                                                                                                                                                              |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Technique**     | Monorepo Turborepo + Bun ; API NestJS 11 / TypeORM / PostgreSQL ; Web Next.js 16 / React 19 / Tailwind v4 / shadcn ; queue BullMQ + Redis ; stockage AWS S3 + CloudFront.                                                                                                                                               |
-| **Architecture**  | Monolithe modulaire (et non microservices) ; déploiement Docker Swarm sur VPS ; reverse proxy Caddy.                                                                                                                                                                                                                    |
-| **Légale / RGPD** | Données personnelles (comptes, métadonnées, albums) hébergées exclusivement sur VPS EU. Compromis assumé : binaires photo sur S3 région Paris (`eu-west-3`), dépendance AWS soumise au Cloud Act, mitigée par région EU et absence de lien exploitable sans la base. Aligné sur les principes ISO 27001 (non certifié). |
-| **Délai**         | Projet fil rouge cadencé par les échéances de la certification ; développement solo.                                                                                                                                                                                                                                    |
-| **Ressource**     | Une seule personne (développeur full-stack) ; pas d'équipe ni de budget externe.                                                                                                                                                                                                                                        |
-| **Qualité**       | Validation Zod partagée API/web ; tests Jest API + intégration testcontainers ; objectif de couverture en montée progressive.                                                                                                                                                                                           |
+| Type              | Contrainte                                                                                                                                                                                                                                                          |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Technique**     | Monorepo Turborepo + Bun ; API NestJS 11 / TypeORM / PostgreSQL ; Web Next.js 16 / React 19 / Tailwind v4 / shadcn ; queue BullMQ + Redis ; stockage AWS S3 + CloudFront.                                                                                           |
+| **Architecture**  | Monolithe modulaire (et non microservices) ; déploiement Docker Swarm sur VPS ; reverse proxy Caddy.                                                                                                                                                                |
+| **Légale / RGPD** | Données personnelles (comptes, métadonnées, albums) hébergées exclusivement sur VPS EU. Compromis assumé : binaires photo sur S3 région Paris (`eu-west-3`), dépendance AWS soumise au Cloud Act, mitigée par région EU et absence de lien exploitable sans la base |
+| **Délai**         | Projet fil rouge cadencé par les échéances de la certification ; développement solo.                                                                                                                                                                                |
+| **Ressource**     | Une seule personne (développeur full-stack) ; pas d'équipe ni de budget externe.                                                                                                                                                                                    |
+| **Qualité**       | Validation Zod partagée API/web ; tests Jest API + intégration testcontainers ; objectif de couverture en montée progressive.                                                                                                                                       |
 
 ---
 
@@ -104,12 +103,15 @@ Aucune solution n'occupe le quadrant **« self-hosted RGPD-compliant + UX modern
 | Jalon                     | Contenu                                                               |    Statut     |
 | ------------------------- | --------------------------------------------------------------------- | :-----------: |
 | J1 — Cadrage & conception | Personas, user stories, benchmark, modélisation, ADR                  |    Validé     |
-| J2 — Socle technique      | Monorepo, infra Swarm, CI/CD, auth                                    |    Validé     |
-| J3 — Fonctionnalités cœur | Upload, galerie, albums, partage                                      |    Validé     |
+| J2 — Socle technique      | Monorepo, infra Swarm, CI/CD, auth, observabilité (métriques, logs, dashboards) |    Validé     |
+| J3 — Fonctionnalités cœur | Upload, galerie, albums, partage, pages vitrine + responsive          |    Validé     |
 | J4 — Killer feature       | Exploration Chromatique v2 (atlas OKLCH)                              |    Validé     |
 | J5 — Qualité & sécurité   | Tests, durcissement (CSRF, throttling, sécurité upload), URLs signées |    Validé     |
 | J6 — Roadmap produit      | Recherche/filtres, favoris/tags, gestion de compte                    | à implémenter |
 | J7 — Dossier & soutenance | Finalisation du dossier RNCP et préparation jury                      |    Validé     |
+
+> **Vue macro.** Ces jalons regroupent les 10 lots du projet. Le découpage détaillé,
+> chiffré (charge par lot) et daté (Gantt) figure dans [wbs-planning.md](wbs-planning.md).
 
 ---
 
