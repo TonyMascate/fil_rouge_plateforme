@@ -26,11 +26,8 @@ flowchart TD
 
     PHOTO_MODAL --> SHARED["🔗 Photo partagée  /p/token  —  public"]
 
-    ADMIN["🛡️ Dashboard admin  /admin"]
-
     style LANDING fill:#6d28d9,color:#fff,stroke:none
     style GALLERY fill:#6d28d9,color:#fff,stroke:none
-    style ADMIN fill:#374151,color:#fff,stroke:none
     style SHARED fill:#0369a1,color:#fff,stroke:none
     style CHROMATIC fill:#7c3aed,color:#fff,stroke:none
     style UPLOAD fill:#6b7280,color:#fff,stroke:none

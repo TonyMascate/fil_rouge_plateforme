@@ -27,6 +27,9 @@ jobs:
       - name: Compiler le package partagé
         run: bun run --filter '@repo/shared' build
 
+      - name: Tests package partagé avec couverture
+        run: bun run --filter '@repo/shared' test:cov
+
       - name: Tests API avec couverture
         working-directory: apps/api
         run: bun run test:cov

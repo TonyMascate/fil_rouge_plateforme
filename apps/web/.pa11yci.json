@@ -1,0 +1,18 @@
+{
+  "defaults": {
+    "standard": "WCAG2AA",
+    "timeout": 60000,
+    "wait": 500,
+    "reporter": "cli",
+    "chromeLaunchConfig": {
+      "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+    }
+  },
+  "urls": [
+    "http://localhost:3000/",
+    "http://localhost:3000/fonctionnalites",
+    "http://localhost:3000/tarifs",
+    "http://localhost:3000/login",
+    "http://localhost:3000/register"
+  ]
+}
