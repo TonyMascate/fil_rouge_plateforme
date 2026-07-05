@@ -18,7 +18,7 @@ export default function FonctionnalitesPage() {
               <br />
               <span className="text-primary">pour vos photos.</span>
             </h1>
-            <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">De l'import à la diffusion, en passant par l'exploration chromatique — PhotoApp centralise l'ensemble de votre flux photo.</p>
+            <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">De l'import à la diffusion, en passant par l'exploration chromatique — Kroma centralise l'ensemble de votre flux photo.</p>
             <div className="flex w-full max-w-xs flex-col items-stretch gap-3 sm:w-auto sm:max-w-none sm:flex-row sm:items-center">
               <Button asChild size="lg" className="w-full rounded-full shadow-lg shadow-primary/30 sm:w-auto">
                 <Link href="/register">Commencer gratuitement</Link>
@@ -44,7 +44,7 @@ export default function FonctionnalitesPage() {
             <>
               Prêt à découvrir
               <br />
-              <span className="text-primary">PhotoApp ?</span>
+              <span className="text-primary">Kroma ?</span>
             </>
           }
           subtitle="500 MB gratuits · Aucune carte bancaire · Partage illimité"

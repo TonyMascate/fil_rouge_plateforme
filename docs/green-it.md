@@ -1,6 +1,6 @@
 # Note de veille technologique & Green IT
 
-**Projet :** Fil Rouge — Plateforme de gestion de photos et albums (PhotoApp)
+**Projet :** Fil Rouge — Plateforme de gestion de photos et albums (Kroma)
 **Auteur :** Tony Mascate
 **Date :** Juin 2026 _(mise à jour — alignée sur la stack réellement déployée)_
 

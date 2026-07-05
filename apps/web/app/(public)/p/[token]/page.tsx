@@ -53,7 +53,7 @@ export default async function SharedPhotoPage({
           <DownloadButton url={photo.url} filename={photo.originalName} />
         </div>
       </div>
-      <p className="text-xs text-muted-foreground">Partagé via PhotoApp</p>
+      <p className="text-xs text-muted-foreground">Partagé via Kroma</p>
     </main>
   );
 }

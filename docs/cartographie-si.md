@@ -43,7 +43,7 @@ flowchart TD
     U["Utilisateur"]
     A["Administrateur"]
 
-    subgraph Processus["Processus métier de PhotoApp"]
+    subgraph Processus["Processus métier de Kroma"]
         P1["Gérer son compte<br/>(inscription, connexion, suppression — RGPD)"]
         P2["Importer ses photos"]
         P3["Organiser sa bibliothèque<br/>(galerie, albums)"]

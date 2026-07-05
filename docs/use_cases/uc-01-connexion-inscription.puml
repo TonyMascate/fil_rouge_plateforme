@@ -26,7 +26,7 @@ skinparam note {
 actor "Visiteur" as Visiteur
 actor "Utilisateur\nauthentifié" as User
 
-rectangle "PhotoApp — Authentification" {
+rectangle "Kroma — Authentification" {
 
   usecase "S'inscrire" as UC_Register
   usecase "Se connecter" as UC_Login

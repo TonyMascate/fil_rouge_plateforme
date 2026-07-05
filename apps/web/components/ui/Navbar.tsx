@@ -50,7 +50,7 @@ function PublicNavbar() {
     <header className="sticky top-0 z-50">
       <nav className="w-full flex items-center justify-between px-5 sm:px-10 h-16 bg-card backdrop-blur-sm border-b border-border">
         <Link href="/" className="text-lg font-semibold text-foreground">
-          PhotoApp
+          Kroma
         </Link>
 
         {/* Desktop */}
@@ -83,7 +83,7 @@ function PublicNavbar() {
             </Button>
           </SheetTrigger>
           <SheetContent side="right" className="w-full max-w-full flex flex-col gap-8 pt-12 px-6">
-            <SheetTitle className="text-xl font-semibold">PhotoApp</SheetTitle>
+            <SheetTitle className="text-xl font-semibold">Kroma</SheetTitle>
             <nav className="flex flex-col">
               {PUBLIC_LINKS.map(({ label, href }) => (
                 <Link key={label} href={href} className="py-4 text-base font-medium border-b border-border last:border-0 hover:text-primary transition-colors">
@@ -156,7 +156,7 @@ function AuthedNavbar({ user }: Readonly<{ user: NavbarUser }>) {
         <div className="flex items-center gap-6">
           <Link href="/galerie" className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-primary" />
-            <span className="text-base text-foreground font-semibold tracking-tight">PhotoApp</span>
+            <span className="text-base text-foreground font-semibold tracking-tight">Kroma</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-1">

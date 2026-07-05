@@ -1,6 +1,6 @@
 # WBS & Planning (Gantt) — Plateforme de gestion de photos
 
-**Projet :** Fil Rouge — Plateforme de gestion de photos et albums (« PhotoApp »)
+**Projet :** Fil Rouge — Plateforme de gestion de photos et albums (« Kroma »)
 **Auteur :** Tony Mascate
 **Date :** Juin 2026
 **Version :** 1.0
@@ -16,7 +16,7 @@
 ## 1. WBS — Organigramme des tâches
 
 ```
-Projet PhotoApp
+Projet Kroma
 │
 ├── LOT 1 — Cadrage & avant-projet
 │   ├── 1.1 Initialisation du dépôt (monorepo, conventions)
@@ -148,7 +148,7 @@ attendu.
 
 ```mermaid
 gantt
-    title Planning PhotoApp — janvier à juin 2026 (sections = lots du WBS)
+    title Planning Kroma — janvier à juin 2026 (sections = lots du WBS)
     dateFormat  YYYY-MM-DD
     axisFormat  %d/%m
 
@@ -212,7 +212,7 @@ gantt
 ## 4. Chemin critique
 
 Le **chemin critique** est la plus longue chaîne de tâches dépendantes : tout
-retard sur l'une d'elles décale la livraison finale. Pour PhotoApp :
+retard sur l'une d'elles décale la livraison finale. Pour Kroma :
 
 > **Init dépôt → CI/CD → Monorepo & Docker Swarm → Auth JWT → Téléversement des images
 > → Galerie → Gestion des albums → Exploration Chromatique v2 → Tests → Quality gate SonarQube**

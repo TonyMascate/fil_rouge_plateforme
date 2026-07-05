@@ -25,7 +25,7 @@ skinparam note {
 
 actor "Utilisateur\nauthentifié" as User
 
-rectangle "PhotoApp — Albums" {
+rectangle "Kroma — Albums" {
 
   usecase "Ajouter une image\ndans un album" as UC_Add
   usecase "Retirer une image\nd'un album" as UC_Remove

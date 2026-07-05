@@ -1,4 +1,4 @@
-# Architecture des pages — PhotoApp
+# Architecture des pages — Kroma
 
 ## Arborescence
 

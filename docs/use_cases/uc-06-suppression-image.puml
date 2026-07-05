@@ -25,7 +25,7 @@ skinparam note {
 
 actor "Utilisateur\nauthentifié" as User
 
-rectangle "PhotoApp — Gestion des photos" {
+rectangle "Kroma — Gestion des photos" {
 
   usecase "Supprimer une image" as UC_Delete
 

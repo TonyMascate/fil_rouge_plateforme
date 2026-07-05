@@ -55,7 +55,7 @@ export default function LoginPage() {
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[115%] max-w-[680px] rotate-[-8deg] translate-x-[12%] translate-y-[2%] shrink-0">
             <MacWindow className="shadow-2xl">
-              <Image src="/boilerplate.png" alt="Aperçu de PhotoApp" width={1902} height={915} priority className="w-full h-auto block" />
+              <Image src="/boilerplate.png" alt="Aperçu de Kroma" width={1902} height={915} priority className="w-full h-auto block" />
             </MacWindow>
           </div>
         </div>

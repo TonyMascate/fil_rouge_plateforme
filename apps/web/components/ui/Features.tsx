@@ -5,7 +5,7 @@ import { MacWindow } from "@/components/ui/MacWindow";
 import { FeatureText, FeatureRow, CheckList } from "@/components/ui/FeatureSection";
 
 function AppPreviewImage() {
-  return <Image src="/boilerplate.png" alt="Aperçu de PhotoApp" width={1902} height={915} className="w-full h-auto block" />;
+  return <Image src="/boilerplate.png" alt="Aperçu de Kroma" width={1902} height={915} className="w-full h-auto block" />;
 }
 
 // — Visuals —
@@ -50,7 +50,7 @@ export function UploadFeature() {
             c'est fait.
           </>
         }
-        description="Importez vos photos en quelques secondes par glisser-déposer ou sélection multiple. PhotoApp accepte JPG, PNG, HEIC et RAW jusqu'à 50 MB par fichier.">
+        description="Importez vos photos en quelques secondes par glisser-déposer ou sélection multiple. Kroma accepte JPG, PNG, HEIC et RAW jusqu'à 50 MB par fichier.">
         <CheckList items={["Import par lot jusqu'à 200 photos à la fois", "Formats JPG, PNG, HEIC, RAW supportés", "Progression en temps réel avec aperçu immédiat", "Stockage sécurisé, photos conservées indéfiniment"]} />
         <Link href="/register" className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:gap-2.5 transition-all">
           Essayer l'upload →
@@ -75,7 +75,7 @@ export function ChromaFeature() {
             <span className="text-primary">ambiance.</span>
           </>
         }
-        description="Fini les galeries chronologiques. PhotoApp analyse automatiquement la palette de chaque photo et vous permet de naviguer par teinte — retrouvez toutes vos photos « heure dorée » en un clic.">
+        description="Fini les galeries chronologiques. Kroma analyse automatiquement la palette de chaque photo et vous permet de naviguer par teinte — retrouvez toutes vos photos « heure dorée » en un clic.">
         <CheckList items={["Analyse colorimétrique automatique à l'import", "Navigation par ambiance : violet, doré, bleu, vert…", "Regroupement intelligent de photos similaires", "Aucune action manuelle requise"]} />
         <Button asChild className="w-fit rounded-full bg-foreground text-background hover:bg-foreground/80">
           <Link href="#">Découvrir la feature →</Link>

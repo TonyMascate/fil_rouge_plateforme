@@ -25,7 +25,7 @@ skinparam note {
 
 actor "Utilisateur\nauthentifié" as User
 
-rectangle "PhotoApp — Upload" {
+rectangle "Kroma — Upload" {
 
   usecase "Uploader une image" as UC_Upload
   usecase "Annuler l'upload\nen cours" as UC_Abort

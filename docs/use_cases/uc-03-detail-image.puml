@@ -25,7 +25,7 @@ skinparam note {
 
 actor "Utilisateur\nauthentifié" as User
 
-rectangle "PhotoApp — Détail image" {
+rectangle "Kroma — Détail image" {
 
   usecase "Voir le détail\nd'une image" as UC_ViewDetail
   usecase "Consulter le statut\nde traitement" as UC_GetStatus

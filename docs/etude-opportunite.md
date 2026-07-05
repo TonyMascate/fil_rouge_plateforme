@@ -1,6 +1,6 @@
 # Étude d'opportunité — Plateforme de gestion de photos
 
-**Projet :** Fil Rouge — Plateforme de gestion de photos et albums (« PhotoApp »)
+**Projet :** Fil Rouge — Plateforme de gestion de photos et albums (« Kroma »)
 **Auteur :** Tony Mascate
 **Date :** Juin 2026
 **Version :** 1.0

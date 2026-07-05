@@ -26,7 +26,7 @@ skinparam note {
 actor "Utilisateur\nauthentifié" as User
 actor "Visiteur\nanonyme" as Visitor
 
-rectangle "PhotoApp — Partage public" {
+rectangle "Kroma — Partage public" {
 
   usecase "Activer le partage\npublic d'une image" as UC_Share
   usecase "Désactiver le partage\npublic" as UC_Unshare

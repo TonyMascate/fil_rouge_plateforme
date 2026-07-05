@@ -1,6 +1,6 @@
 # Modélisation des données — MCD / MLD / MPD / Diagramme de classes
 
-**Projet :** Fil Rouge — Plateforme de gestion de photos et albums (PhotoApp)
+**Projet :** Fil Rouge — Plateforme de gestion de photos et albums (Kroma)
 **Auteur :** Tony Mascate
 **Date :** Juin 2026 _(mise à jour — modèle aligné sur l'implémentation livrée)_
 

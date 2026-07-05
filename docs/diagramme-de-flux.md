@@ -1,6 +1,6 @@
 # Diagrammes de flux et de séquence
 
-**Projet :** Fil Rouge — Plateforme de gestion de photos et albums (PhotoApp)
+**Projet :** Fil Rouge — Plateforme de gestion de photos et albums (Kroma)
 **Auteur :** Tony Mascate
 **Date :** Juin 2026 _(mise à jour — aligné sur l'architecture livrée)_
 

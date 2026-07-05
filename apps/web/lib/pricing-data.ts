@@ -36,7 +36,7 @@ export const PLANS: Plan[] = [
     id: "starter",
     badge: "Gratuit",
     name: "Starter",
-    desc: "Pour découvrir PhotoApp et partager vos premiers souvenirs.",
+    desc: "Pour découvrir Kroma et partager vos premiers souvenirs.",
     priceMensuel: "0",
     priceAnnuel: "0",
     annualNote: null,
@@ -64,6 +64,6 @@ export const PLANS: Plan[] = [
     priceAnnuel: "15",
     annualNote: "par utilisateur · facturé annuellement",
     ctaLabel: "Contacter l'équipe",
-    ctaHref: "mailto:hello@photoapp.fr",
+    ctaHref: "mailto:hello@kroma.fr",
   },
 ];

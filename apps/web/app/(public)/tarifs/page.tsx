@@ -74,7 +74,7 @@ export default function TarifsPage() {
         <CtaSection
           title={
             <>
-              Essayez <span className="text-primary">PhotoApp</span>
+              Essayez <span className="text-primary">Kroma</span>
               <br />
               gratuitement.
             </>

@@ -25,7 +25,7 @@ skinparam note {
 
 actor "Utilisateur\nauthentifié" as User
 
-rectangle "PhotoApp — Albums" {
+rectangle "Kroma — Albums" {
 
   usecase "Créer un album" as UC_Create
   usecase "Renommer un album" as UC_Rename
