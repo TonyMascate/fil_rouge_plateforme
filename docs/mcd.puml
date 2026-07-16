@@ -1,0 +1,90 @@
+@startuml mcd
+' ─────────────────────────────────────────────────────────────────────────────
+' Kroma — MCD (Modèle Conceptuel de Données, méthode Merise)
+' Entités (rectangles, identifiant souligné) + associations (nœuds «assoc»),
+' traits SANS embout, cardinalités Merise (0,1)/(1,1)/(0,n)/(1,n).
+' Nommage conceptuel : l'identifiant reprend le nom de l'entité (id_users,
+' id_photos, id_albums, id_refresh_token) ; les autres attributs ne sont pas
+' suffixés. Pas de clé étrangère (introduite au MLD).
+' Rendu : kroki.io (type=plantuml) ou extension PlantUML VS Code.
+' ─────────────────────────────────────────────────────────────────────────────
+title Kroma - MCD 
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam defaultTextAlignment left
+skinparam nodesep 90
+skinparam ranksep 140
+hide circle
+hide empty members
+skinparam class {
+  BackgroundColor #EAF2FB
+  BorderColor #2C5A8C
+  FontColor #1a1a1a
+}
+
+' ── Entités (identifiant conceptuel souligné, sans clé étrangère) ──
+class USERS {
+  <u>id_users</u>
+  email
+  mot_de_passe
+  role
+  prenom
+  nom
+  date_creation
+}
+class PHOTOS {
+  <u>id_photos</u>
+  cle_s3
+  nom_original
+  statut
+  taille_octets
+  couleur_dominante
+  palette
+  cellules_couleur
+  jeton_partage
+  date_creation
+  date_maj
+}
+class ALBUMS {
+  <u>id_albums</u>
+  nom
+  date_creation
+  date_maj
+}
+class REFRESH_TOKEN {
+  <u>id_refresh_token</u>
+  empreinte_jeton
+  revoque
+  date_expiration
+  date_creation
+}
+
+' ── Associations (les porteuses ont des attributs) ──
+class POSSEDE  #FCEFC7
+class CREE     #FCEFC7
+class DETIENT  #FCEFC7
+class CONTIENT #FCEFC7 {
+  date_ajout
+}
+class MEMBRE   #FCEFC7 {
+  date_acces
+}
+
+' ── Cardinalités Merise (traits sans embout) ─────────────
+PHOTOS        "(1,1)" -- POSSEDE
+USERS         "(0,n)" -- POSSEDE
+
+PHOTOS        "(0,n)" -- CONTIENT
+ALBUMS        "(0,n)" -- CONTIENT
+
+ALBUMS        "(1,1)" -- CREE
+USERS         "(0,n)" -- CREE
+
+ALBUMS        "(0,n)" -- MEMBRE
+USERS         "(0,n)" -- MEMBRE
+
+REFRESH_TOKEN "(1,1)" -- DETIENT
+USERS         "(0,n)" -- DETIENT
+
+@enduml
