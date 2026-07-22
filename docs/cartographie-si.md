@@ -86,14 +86,14 @@ flowchart LR
     end
 ```
 
-| Bloc fonctionnel                | Processus métier servi    | Fonctions principales                                           |
-| ------------------------------- | ------------------------- | --------------------------------------------------------------- |
-| Authentification & autorisation | Gérer son compte          | Inscription, connexion, déconnexion, rôles, sessions révocables |
-| Gestion des photos              | Importer ses photos       | Upload résilient, quota, statut de traitement, suppression      |
-| Gestion des albums              | Organiser sa bibliothèque | Création, contenu, renommage, couverture, membres               |
-| Partage                         | Partager                  | Lien public révocable, albums collaboratifs                     |
-| Exploration chromatique         | Explorer par la couleur   | Extraction de palette OKLab, classement en atlas chromatique fixe |
-| Diffusion des médias            | (transverse)              | Stockage objet, distribution CDN par URL signée                 |
+| Bloc fonctionnel                | Processus métier servi    | Fonctions principales                                              |
+| ------------------------------- | ------------------------- | ------------------------------------------------------------------ |
+| Authentification & autorisation | Gérer son compte          | Inscription, connexion, déconnexion, rôles, sessions révocables    |
+| Gestion des photos              | Importer ses photos       | Upload résilient, quota, statut de traitement, suppression         |
+| Gestion des albums              | Organiser sa bibliothèque | Création, contenu, renommage, couverture, membres                  |
+| Partage                         | Partager                  | Lien public révocable, albums collaboratifs                        |
+| Exploration chromatique         | Explorer par la couleur   | Extraction de palette OKLab, classement en atlas chromatique fixe  |
+| Diffusion des médias            | (transverse)              | Stockage objet, distribution CDN par URL signée                    |
 | Observabilité                   | Superviser la plateforme  | Métriques, logs corrélés, tableaux de bord (alerting à configurer) |
 
 > Les niveaux **applicatif** (section 3) et **infrastructure** (section 4) ci-dessous montrent _comment_
@@ -353,18 +353,18 @@ graph TB
 > Probabilité et impact évalués **avant mitigation** · Score résiduel **après mitigation**
 > Échelle : 1 (faible) → 3 (élevé) · Score = Probabilité × Impact
 
-| #   | Actif         | Menace                                     | Source de risque       | Prob. | Impact | Score brut | Mitigation                                                                          | Score résiduel |
-| --- | ------------- | ------------------------------------------ | ---------------------- | :---: | :----: | :--------: | ----------------------------------------------------------------------------------- | :------------: |
-| R1  | Service Auth  | Brute force sur login                      | Bot automatisé         |   3   |   3    |  **9** 🔴  | Throttler (5 req/60s), Argon2id, refresh token JWT révocable en base                |    **2** 🟢    |
-| R2  | PostgreSQL    | Panne / indisponibilité (SPOF)             | Panne matérielle       |   3   |   3    |  **9** 🔴  | Backups quotidiens automatisés, restart policy Swarm, supervision Grafana (métriques) |    **6** 🔴    |
-| R3  | Photos        | Accès non autorisé à des photos privées    | Hacker externe         |   2   |   3    |  **6** 🔴  | Ownership guard (`photo.userId`), JWT HTTP-only, URL S3 signées                     |    **2** 🟢    |
-| R4  | Tokens JWT    | Vol de token via XSS                       | Hacker externe         |   2   |   3    |  **6** 🔴  | Cookies HTTP-only (inaccessibles par JS), access token 15 min, HTTPS                |    **2** 🟢    |
-| R5  | VPS           | Indisponibilité totale (panne matérielle)  | Panne matérielle       |   2   |   3    |  **6** 🔴  | Rolling updates Swarm, snapshot VPS régulier, supervision Grafana (métriques)        |    **3** 🟡    |
-| R6  | Redis         | Indisponibilité (SPOF)                     | Panne matérielle       |   2   |   2    |  **4** 🟡  | Restart policy Swarm, graceful degradation (cache miss → DB)                        |    **2** 🟢    |
-| R7  | API NestJS    | Injection SQL                              | Hacker externe         |   1   |   3    |  **3** 🟡  | TypeORM (requêtes paramétrées), validation Zod sur toutes les entrées               |    **1** 🟢    |
-| R8  | S3 / AWS      | Cloud Act — accès données par autorités US | Fournisseur défaillant |   1   |   2    |  **2** 🟢  | Région EU (eu-west-3 Paris), aucune donnée personnelle stockée sur S3               |    **1** 🟢    |
-| R9  | Logs (Loki)   | Fuite de données sensibles dans les logs   | Erreur humaine         |   1   |   2    |  **2** 🟢  | Pino sans MDP ni token ; email loggé uniquement à la connexion (audit intentionnel) |    **1** 🟢    |
-| R10 | Images Docker | Supply chain attack                        | Hacker externe         |   1   |   2    |  **2** 🟢  | Build CI contrôlé, ghcr.io privé, GITHUB_TOKEN éphémère                             |    **1** 🟢    |
+| #   | Actif         | Menace                                     | Source de risque       | Prob. | Impact | Score brut | Mitigation                                                                            | Score résiduel |
+| --- | ------------- | ------------------------------------------ | ---------------------- | :---: | :----: | :--------: | ------------------------------------------------------------------------------------- | :------------: |
+| R1  | Service Auth  | Brute force sur login                      | Bot automatisé         |   3   |   3    |   **9**    | Throttler (5 req/60s), Argon2id, refresh token JWT révocable en base                  |     **2**      |
+| R2  | PostgreSQL    | Panne / indisponibilité (SPOF)             | Panne matérielle       |   3   |   3    |   **9**    | Backups quotidiens automatisés, restart policy Swarm, supervision Grafana (métriques) |     **6**      |
+| R3  | Photos        | Accès non autorisé à des photos privées    | Hacker externe         |   2   |   3    |   **6**    | Ownership guard (`photo.userId`), JWT HTTP-only, URL S3 signées                       |     **2**      |
+| R4  | Tokens JWT    | Vol de token via XSS                       | Hacker externe         |   2   |   3    |   **6**    | Cookies HTTP-only (inaccessibles par JS), access token 15 min, HTTPS                  |     **2**      |
+| R5  | VPS           | Indisponibilité totale (panne matérielle)  | Panne matérielle       |   2   |   3    |   **6**    | Rolling updates Swarm, snapshot VPS régulier, supervision Grafana (métriques)         |     **3**      |
+| R6  | Redis         | Indisponibilité (SPOF)                     | Panne matérielle       |   2   |   2    |   **4**    | Restart policy Swarm, graceful degradation (cache miss → DB)                          |     **2**      |
+| R7  | API NestJS    | Injection SQL                              | Hacker externe         |   1   |   3    |   **3**    | TypeORM (requêtes paramétrées), validation Zod sur toutes les entrées                 |     **1**      |
+| R8  | S3 / AWS      | Cloud Act — accès données par autorités US | Fournisseur défaillant |   1   |   2    |   **2**    | Région EU (eu-west-3 Paris), aucune donnée personnelle stockée sur S3                 |     **1**      |
+| R9  | Logs (Loki)   | Fuite de données sensibles dans les logs   | Erreur humaine         |   1   |   2    |   **2**    | Pino sans MDP ni token ; email loggé uniquement à la connexion (audit intentionnel)   |     **1**      |
+| R10 | Images Docker | Supply chain attack                        | Hacker externe         |   1   |   2    |   **2**    | Build CI contrôlé, ghcr.io privé, GITHUB_TOKEN éphémère                               |     **1**      |
 
 #### Matrice de risques (avant mitigation)
 
@@ -372,11 +372,11 @@ Grille de criticité : chaque case correspond à un couple **Probabilité × Imp
 sont placés selon leur cotation brute. La couleur de la case indique la criticité (score = P × I :
 🟢 1-2 · 🟡 3-4 · 🔴 6-9).
 
-| Probabilité ↓ \ Impact → | Faible (1) | Moyen (2) | Critique (3) |
-| ------------------------ | ---------- | --------- | ------------ |
-| **Élevée (3)**   | 🟢 *(3)* — | 🔴 *(6)* — | 🔴 *(9)* **R1** Brute force · **R2** Panne PostgreSQL |
-| **Moyenne (2)**  | 🟢 *(2)* — | 🟡 *(4)* **R6** Redis SPOF | 🔴 *(6)* **R3** Accès photos · **R4** Vol token XSS · **R5** Indispo VPS |
-| **Faible (1)**   | 🟢 *(1)* — | 🟢 *(2)* **R8** Cloud Act · **R9** Fuite logs · **R10** Supply chain | 🟡 *(3)* **R7** Injection SQL |
+| Probabilité ↓ \ Impact → | Faible (1) | Moyen (2)                                                            | Critique (3)                                                             |
+| ------------------------ | ---------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **Élevée (3)**           | 🟢 _(3)_ — | 🔴 _(6)_ —                                                           | 🔴 _(9)_ **R1** Brute force · **R2** Panne PostgreSQL                    |
+| **Moyenne (2)**          | 🟢 _(2)_ — | 🟡 _(4)_ **R6** Redis SPOF                                           | 🔴 _(6)_ **R3** Accès photos · **R4** Vol token XSS · **R5** Indispo VPS |
+| **Faible (1)**           | 🟢 _(1)_ — | 🟢 _(2)_ **R8** Cloud Act · **R9** Fuite logs · **R10** Supply chain | 🟡 _(3)_ **R7** Injection SQL                                            |
 
 > Lecture : les risques **R1 à R5** (haut-droite) sont les plus critiques avant mitigation et
 > concentrent l'effort de traitement (voir le tableau de traitement EBIOS ci-dessous). Après
@@ -386,18 +386,18 @@ sont placés selon leur cotation brute. La couleur de la case indique la critici
 
 ### Atelier 5 — Traitement du risque
 
-| #   | Stratégie              | Actions concrètes                                                                     | Responsable  | Délai         |
-| --- | ---------------------- | ------------------------------------------------------------------------------------- | ------------ | ------------- |
-| R1  | **RÉDUIRE**            | Throttler NestJS (5 req/60s sur `/auth/login`), Argon2id, rotation refresh token      | Tony Mascate | ✅ Implémenté |
+| #   | Stratégie              | Actions concrètes                                                                                   | Responsable  | Délai         |
+| --- | ---------------------- | --------------------------------------------------------------------------------------------------- | ------------ | ------------- |
+| R1  | **RÉDUIRE**            | Throttler NestJS (5 req/60s sur `/auth/login`), Argon2id, rotation refresh token                    | Tony Mascate | ✅ Implémenté |
 | R2  | **RÉDUIRE + ACCEPTER** | Backup PostgreSQL quotidien via workflow GitHub Actions, monitoring Grafana (alerting à configurer) | Tony Mascate | ✅ Implémenté |
-| R3  | **RÉDUIRE**            | Ownership guard sur chaque ressource, URL S3 signées temporairement                   | Tony Mascate | ✅ Implémenté |
-| R4  | **RÉDUIRE**            | Cookies HTTP-only + Secure + SameSite=Lax, access token 15 min, HTTPS obligatoire     | Tony Mascate | ✅ Implémenté |
-| R5  | **RÉDUIRE + ACCEPTER** | Docker Swarm restart policy, snapshot VPS hebdomadaire, monitoring Grafana            | Tony Mascate | ✅ Implémenté |
-| R6  | **RÉDUIRE**            | Restart policy Swarm, dégradation gracieuse (cache miss → DB)                         | Tony Mascate | ✅ Implémenté |
-| R7  | **ÉVITER**             | TypeORM avec requêtes paramétrées, validation Zod sur toutes les entrées API          | Tony Mascate | ✅ Implémenté |
-| R8  | **TRANSFÉRER**         | AWS région eu-west-3 (Paris), aucune PII stockée sur S3 (binaires uniquement)         | AWS / Tony   | ✅ Implémenté |
-| R9  | **RÉDUIRE**            | Pino sans MDP ni token ; email loggé à la connexion uniquement (traçabilité sécurité) | Tony Mascate | ✅ Implémenté |
-| R10 | **RÉDUIRE**            | Pipeline CI GitHub Actions, registry privé ghcr.io, GITHUB_TOKEN éphémère             | Tony Mascate | ✅ Implémenté |
+| R3  | **RÉDUIRE**            | Ownership guard sur chaque ressource, URL S3 signées temporairement                                 | Tony Mascate | ✅ Implémenté |
+| R4  | **RÉDUIRE**            | Cookies HTTP-only + Secure + SameSite=Lax, access token 15 min, HTTPS obligatoire                   | Tony Mascate | ✅ Implémenté |
+| R5  | **RÉDUIRE + ACCEPTER** | Docker Swarm restart policy, snapshot VPS hebdomadaire, monitoring Grafana                          | Tony Mascate | ✅ Implémenté |
+| R6  | **RÉDUIRE**            | Restart policy Swarm, dégradation gracieuse (cache miss → DB)                                       | Tony Mascate | ✅ Implémenté |
+| R7  | **ÉVITER**             | TypeORM avec requêtes paramétrées, validation Zod sur toutes les entrées API                        | Tony Mascate | ✅ Implémenté |
+| R8  | **TRANSFÉRER**         | AWS région eu-west-3 (Paris), aucune PII stockée sur S3 (binaires uniquement)                       | AWS / Tony   | ✅ Implémenté |
+| R9  | **RÉDUIRE**            | Pino sans MDP ni token ; email loggé à la connexion uniquement (traçabilité sécurité)               | Tony Mascate | ✅ Implémenté |
+| R10 | **RÉDUIRE**            | Pipeline CI GitHub Actions, registry privé ghcr.io, GITHUB_TOKEN éphémère                           | Tony Mascate | ✅ Implémenté |
 
 #### Risques résiduels acceptés
 
@@ -439,11 +439,11 @@ sont placés selon leur cotation brute. La couleur de la case indique la critici
 
 L'exploration chromatique repose sur un nuancier (atlas fixe de cases colorées, chaque case = une cellule de couleur). Ce type d'interface, fondé sur la couleur, pose des défis d'accessibilité spécifiques :
 
-| Limitation                                            | Impact                                    | Mitigation                                                                                               |
-| ----------------------------------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Identification par la seule couleur                   | Utilisateurs daltoniens                   | Nom de la teinte + nombre de photos exposés en infobulle et `aria-label` sur chaque case (en place) ; étiquette visible à compléter |
-| Cases non vocalisées par les lecteurs d'écran         | Utilisateurs malvoyants                   | `aria-label` « {nom de teinte} — N photos » sur chaque case ; alternative textuelle de la répartition à compléter |
-| Navigation à la souris (clic sur une case)            | Utilisateurs moteurs / navigation clavier | Cases rendues comme `<button>` focalisables et activables au clavier (Tab + Entrée)                      |
+| Limitation                                    | Impact                                    | Mitigation                                                                                                                          |
+| --------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Identification par la seule couleur           | Utilisateurs daltoniens                   | Nom de la teinte + nombre de photos exposés en infobulle et `aria-label` sur chaque case (en place) ; étiquette visible à compléter |
+| Cases non vocalisées par les lecteurs d'écran | Utilisateurs malvoyants                   | `aria-label` « {nom de teinte} — N photos » sur chaque case ; alternative textuelle de la répartition à compléter                   |
+| Navigation à la souris (clic sur une case)    | Utilisateurs moteurs / navigation clavier | Cases rendues comme `<button>` focalisables et activables au clavier (Tab + Entrée)                                                 |
 
 > **Note :** L'accessibilité complète de l'exploration chromatique représente une contrainte significative (interface intrinsèquement visuelle). Le niveau AA sur cet écran sera atteint partiellement, avec les alternatives textuelles comme priorité.
 

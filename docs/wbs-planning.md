@@ -146,6 +146,43 @@ attendu.
 
 ## 3. Planning (diagramme de Gantt)
 
+### 3.1 Vue macro — une barre par lot
+
+```mermaid
+gantt
+    title Vue macro Kroma — 1 barre par lot (janvier à juin 2026)
+    dateFormat  YYYY-MM-DD
+    axisFormat  %d/%m
+
+    section Lots du WBS
+    LOT 1 - Cadrage & avant-projet           :crit, m1, 2026-01-06, 2026-01-16
+    LOT 2 - Conception & documentation       :m2, 2026-01-15, 2026-06-14
+    LOT 3 - Socle technique & infrastructure :crit, m3, 2026-01-06, 2026-06-08
+    LOT 4 - Authentification & sécurité      :crit, m4, 2026-02-22, 2026-05-31
+    LOT 5 - Fonctionnalités cœur             :crit, m5, 2026-04-13, 2026-06-06
+    LOT 6 - Killer feature                   :crit, m6, 2026-05-12, 2026-06-23
+    LOT 7 - Pages vitrine                    :m7, 2026-05-18, 2026-06-24
+    LOT 8 - Observabilité                    :m8, 2026-01-28, 2026-03-24
+    LOT 9 - Qualité & recette                :crit, m9, 2026-06-09, 2026-06-25
+    LOT 10 - Pilotage & livraison            :m10, 2026-06-15, 2026-06-25
+```
+
+**Lecture de cette vue :**
+
+- Chaque barre est l'**enveloppe** du lot : du début de sa première tâche à la fin
+  de sa dernière tâche. Elle ne représente **pas** un travail continu sur toute la
+  période — le détail, avec les interruptions réelles, figure en §3.2.
+- Les lots 2 et 3 sont les plus étirés parce qu'ils portent des activités
+  volontairement **continues ou tardives** : veille technologique et ADR menés sur
+  toute la durée du projet et diagrammes UML / EBIOS en fin de parcours (lot 2) ;
+  Ansible, Docker Secrets et backup/restore livrés en juin (lot 3).
+- Les lots en **rouge** (1, 3, 4, 5, 6, 9) portent au moins une tâche du **chemin
+  critique** (§4) ; les autres disposent d'une marge.
+- Le **parallélisme** est lisible d'un coup d'œil : les lots 2, 7 et 8 se déroulent
+  en marge des lots cœur sans jamais les bloquer.
+
+### 3.2 Vue détaillée — tâches par lot
+
 ```mermaid
 gantt
     title Planning Kroma — janvier à juin 2026 (sections = lots du WBS)
