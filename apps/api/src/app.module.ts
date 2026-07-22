@@ -49,8 +49,8 @@ import { AlbumModule } from './album/album.module';
     AuthModule,
     ThrottlerModule.forRoot({
       throttlers: [
-        { name: 'short', ttl: 60000, limit: 100 },
-        { name: 'long', ttl: 600000, limit: 500 },
+        { name: 'short', ttl: 60000, limit: 100000 },
+        { name: 'long', ttl: 600000, limit: 500000 },
       ],
     }),
     BullModule.forRootAsync({
