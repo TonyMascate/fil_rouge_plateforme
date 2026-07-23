@@ -363,6 +363,10 @@
             "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
           },
           {
+            "matcher": { "id": "byName", "options": "3xx" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+          },
+          {
             "matcher": { "id": "byName", "options": "2xx" },
             "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
           }
@@ -378,10 +382,34 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus-main" },
           "editorMode": "code",
-          "expr": "sum by (status_class) (label_replace(rate(http_request_duration_seconds_count{job=\"api\"}[5m]), \"status_class\", \"$1xx\", \"status_code\", \"(.)..\"))",
-          "legendFormat": "{{status_class}}",
+          "expr": "sum(rate(http_request_duration_seconds_count{job=\"api\",status_code=~\"2..\"}[5m]))",
+          "legendFormat": "2xx",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus-main" },
+          "editorMode": "code",
+          "expr": "sum(rate(http_request_duration_seconds_count{job=\"api\",status_code=~\"3..\"}[5m]))",
+          "legendFormat": "3xx",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus-main" },
+          "editorMode": "code",
+          "expr": "sum(rate(http_request_duration_seconds_count{job=\"api\",status_code=~\"4..\"}[5m]))",
+          "legendFormat": "4xx",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus-main" },
+          "editorMode": "code",
+          "expr": "sum(rate(http_request_duration_seconds_count{job=\"api\",status_code=~\"5..\"}[5m]))",
+          "legendFormat": "5xx",
+          "range": true,
+          "refId": "D"
         }
       ],
       "title": "Trafic par famille de code HTTP",
