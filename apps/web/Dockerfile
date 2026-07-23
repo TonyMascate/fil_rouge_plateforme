@@ -56,12 +56,16 @@ RUN turbo prune --scope=web --docker
 FROM oven/bun:1 AS builder
 WORKDIR /app
 
-COPY --from=pruner /app/out/json/ .
-COPY --from=pruner /app/out/bun.lock ./bun.lock
-# Pas de --frozen-lockfile : le lock lu ici est celui régénéré par turbo prune,
-# qui perd le bloc trustedDependencies du lock racine (écart systématique).
-# Les versions restent figées par le lock pruné.
-RUN bun install --ignore-scripts
+# On installe depuis le lockfile racine, pas depuis celui régénéré par turbo prune :
+# le lock pruné perd le bloc trustedDependencies, ce qui fait systématiquement échouer
+# --frozen-lockfile. Copier uniquement les package.json garde le cache de couches Docker
+# valide tant qu'aucune dépendance ne bouge.
+COPY package.json bun.lock ./
+COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/typescript-config/package.json ./packages/typescript-config/
+RUN bun install --frozen-lockfile --ignore-scripts
 
 COPY --from=pruner /app/out/full/ .
 
