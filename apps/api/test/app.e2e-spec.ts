@@ -150,7 +150,7 @@ describe('API (e2e)', () => {
   // ─── AuthController ─────────────────────────────────────────────────────────
 
   describe('POST /auth/register', () => {
-    it('201 — crée l\'utilisateur et pose les cookies d\'auth', async () => {
+    it("201 — crée l'utilisateur et pose les cookies d'auth", async () => {
       const res = await request(app.getHttpServer())
         .post('/auth/register')
         .send({ email: 'new@example.com', password: 'Password123!', firstName: 'Alice', lastName: 'Martin' });
@@ -234,9 +234,7 @@ describe('API (e2e)', () => {
     it('201 — renouvelle les tokens si refresh_token présent', async () => {
       mockAuthService.refreshTokens.mockResolvedValue({ accessToken: 'new-at', refreshToken: 'new-rt' });
 
-      const res = await request(app.getHttpServer())
-        .post('/auth/refresh')
-        .set('Cookie', 'refresh_token=valid-token');
+      const res = await request(app.getHttpServer()).post('/auth/refresh').set('Cookie', 'refresh_token=valid-token');
 
       expect(res.status).toBe(201);
       expect(res.body).toEqual({ message: 'Refreshed' });
@@ -254,9 +252,7 @@ describe('API (e2e)', () => {
     it('200 — retourne le profil avec un access_token valide', async () => {
       const token = await jwtService.signAsync({ sub: 'user-uuid', role: 'user', email: 'test@example.com' });
 
-      const res = await request(app.getHttpServer())
-        .get('/users/profile')
-        .set('Cookie', `access_token=${token}`);
+      const res = await request(app.getHttpServer()).get('/users/profile').set('Cookie', `access_token=${token}`);
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('email', 'test@example.com');
@@ -272,9 +268,7 @@ describe('API (e2e)', () => {
     it('401 — JWT valide mais rôle "user" insuffisant (RolesGuard)', async () => {
       const token = await jwtService.signAsync({ sub: 'user-uuid', role: 'user', email: 'test@example.com' });
 
-      const res = await request(app.getHttpServer())
-        .get('/users/admin-only')
-        .set('Cookie', `access_token=${token}`);
+      const res = await request(app.getHttpServer()).get('/users/admin-only').set('Cookie', `access_token=${token}`);
 
       expect(res.status).toBe(401);
     });

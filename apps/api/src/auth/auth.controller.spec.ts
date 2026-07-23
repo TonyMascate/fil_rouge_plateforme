@@ -94,7 +94,11 @@ describe('AuthController', () => {
 
     it('renouvelle les cookies si le refresh token est valide', async () => {
       const mockRequest = { cookies: { refresh_token: 'valid-token' } };
-      mockAuthService.refreshTokens.mockResolvedValue({ accessToken: 'new-access', refreshToken: 'new-refresh', tokenId: 'tid' });
+      mockAuthService.refreshTokens.mockResolvedValue({
+        accessToken: 'new-access',
+        refreshToken: 'new-refresh',
+        tokenId: 'tid',
+      });
 
       const result = await controller.refresh(mockRequest as any, mockResponse as any);
 

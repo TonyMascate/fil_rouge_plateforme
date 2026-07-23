@@ -27,7 +27,11 @@ describe('AlbumMemberRepository — Intégration', () => {
   beforeEach(async () => {
     await clearTables();
     owner = await userRepo.save({
-      email: 'owner@e.com', password: 'x', firstName: 'Owner', lastName: 'User', role: Role.USER,
+      email: 'owner@e.com',
+      password: 'x',
+      firstName: 'Owner',
+      lastName: 'User',
+      role: Role.USER,
     });
   });
 
@@ -39,7 +43,11 @@ describe('AlbumMemberRepository — Intégration', () => {
 
     it('retourne les membres avec leurs données utilisateur via INNER JOIN', async () => {
       const member = await userRepo.save({
-        email: 'alice@e.com', password: 'x', firstName: 'Alice', lastName: 'Martin', role: Role.USER,
+        email: 'alice@e.com',
+        password: 'x',
+        firstName: 'Alice',
+        lastName: 'Martin',
+        role: Role.USER,
       });
       const album = await albumRepo.save({ name: 'Mon album', userId: owner.id });
       await memberRepo.save({ albumId: album.id, userId: member.id });
@@ -56,9 +64,13 @@ describe('AlbumMemberRepository — Intégration', () => {
       });
     });
 
-    it("regroupe les membres de plusieurs albums dans un seul appel", async () => {
+    it('regroupe les membres de plusieurs albums dans un seul appel', async () => {
       const member = await userRepo.save({
-        email: 'shared@e.com', password: 'x', firstName: 'Shared', lastName: 'User', role: Role.USER,
+        email: 'shared@e.com',
+        password: 'x',
+        firstName: 'Shared',
+        lastName: 'User',
+        role: Role.USER,
       });
       const album1 = await albumRepo.save({ name: 'A1', userId: owner.id });
       const album2 = await albumRepo.save({ name: 'A2', userId: owner.id });

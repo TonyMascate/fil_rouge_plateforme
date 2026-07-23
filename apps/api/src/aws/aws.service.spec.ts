@@ -72,10 +72,7 @@ describe('AwsService', () => {
     });
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AwsService,
-        { provide: ConfigService, useValue: mockConfigService },
-      ],
+      providers: [AwsService, { provide: ConfigService, useValue: mockConfigService }],
     }).compile();
 
     service = module.get<AwsService>(AwsService);
@@ -102,7 +99,7 @@ describe('AwsService', () => {
       expect(result.key).toMatch(/^raw\/.+\.jpg$/);
     });
 
-    it('retourne une clé avec l\'extension correcte selon le content-type', async () => {
+    it("retourne une clé avec l'extension correcte selon le content-type", async () => {
       const resultPng = await service.createMultipartUpload('image/png');
       expect(resultPng.key).toMatch(/\.png$/);
 
@@ -112,14 +109,14 @@ describe('AwsService', () => {
   });
 
   describe('headObject', () => {
-    it('retourne les métadonnées de l\'objet S3', async () => {
+    it("retourne les métadonnées de l'objet S3", async () => {
       const result = await service.headObject('raw/photo.jpg');
       expect(result).toBeDefined();
     });
   });
 
   describe('deleteObject', () => {
-    it('supprime l\'objet S3', async () => {
+    it("supprime l'objet S3", async () => {
       const result = await service.deleteObject('raw/photo.jpg');
       expect(result).toBeDefined();
     });
@@ -143,7 +140,7 @@ describe('AwsService', () => {
   });
 
   describe('abortMultipartUpload', () => {
-    it('annule l\'upload', async () => {
+    it("annule l'upload", async () => {
       const result = await service.abortMultipartUpload('raw/photo.jpg', 'upload-123');
       expect(result).toBeDefined();
     });
@@ -164,7 +161,7 @@ describe('AwsService', () => {
   });
 
   describe('createMultipartUpload — UploadId absent', () => {
-    it('lève une erreur si S3 ne retourne pas d\'UploadId', async () => {
+    it("lève une erreur si S3 ne retourne pas d'UploadId", async () => {
       const { S3Client } = require('@aws-sdk/client-s3');
       S3Client.mockImplementationOnce(() => ({
         send: jest.fn().mockResolvedValue({}),

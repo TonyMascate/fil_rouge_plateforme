@@ -25,10 +25,7 @@ export class PhotoRepository extends Repository<Photo> {
    * optionnel restreint aux photos d'un album. SQL direct : le sous-select via
    * query builder produisait un produit cartésien avec la table principale.
    */
-  async countByColorCell(
-    userId: string,
-    albumId?: string,
-  ): Promise<Array<{ cellId: string; count: number }>> {
+  async countByColorCell(userId: string, albumId?: string): Promise<Array<{ cellId: string; count: number }>> {
     return this.query(
       `SELECT cell AS "cellId", COUNT(*)::int AS count
          FROM (
@@ -43,21 +40,19 @@ export class PhotoRepository extends Repository<Photo> {
   }
 
   /** Photos d'une cellule d'atlas pour un utilisateur, paginées. */
-  async findByColorCellPage(
-    userId: string,
-    cellId: string,
-    query: PhotoListQueryDto,
-  ): Promise<[Photo[], number]> {
+  async findByColorCellPage(userId: string, cellId: string, query: PhotoListQueryDto): Promise<[Photo[], number]> {
     const { page, limit, order } = query;
-    return this.createQueryBuilder('photo')
-      .where('photo.user_id = :userId', { userId })
-      .andWhere('photo.status = :status', { status: PhotoStatus.COMPLETED })
-      // `@> ARRAY[:cellId]` (« contient ») et non `= ANY(...)` : seule la forme
-      // « contient » exploite l'index GIN sur color_cells (sinon seq scan).
-      .andWhere('photo.color_cells @> ARRAY[:cellId]', { cellId })
-      .orderBy('photo.created_at', order === 'asc' ? 'ASC' : 'DESC')
-      .skip((page - 1) * limit)
-      .take(limit)
-      .getManyAndCount();
+    return (
+      this.createQueryBuilder('photo')
+        .where('photo.user_id = :userId', { userId })
+        .andWhere('photo.status = :status', { status: PhotoStatus.COMPLETED })
+        // `@> ARRAY[:cellId]` (« contient ») et non `= ANY(...)` : seule la forme
+        // « contient » exploite l'index GIN sur color_cells (sinon seq scan).
+        .andWhere('photo.color_cells @> ARRAY[:cellId]', { cellId })
+        .orderBy('photo.created_at', order === 'asc' ? 'ASC' : 'DESC')
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getManyAndCount()
+    );
   }
 }

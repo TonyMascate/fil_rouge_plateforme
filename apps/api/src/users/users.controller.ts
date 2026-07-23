@@ -29,7 +29,7 @@ export class UsersController {
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Profil de l\'utilisateur connecté' })
+  @ApiOperation({ summary: "Profil de l'utilisateur connecté" })
   @ApiResponse({ status: 200, type: UserResponseDto })
   @ApiResponse({ status: 401, description: 'Non authentifié', type: ApiErrorDto })
   getProfile(@CurrentUser() user: { userId: string; role: string; email: string }) {

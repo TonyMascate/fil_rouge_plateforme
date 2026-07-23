@@ -60,7 +60,12 @@ export class AuthController {
   @Post('register')
   @SkipCsrf()
   @ApiOperation({ summary: 'Créer un compte' })
-  @ApiBody({ type: CreateUserDto, examples: { default: { value: { email: 'user@example.com', password: 'Password123', firstName: 'Jean', lastName: 'Dupont' } } } })
+  @ApiBody({
+    type: CreateUserDto,
+    examples: {
+      default: { value: { email: 'user@example.com', password: 'Password123', firstName: 'Jean', lastName: 'Dupont' } },
+    },
+  })
   @ApiResponse({ status: 201, schema: { properties: { user: { $ref: getSchemaPath(UserResponseDto) } } } })
   @ApiResponse({ status: 400, description: 'Données invalides', type: ApiErrorDto })
   @ApiResponse({ status: 409, description: 'Email déjà utilisé', type: ApiErrorDto })
@@ -75,7 +80,10 @@ export class AuthController {
   @SkipCsrf()
   @Throttle({ short: { ttl: 60000, limit: 5 } })
   @ApiOperation({ summary: 'Se connecter' })
-  @ApiBody({ type: LoginUserDto, examples: { default: { value: { email: 'user@example.com', password: 'Password123' } } } })
+  @ApiBody({
+    type: LoginUserDto,
+    examples: { default: { value: { email: 'user@example.com', password: 'Password123' } } },
+  })
   @ApiResponse({ status: 200, schema: { properties: { user: { $ref: getSchemaPath(UserResponseDto) } } } })
   @ApiResponse({ status: 401, description: 'Email ou mot de passe invalide', type: ApiErrorDto })
   @ApiResponse({ status: 429, description: 'Trop de tentatives', type: ApiErrorDto })

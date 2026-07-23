@@ -10,10 +10,7 @@ import { PhotoRepository } from './repositories/photo.repository';
 import { AlbumPhotoRepository } from '@app/album/repositories/album-photo.repository';
 
 @Module({
-  imports: [
-    BullModule.registerQueue({ name: 'image-queue' }),
-    AwsModule,
-  ],
+  imports: [BullModule.registerQueue({ name: 'image-queue' }), AwsModule],
   controllers: [PhotoController, PublicPhotoController],
   // AlbumPhotoRepository ne dépend que de DataSource : on le fournit ici pour
   // l'exploration chromatique filtrée par album, sans coupler les modules.

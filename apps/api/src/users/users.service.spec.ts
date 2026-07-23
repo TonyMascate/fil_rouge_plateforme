@@ -20,10 +20,7 @@ describe('UsersService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        UsersService,
-        { provide: getRepositoryToken(User), useValue: mockUsersRepository },
-      ],
+      providers: [UsersService, { provide: getRepositoryToken(User), useValue: mockUsersRepository }],
     }).compile();
 
     service = module.get<UsersService>(UsersService);
@@ -49,7 +46,7 @@ describe('UsersService', () => {
       expect(result.email).toBe('new@test.com');
     });
 
-    it('lève ConflictException si l\'email est déjà utilisé', async () => {
+    it("lève ConflictException si l'email est déjà utilisé", async () => {
       mockUsersRepository.findOneBy.mockResolvedValue({ id: '1', email: 'exists@test.com' });
 
       await expect(service.create({ email: 'exists@test.com' } as any)).rejects.toThrow(ConflictException);
@@ -57,7 +54,7 @@ describe('UsersService', () => {
   });
 
   describe('getProfile', () => {
-    it('retourne le profil de l\'utilisateur correspondant', async () => {
+    it("retourne le profil de l'utilisateur correspondant", async () => {
       const userId = 'user-uuid';
       const mockUser = { id: userId, email: 'user@test.com' };
       mockUsersRepository.findOneBy.mockResolvedValue(mockUser);

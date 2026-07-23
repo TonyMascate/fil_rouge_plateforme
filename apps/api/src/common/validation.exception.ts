@@ -7,4 +7,3 @@ export class ApiValidationException extends ApiException {
     super(ErrorCode.VALIDATION_ERROR, HttpStatus.BAD_REQUEST, 'Erreur de validation des données', details);
   }
 }
-

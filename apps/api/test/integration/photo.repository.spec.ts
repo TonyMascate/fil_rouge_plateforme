@@ -65,7 +65,11 @@ describe('PhotoRepository — Intégration', () => {
 
     it("ignore les photos d'un autre utilisateur", async () => {
       const other = await userRepo.save({
-        email: 'other@example.com', password: 'x', firstName: 'O', lastName: 'U', role: Role.USER,
+        email: 'other@example.com',
+        password: 'x',
+        firstName: 'O',
+        lastName: 'U',
+        role: Role.USER,
       });
       await photoRepo.save([
         { s3Key: 'key1', originalName: 'a.jpg', status: PhotoStatus.COMPLETED, fileSizeBytes: 1000, userId: user.id },
@@ -76,7 +80,13 @@ describe('PhotoRepository — Intégration', () => {
     });
 
     it('COALESCE retourne 0 si toutes les tailles sont null', async () => {
-      await photoRepo.save({ s3Key: 'key1', originalName: 'a.jpg', status: PhotoStatus.COMPLETED, fileSizeBytes: null, userId: user.id });
+      await photoRepo.save({
+        s3Key: 'key1',
+        originalName: 'a.jpg',
+        status: PhotoStatus.COMPLETED,
+        fileSizeBytes: null,
+        userId: user.id,
+      });
       const total = await photoRepository.storageUsedByUser(user.id);
       expect(total).toBe(0);
     });
@@ -96,10 +106,23 @@ describe('PhotoRepository — Intégration', () => {
     });
 
     it('ignore les photos non-COMPLETED et celles des autres utilisateurs', async () => {
-      const other = await userRepo.save({ email: 'o@e.com', password: 'x', firstName: 'O', lastName: 'U', role: Role.USER });
+      const other = await userRepo.save({
+        email: 'o@e.com',
+        password: 'x',
+        firstName: 'O',
+        lastName: 'U',
+        role: Role.USER,
+      });
       await createPhoto('completed.jpg', ['c-9-0']);
       await createPhoto('pending.jpg', ['c-9-0'], PhotoStatus.PENDING);
-      await photoRepo.save({ s3Key: 'other.jpg', originalName: 'f.jpg', status: PhotoStatus.COMPLETED, fileSizeBytes: 100, userId: other.id, colorCells: ['c-9-0'] });
+      await photoRepo.save({
+        s3Key: 'other.jpg',
+        originalName: 'f.jpg',
+        status: PhotoStatus.COMPLETED,
+        fileSizeBytes: 100,
+        userId: other.id,
+        colorCells: ['c-9-0'],
+      });
 
       const rows = await photoRepository.countByColorCell(user.id);
       const countByCell = new Map(rows.map((row) => [row.cellId, Number(row.count)]));
@@ -140,11 +163,24 @@ describe('PhotoRepository — Intégration', () => {
       expect(photos.map((photo) => photo.s3Key).sort()).toEqual(['blue1.jpg', 'blue2.jpg']);
     });
 
-    it('scope sur l\'utilisateur et les photos COMPLETED', async () => {
-      const other = await userRepo.save({ email: 'o2@e.com', password: 'x', firstName: 'O', lastName: 'U', role: Role.USER });
+    it("scope sur l'utilisateur et les photos COMPLETED", async () => {
+      const other = await userRepo.save({
+        email: 'o2@e.com',
+        password: 'x',
+        firstName: 'O',
+        lastName: 'U',
+        role: Role.USER,
+      });
       await createPhoto('mine.jpg', ['c-9-0']);
       await createPhoto('pending.jpg', ['c-9-0'], PhotoStatus.PENDING);
-      await photoRepo.save({ s3Key: 'other.jpg', originalName: 'f.jpg', status: PhotoStatus.COMPLETED, fileSizeBytes: 100, userId: other.id, colorCells: ['c-9-0'] });
+      await photoRepo.save({
+        s3Key: 'other.jpg',
+        originalName: 'f.jpg',
+        status: PhotoStatus.COMPLETED,
+        fileSizeBytes: 100,
+        userId: other.id,
+        colorCells: ['c-9-0'],
+      });
 
       const [photos, total] = await photoRepository.findByColorCellPage(user.id, 'c-9-0', LIST_QUERY);
 
@@ -155,7 +191,11 @@ describe('PhotoRepository — Intégration', () => {
     it('pagine les résultats', async () => {
       for (let index = 0; index < 5; index++) await createPhoto(`p${index}.jpg`, ['c-9-0']);
 
-      const [photos, total] = await photoRepository.findByColorCellPage(user.id, 'c-9-0', { page: 1, limit: 2, order: 'desc' });
+      const [photos, total] = await photoRepository.findByColorCellPage(user.id, 'c-9-0', {
+        page: 1,
+        limit: 2,
+        order: 'desc',
+      });
 
       expect(total).toBe(5);
       expect(photos).toHaveLength(2);

@@ -1,11 +1,4 @@
-import {
-  type Oklab,
-  classifyToCell,
-  oklabToOklch,
-  oklabToRgb,
-  rgbToHex,
-  rgbToOklab,
-} from '@repo/shared';
+import { type Oklab, classifyToCell, oklabToOklch, oklabToRgb, rgbToHex, rgbToOklab } from '@repo/shared';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Extraction de palette — fonctions PURES côté API (dépendent de Buffer, donc
@@ -28,9 +21,7 @@ const KMEANS_MAX_ITERATIONS = 20;
 
 function squaredOklabDistance(first: Oklab, second: Oklab): number {
   return (
-    (first.lightness - second.lightness) ** 2 +
-    (first.aAxis - second.aAxis) ** 2 +
-    (first.bAxis - second.bAxis) ** 2
+    (first.lightness - second.lightness) ** 2 + (first.aAxis - second.aAxis) ** 2 + (first.bAxis - second.bAxis) ** 2
   );
 }
 
@@ -61,9 +52,7 @@ function pickInitialCentroids(pixels: Oklab[], clusterCount: number): Oklab[] {
 
   const firstIndex = pixels.reduce(
     (closest, pixel, index) =>
-      squaredOklabDistance(pixel, meanPixel) < squaredOklabDistance(pixels[closest], meanPixel)
-        ? index
-        : closest,
+      squaredOklabDistance(pixel, meanPixel) < squaredOklabDistance(pixels[closest], meanPixel) ? index : closest,
     0,
   );
 
@@ -72,9 +61,7 @@ function pickInitialCentroids(pixels: Oklab[], clusterCount: number): Oklab[] {
     let farthestIndex = 0;
     let farthestDistance = -1;
     for (let index = 0; index < pixels.length; index++) {
-      const distanceToNearest = Math.min(
-        ...centroids.map((centroid) => squaredOklabDistance(pixels[index], centroid)),
-      );
+      const distanceToNearest = Math.min(...centroids.map((centroid) => squaredOklabDistance(pixels[index], centroid)));
       if (distanceToNearest > farthestDistance) {
         farthestDistance = distanceToNearest;
         farthestIndex = index;
@@ -88,9 +75,7 @@ function pickInitialCentroids(pixels: Oklab[], clusterCount: number): Oklab[] {
 function nearestCentroidIndex(pixel: Oklab, centroids: Oklab[]): number {
   return centroids.reduce(
     (nearest, centroid, index) =>
-      squaredOklabDistance(pixel, centroid) < squaredOklabDistance(pixel, centroids[nearest])
-        ? index
-        : nearest,
+      squaredOklabDistance(pixel, centroid) < squaredOklabDistance(pixel, centroids[nearest]) ? index : nearest,
     0,
   );
 }

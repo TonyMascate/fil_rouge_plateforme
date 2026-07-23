@@ -84,18 +84,15 @@ describe('AlbumPhotoRepository', () => {
   });
 
   describe('findPhotoIds', () => {
-    it('retourne les IDs des photos de l\'album', async () => {
-      jest.spyOn(repo, 'find').mockResolvedValue([
-        { photoId: 'p1' } as any,
-        { photoId: 'p2' } as any,
-      ]);
+    it("retourne les IDs des photos de l'album", async () => {
+      jest.spyOn(repo, 'find').mockResolvedValue([{ photoId: 'p1' } as any, { photoId: 'p2' } as any]);
 
       const result = await repo.findPhotoIds('album-1');
 
       expect(result).toEqual(['p1', 'p2']);
     });
 
-    it('retourne un tableau vide si l\'album n\'a pas de photos', async () => {
+    it("retourne un tableau vide si l'album n'a pas de photos", async () => {
       jest.spyOn(repo, 'find').mockResolvedValue([]);
 
       const result = await repo.findPhotoIds('album-1');
@@ -115,7 +112,7 @@ describe('AlbumPhotoRepository', () => {
       expect(result[1]).toBe(1);
     });
 
-    it('respecte l\'ordre ascendant', async () => {
+    it("respecte l'ordre ascendant", async () => {
       mockQueryBuilder.getManyAndCount.mockResolvedValue([[], 0]);
 
       await repo.findPhotosPage('album-1', { page: 1, limit: 20, order: 'asc' } as any);

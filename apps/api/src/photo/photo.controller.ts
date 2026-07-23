@@ -1,5 +1,27 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiExtraModels, ApiHeader, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Logger,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiCookieAuth,
+  ApiExtraModels,
+  ApiHeader,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ApiErrorDto } from '@app/common/dto/api-error.dto';
 import {
   CreateMultipartResponseDto,
@@ -19,17 +41,16 @@ import { RedisService } from '@app/redis/redis.service';
 import { ErrorCode, isValidCellId } from '@repo/shared';
 import { PhotoService } from './photo.service';
 import { PhotoListQueryDto } from './dto/photo-list-query.dto';
-import {
-  CompleteMultipartDto,
-  CreateMultipartDto,
-  MultipartKeyDto,
-  SignPartDto,
-} from './dto/multipart.dto';
+import { CompleteMultipartDto, CreateMultipartDto, MultipartKeyDto, SignPartDto } from './dto/multipart.dto';
 
 @ApiTags('Photos')
 @ApiCookieAuth('access_token')
 @ApiExtraModels(ApiErrorDto)
-@ApiHeader({ name: 'X-XSRF-TOKEN', description: 'Token CSRF (valeur du cookie XSRF-TOKEN) — requis sur toutes les mutations', required: true })
+@ApiHeader({
+  name: 'X-XSRF-TOKEN',
+  description: 'Token CSRF (valeur du cookie XSRF-TOKEN) — requis sur toutes les mutations',
+  required: true,
+})
 @Controller('photos')
 @UseGuards(JwtAuthGuard)
 export class PhotoController {
@@ -60,10 +81,7 @@ export class PhotoController {
   @ApiResponse({ status: 400, description: 'Données invalides', type: ApiErrorDto })
   @ApiResponse({ status: 401, description: 'Non authentifié', type: ApiErrorDto })
   @ApiResponse({ status: 403, description: 'Quota de stockage atteint', type: ApiErrorDto })
-  async createMultipart(
-    @Body() dto: CreateMultipartDto,
-    @CurrentUser() user: { userId: string },
-  ) {
+  async createMultipart(@Body() dto: CreateMultipartDto, @CurrentUser() user: { userId: string }) {
     const { usedBytes, maxBytes } = await this.photoService.getQuotaForUser(user.userId);
     if (usedBytes + dto.fileSize > maxBytes) {
       throw new ApiException(ErrorCode.QUOTA_EXCEEDED, HttpStatus.FORBIDDEN, 'Quota de stockage atteint', []);
@@ -79,11 +97,8 @@ export class PhotoController {
   @ApiOperation({ summary: 'Signer une URL PUT pour une part' })
   @ApiResponse({ status: 201, type: SignPartResponseDto })
   @ApiResponse({ status: 401, description: 'Non authentifié', type: ApiErrorDto })
-  @ApiResponse({ status: 403, description: 'Upload n\'appartient pas au user', type: ApiErrorDto })
-  async signPart(
-    @Body() dto: SignPartDto,
-    @CurrentUser() user: { userId: string },
-  ) {
+  @ApiResponse({ status: 403, description: "Upload n'appartient pas au user", type: ApiErrorDto })
+  async signPart(@Body() dto: SignPartDto, @CurrentUser() user: { userId: string }) {
     await this.assertUploadOwner(dto.uploadId, user.userId);
     const url = await this.aws.signPart(dto.key, dto.uploadId, dto.partNumber);
     return { url };
@@ -93,37 +108,37 @@ export class PhotoController {
   @Post('uploads/multipart/list-parts')
   @HttpCode(200)
   @ApiOperation({ summary: 'Lister les parts déjà uploadées (reprise)' })
-  @ApiResponse({ status: 200, schema: { type: 'array', items: { type: 'object', properties: { PartNumber: { type: 'number' }, ETag: { type: 'string' }, Size: { type: 'number' } } } } })
+  @ApiResponse({
+    status: 200,
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: { PartNumber: { type: 'number' }, ETag: { type: 'string' }, Size: { type: 'number' } },
+      },
+    },
+  })
   @ApiResponse({ status: 401, description: 'Non authentifié', type: ApiErrorDto })
-  @ApiResponse({ status: 403, description: 'Upload n\'appartient pas au user', type: ApiErrorDto })
-  async listParts(
-    @Body() dto: MultipartKeyDto,
-    @CurrentUser() user: { userId: string },
-  ) {
+  @ApiResponse({ status: 403, description: "Upload n'appartient pas au user", type: ApiErrorDto })
+  async listParts(@Body() dto: MultipartKeyDto, @CurrentUser() user: { userId: string }) {
     await this.assertUploadOwner(dto.uploadId, user.userId);
     return this.aws.listParts(dto.key, dto.uploadId);
   }
 
   @SkipCsrf()
   @Post('uploads/multipart/complete')
-  @ApiOperation({ summary: 'Assembler les parts, enregistrer la photo et lancer l\'optimisation' })
+  @ApiOperation({ summary: "Assembler les parts, enregistrer la photo et lancer l'optimisation" })
   @ApiResponse({ status: 201, type: UploadRegisteredResponseDto })
   @ApiResponse({ status: 401, description: 'Non authentifié', type: ApiErrorDto })
-  @ApiResponse({ status: 403, description: 'Upload n\'appartient pas au user', type: ApiErrorDto })
+  @ApiResponse({ status: 403, description: "Upload n'appartient pas au user", type: ApiErrorDto })
   @ApiResponse({ status: 404, description: 'Fichier introuvable sur S3 après assemblage', type: ApiErrorDto })
-  async completeMultipart(
-    @Body() dto: CompleteMultipartDto,
-    @CurrentUser() user: { userId: string },
-  ) {
+  async completeMultipart(@Body() dto: CompleteMultipartDto, @CurrentUser() user: { userId: string }) {
     await this.assertUploadOwner(dto.uploadId, user.userId);
     await this.aws.completeMultipartUpload(dto.key, dto.uploadId, dto.parts);
     await this.redis.del(`upload:${dto.uploadId}`);
 
     try {
-      return await this.photoService.registerUpload(
-        { key: dto.key, originalName: dto.originalName },
-        user.userId,
-      );
+      return await this.photoService.registerUpload({ key: dto.key, originalName: dto.originalName }, user.userId);
     } catch (err) {
       await this.aws
         .deleteObject(dto.key)
@@ -138,18 +153,15 @@ export class PhotoController {
   @ApiOperation({ summary: 'Annuler un upload en cours' })
   @ApiResponse({ status: 204, description: 'Upload annulé' })
   @ApiResponse({ status: 401, description: 'Non authentifié', type: ApiErrorDto })
-  @ApiResponse({ status: 403, description: 'Upload n\'appartient pas au user', type: ApiErrorDto })
-  async abortMultipart(
-    @Body() dto: MultipartKeyDto,
-    @CurrentUser() user: { userId: string },
-  ) {
+  @ApiResponse({ status: 403, description: "Upload n'appartient pas au user", type: ApiErrorDto })
+  async abortMultipart(@Body() dto: MultipartKeyDto, @CurrentUser() user: { userId: string }) {
     await this.assertUploadOwner(dto.uploadId, user.userId);
     await this.aws.abortMultipartUpload(dto.key, dto.uploadId);
     await this.redis.del(`upload:${dto.uploadId}`);
   }
 
   @Get('quota')
-  @ApiOperation({ summary: 'Quota de stockage de l\'utilisateur connecté' })
+  @ApiOperation({ summary: "Quota de stockage de l'utilisateur connecté" })
   @ApiResponse({ status: 200, type: QuotaResponseDto })
   @ApiResponse({ status: 401, description: 'Non authentifié', type: ApiErrorDto })
   getQuota(@CurrentUser() user: { userId: string }): Promise<QuotaResponseDto> {
@@ -158,7 +170,13 @@ export class PhotoController {
 
   @Get('colors')
   @ApiOperation({ summary: 'Exploration chromatique — atlas de couleurs avec le nombre de photos par cellule' })
-  @ApiQuery({ name: 'albumId', required: false, type: String, format: 'uuid', description: 'Restreint l\'atlas à un album' })
+  @ApiQuery({
+    name: 'albumId',
+    required: false,
+    type: String,
+    format: 'uuid',
+    description: "Restreint l'atlas à un album",
+  })
   @ApiResponse({ status: 200, description: 'Grille fixe de cellules couleur, chacune avec son count' })
   @ApiResponse({ status: 401, description: 'Non authentifié', type: ApiErrorDto })
   getColorAtlas(
@@ -169,9 +187,15 @@ export class PhotoController {
   }
 
   @Get('colors/:cellId')
-  @ApiOperation({ summary: 'Photos d\'une cellule de l\'atlas (paginées)' })
+  @ApiOperation({ summary: "Photos d'une cellule de l'atlas (paginées)" })
   @ApiParam({ name: 'cellId', type: String, example: 'c-8-2' })
-  @ApiQuery({ name: 'albumId', required: false, type: String, format: 'uuid', description: 'Restreint la cellule à un album' })
+  @ApiQuery({
+    name: 'albumId',
+    required: false,
+    type: String,
+    format: 'uuid',
+    description: 'Restreint la cellule à un album',
+  })
   @ApiResponse({ status: 200, description: 'Photos de la cellule, paginées' })
   @ApiResponse({ status: 400, description: 'cellId inconnu', type: ApiErrorDto })
   @ApiResponse({ status: 401, description: 'Non authentifié', type: ApiErrorDto })
@@ -188,15 +212,12 @@ export class PhotoController {
   }
 
   @Get(':id/status')
-  @ApiOperation({ summary: 'Statut de traitement d\'une photo' })
+  @ApiOperation({ summary: "Statut de traitement d'une photo" })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })
   @ApiResponse({ status: 200, type: PhotoStatusResponseDto })
   @ApiResponse({ status: 401, description: 'Non authentifié', type: ApiErrorDto })
   @ApiResponse({ status: 404, description: 'Photo introuvable ou accès refusé', type: ApiErrorDto })
-  getStatus(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: { userId: string },
-  ) {
+  getStatus(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: { userId: string }) {
     return this.photoService.getStatus(id, user.userId);
   }
 
