@@ -37,12 +37,10 @@ export class PhotoProcessor extends WorkerHost {
 
     const base = sharp();
 
-    const colorFork = base.clone()
-      .resize(50, 50, { fit: 'cover' })
-      .removeAlpha()
-      .raw();
+    const colorFork = base.clone().resize(50, 50, { fit: 'cover' }).removeAlpha().raw();
 
-    const uploadTransform = base.clone()
+    const uploadTransform = base
+      .clone()
       .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
       .webp({ quality: 82 });
 
@@ -53,10 +51,7 @@ export class PhotoProcessor extends WorkerHost {
     uploadTransform.pipe(passThrough);
 
     let palette: PaletteEntry[] = [];
-    const [colorBuf] = await Promise.all([
-      colorFork.toBuffer().catch(() => null),
-      uploadPromise,
-    ]);
+    const [colorBuf] = await Promise.all([colorFork.toBuffer().catch(() => null), uploadPromise]);
 
     if (colorBuf && colorBuf.length >= 3) {
       palette = extractPalette(colorBuf);
@@ -92,6 +87,8 @@ export class PhotoProcessor extends WorkerHost {
     await this.photoRepo.update(job.data.photoId, { status: PhotoStatus.FAILED });
     await this.aws
       .deleteObject(job.data.rawKey)
-      .catch((e) => this.logger.error({ key: job.data.rawKey, err: e }, 'Failed to delete raw object after job failure'));
+      .catch((e) =>
+        this.logger.error({ key: job.data.rawKey, err: e }, 'Failed to delete raw object after job failure'),
+      );
   }
 }

@@ -47,10 +47,7 @@ export class PhotoService {
   ) {}
 
   private getMaxStorageBytes(): number {
-    return Number.parseInt(
-      this.config.get<string>('MAX_STORAGE_PER_USER_BYTES') ?? String(500 * 1024 * 1024),
-      10,
-    );
+    return Number.parseInt(this.config.get<string>('MAX_STORAGE_PER_USER_BYTES') ?? String(500 * 1024 * 1024), 10);
   }
 
   async getQuotaForUser(userId: string): Promise<QuotaResponseDto> {
@@ -64,12 +61,7 @@ export class PhotoService {
       const head = await this.aws.headObject(input.key);
       fileSizeBytes = head.ContentLength ?? null;
     } catch {
-      throw new ApiException(
-        ErrorCode.PHOTO_S3_MISSING,
-        HttpStatus.NOT_FOUND,
-        'Fichier introuvable sur S3',
-        [],
-      );
+      throw new ApiException(ErrorCode.PHOTO_S3_MISSING, HttpStatus.NOT_FOUND, 'Fichier introuvable sur S3', []);
     }
 
     const photo = await this.photoRepo.save({
@@ -98,12 +90,7 @@ export class PhotoService {
     const photo = await this.photoRepo.findOne({ where: { id } });
 
     if (photo?.userId !== userId) {
-      throw new ApiException(
-        ErrorCode.PHOTO_NOT_FOUND,
-        HttpStatus.NOT_FOUND,
-        'Photo introuvable',
-        [],
-      );
+      throw new ApiException(ErrorCode.PHOTO_NOT_FOUND, HttpStatus.NOT_FOUND, 'Photo introuvable', []);
     }
 
     return {
@@ -138,9 +125,7 @@ export class PhotoService {
     }));
 
     if (cacheKey) {
-      await this.redis
-        .set(cacheKey, JSON.stringify(atlas), 'EX', COLOR_ATLAS_CACHE_TTL_SECONDS)
-        .catch(() => undefined);
+      await this.redis.set(cacheKey, JSON.stringify(atlas), 'EX', COLOR_ATLAS_CACHE_TTL_SECONDS).catch(() => undefined);
     }
 
     return atlas;

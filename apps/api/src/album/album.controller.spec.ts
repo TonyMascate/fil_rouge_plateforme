@@ -37,7 +37,7 @@ describe('AlbumController', () => {
   });
 
   describe('findAll', () => {
-    it('retourne les albums de l\'utilisateur', async () => {
+    it("retourne les albums de l'utilisateur", async () => {
       const albums = [{ id: 'a1', name: 'Album 1' }];
       mockAlbumService.findAllForUser.mockResolvedValue(albums);
 
@@ -84,7 +84,7 @@ describe('AlbumController', () => {
   });
 
   describe('update', () => {
-    it('renomme l\'album', async () => {
+    it("renomme l'album", async () => {
       const updated = { id: 'album-uuid', name: 'Nouveau nom' };
       mockAlbumService.update.mockResolvedValue(updated);
 
@@ -96,7 +96,7 @@ describe('AlbumController', () => {
   });
 
   describe('remove', () => {
-    it('supprime l\'album', async () => {
+    it("supprime l'album", async () => {
       mockAlbumService.remove.mockResolvedValue(undefined);
 
       await controller.remove('album-uuid', currentUser);
@@ -118,7 +118,7 @@ describe('AlbumController', () => {
   });
 
   describe('addPhotos', () => {
-    it('ajoute des photos à l\'album', async () => {
+    it("ajoute des photos à l'album", async () => {
       mockAlbumService.addPhotos.mockResolvedValue(undefined);
 
       await controller.addPhotos('album-uuid', { photoIds: ['p1', 'p2'] } as any, currentUser);
@@ -128,7 +128,7 @@ describe('AlbumController', () => {
   });
 
   describe('removePhoto', () => {
-    it('retire une photo de l\'album', async () => {
+    it("retire une photo de l'album", async () => {
       mockAlbumService.removePhoto.mockResolvedValue(undefined);
 
       await controller.removePhoto('album-uuid', 'photo-uuid', currentUser);
@@ -138,7 +138,7 @@ describe('AlbumController', () => {
   });
 
   describe('getMembers', () => {
-    it('retourne les membres de l\'album', async () => {
+    it("retourne les membres de l'album", async () => {
       const members = [{ id: 'm1', email: 'member@test.com' }];
       mockAlbumService.getMembers.mockResolvedValue(members);
 

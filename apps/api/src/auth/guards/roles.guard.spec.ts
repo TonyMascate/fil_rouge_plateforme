@@ -33,14 +33,14 @@ describe('RolesGuard', () => {
     expect(guard).toBeDefined();
   });
 
-  it('autorise si aucun rôle requis n\'est défini', () => {
+  it("autorise si aucun rôle requis n'est défini", () => {
     const context = buildContext({ requiredRoles: null });
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(null);
 
     expect(guard.canActivate(context as any)).toBe(true);
   });
 
-  it('autorise si l\'utilisateur possède le rôle requis', () => {
+  it("autorise si l'utilisateur possède le rôle requis", () => {
     const context = buildContext({ requiredRoles: [Role.ADMIN], userRole: Role.ADMIN });
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([Role.ADMIN]);
 

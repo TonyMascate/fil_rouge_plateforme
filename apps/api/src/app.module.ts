@@ -17,6 +17,8 @@ import { AwsModule } from './aws/aws.module';
 import { PhotoModule } from './photo/photo.module';
 import { RedisModule } from './redis/redis.module';
 import { AlbumModule } from './album/album.module';
+import { MetricsModule } from './metrics/metrics.module';
+import { HttpMetricsMiddleware } from './metrics/http-metrics.middleware';
 
 @Module({
   imports: [
@@ -49,8 +51,8 @@ import { AlbumModule } from './album/album.module';
     AuthModule,
     ThrottlerModule.forRoot({
       throttlers: [
-        { name: 'short', ttl: 60000, limit: 100000 },
-        { name: 'long', ttl: 600000, limit: 500000 },
+        { name: 'short', ttl: 60000, limit: 100 },
+        { name: 'long', ttl: 600000, limit: 500 },
       ],
     }),
     BullModule.forRootAsync({
@@ -66,6 +68,7 @@ import { AlbumModule } from './album/album.module';
     RedisModule,
     PhotoModule,
     AlbumModule,
+    MetricsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -82,6 +85,10 @@ import { AlbumModule } from './album/album.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    // Placé en premier pour englober tout le reste, y compris les rejets du
+    // middleware CSRF. On exclut /metrics : Prometheus l'interroge toutes les
+    // 15 s et ces appels écraseraient les courbes de trafic réel.
+    consumer.apply(HttpMetricsMiddleware).exclude('metrics').forRoutes('*');
     consumer.apply(CsrfMiddleware).forRoutes('*');
   }
 }

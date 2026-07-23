@@ -12,10 +12,7 @@ import { AlbumPhotoRepository } from './repositories/album-photo.repository';
 import { AlbumMemberRepository } from './repositories/album-member.repository';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Album, AlbumPhoto, AlbumMember, Photo, User]),
-    AwsModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Album, AlbumPhoto, AlbumMember, Photo, User]), AwsModule],
   controllers: [AlbumController],
   providers: [AlbumService, AlbumPhotoRepository, AlbumMemberRepository],
 })

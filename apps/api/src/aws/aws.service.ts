@@ -42,10 +42,7 @@ export class AwsService {
       this.config.getOrThrow<string>('CLOUDFRONT_PRIVATE_KEY_BASE64'),
       'base64',
     ).toString('utf8');
-    this.signedUrlTtl = Number.parseInt(
-      this.config.get<string>('CLOUDFRONT_SIGNED_URL_TTL_SECONDS') ?? '3600',
-      10,
-    );
+    this.signedUrlTtl = Number.parseInt(this.config.get<string>('CLOUDFRONT_SIGNED_URL_TTL_SECONDS') ?? '3600', 10);
     this.s3 = new S3Client({
       region: this.config.getOrThrow<string>('AWS_REGION'),
       credentials: {
@@ -58,9 +55,7 @@ export class AwsService {
   // -------- Lecture / écriture stream (utilisés par le worker Sharp) --------
 
   async downloadStream(key: string): Promise<Readable> {
-    const response = await this.s3.send(
-      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
-    );
+    const response = await this.s3.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
     return response.Body as Readable;
   }
 
@@ -126,9 +121,7 @@ export class AwsService {
   }
 
   async listParts(key: string, uploadId: string) {
-    const res = await this.s3.send(
-      new ListPartsCommand({ Bucket: this.bucket, Key: key, UploadId: uploadId }),
-    );
+    const res = await this.s3.send(new ListPartsCommand({ Bucket: this.bucket, Key: key, UploadId: uploadId }));
     return (res.Parts ?? []).map((p) => ({
       PartNumber: p.PartNumber!,
       ETag: p.ETag!,

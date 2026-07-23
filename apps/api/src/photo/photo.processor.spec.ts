@@ -63,9 +63,7 @@ describe('PhotoProcessor', () => {
     mockUploadTransform.resize.mockReturnThis();
     mockUploadTransform.webp.mockReturnThis();
 
-    mockBase.clone
-      .mockReturnValueOnce(mockColorFork)
-      .mockReturnValueOnce(mockUploadTransform);
+    mockBase.clone.mockReturnValueOnce(mockColorFork).mockReturnValueOnce(mockUploadTransform);
 
     (require('sharp') as jest.Mock).mockReturnValue(mockBase);
 
@@ -114,10 +112,7 @@ describe('PhotoProcessor', () => {
     });
 
     it('calcule la couleur dominante depuis des pixels gris (fallback niveaux de gris)', async () => {
-      mockBase.clone
-        .mockReset()
-        .mockReturnValueOnce(mockColorFork)
-        .mockReturnValueOnce(mockUploadTransform);
+      mockBase.clone.mockReset().mockReturnValueOnce(mockColorFork).mockReturnValueOnce(mockUploadTransform);
       // 1 pixel gris → saturation = 0 → chemin grayscalePixels
       mockColorFork.toBuffer.mockResolvedValue(Buffer.from([128, 128, 128]));
 
@@ -130,10 +125,7 @@ describe('PhotoProcessor', () => {
     });
 
     it('calcule la couleur dominante via le fallback total (pixels trop sombres)', async () => {
-      mockBase.clone
-        .mockReset()
-        .mockReturnValueOnce(mockColorFork)
-        .mockReturnValueOnce(mockUploadTransform);
+      mockBase.clone.mockReset().mockReturnValueOnce(mockColorFork).mockReturnValueOnce(mockUploadTransform);
       // Pixel très sombre : lightness < 0.08 → ignoré → fallback total sur tous les pixels
       mockColorFork.toBuffer.mockResolvedValue(Buffer.from([1, 1, 1]));
 
@@ -146,10 +138,7 @@ describe('PhotoProcessor', () => {
     });
 
     it('calcule la saturation via le chemin lightness > 0.5', async () => {
-      mockBase.clone
-        .mockReset()
-        .mockReturnValueOnce(mockColorFork)
-        .mockReturnValueOnce(mockUploadTransform);
+      mockBase.clone.mockReset().mockReturnValueOnce(mockColorFork).mockReturnValueOnce(mockUploadTransform);
       // Pixel clair coloré : lightness > 0.5 avec saturation élevée
       mockColorFork.toBuffer.mockResolvedValue(Buffer.from([240, 150, 100]));
 
@@ -162,48 +151,30 @@ describe('PhotoProcessor', () => {
     });
 
     it('met dominantColor à null si colorBuf est null (toBuffer a rejeté)', async () => {
-      mockBase.clone
-        .mockReset()
-        .mockReturnValueOnce(mockColorFork)
-        .mockReturnValueOnce(mockUploadTransform);
+      mockBase.clone.mockReset().mockReturnValueOnce(mockColorFork).mockReturnValueOnce(mockUploadTransform);
       mockColorFork.toBuffer.mockRejectedValue(new Error('sharp error'));
 
       await processor.process(fakeJob);
 
-      expect(mockPhotoRepo.update).toHaveBeenCalledWith(
-        'photo-uuid',
-        expect.objectContaining({ dominantColor: null }),
-      );
+      expect(mockPhotoRepo.update).toHaveBeenCalledWith('photo-uuid', expect.objectContaining({ dominantColor: null }));
     });
 
     it('met dominantColor à null si colorBuf fait moins de 3 octets', async () => {
-      mockBase.clone
-        .mockReset()
-        .mockReturnValueOnce(mockColorFork)
-        .mockReturnValueOnce(mockUploadTransform);
+      mockBase.clone.mockReset().mockReturnValueOnce(mockColorFork).mockReturnValueOnce(mockUploadTransform);
       mockColorFork.toBuffer.mockResolvedValue(Buffer.from([255, 0])); // 2 octets = < 1 pixel
 
       await processor.process(fakeJob);
 
-      expect(mockPhotoRepo.update).toHaveBeenCalledWith(
-        'photo-uuid',
-        expect.objectContaining({ dominantColor: null }),
-      );
+      expect(mockPhotoRepo.update).toHaveBeenCalledWith('photo-uuid', expect.objectContaining({ dominantColor: null }));
     });
 
     it('met fileSizeBytes à null si headObject ne retourne pas de ContentLength', async () => {
-      mockBase.clone
-        .mockReset()
-        .mockReturnValueOnce(mockColorFork)
-        .mockReturnValueOnce(mockUploadTransform);
+      mockBase.clone.mockReset().mockReturnValueOnce(mockColorFork).mockReturnValueOnce(mockUploadTransform);
       mockAwsService.headObject.mockResolvedValue({});
 
       await processor.process(fakeJob);
 
-      expect(mockPhotoRepo.update).toHaveBeenCalledWith(
-        'photo-uuid',
-        expect.objectContaining({ fileSizeBytes: null }),
-      );
+      expect(mockPhotoRepo.update).toHaveBeenCalledWith('photo-uuid', expect.objectContaining({ fileSizeBytes: null }));
     });
   });
 
@@ -215,7 +186,7 @@ describe('PhotoProcessor', () => {
       expect(mockAwsService.deleteObject).toHaveBeenCalledWith('raw/photo.jpg');
     });
 
-    it('absorbe silencieusement l\'erreur si deleteObject échoue', async () => {
+    it("absorbe silencieusement l'erreur si deleteObject échoue", async () => {
       mockAwsService.deleteObject.mockRejectedValue(new Error('S3 unavailable'));
 
       await expect(processor.onFailed(fakeJob, new Error('Job failed'))).resolves.not.toThrow();

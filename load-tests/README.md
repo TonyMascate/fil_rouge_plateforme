@@ -35,9 +35,8 @@ Monte jusqu'à 300 VUs sur ~6 min (paliers ≥ 1 min car Prometheus scrape à 15
 
 ### Parcours utilisateur authentifié (recommandé)
 
-Simule des utilisateurs qui se connectent et naviguent. Nécessite un **compte de
-test existant** (idéalement avec quelques photos, pour que la navigation renvoie
-des données) et un **throttler desserré** sur l'environnement cible.
+Simule des utilisateurs qui naviguent. Nécessite un **compte de test existant**
+(idéalement avec quelques photos, pour que la navigation renvoie des données).
 
 ```powershell
 k6 run -e BASE_URL=https://staging.fil-rouge-plateforme.com `
@@ -46,8 +45,27 @@ k6 run -e BASE_URL=https://staging.fil-rouge-plateforme.com `
        load-tests/parcours-lecture.js
 ```
 
-Chaque VU se connecte **une seule fois** (comme un vrai utilisateur), puis
+La connexion a lieu **une seule fois pour tout le run**, dans `setup()` : les
+cookies obtenus sont ensuite injectés dans le cookie jar de chaque VU, qui
 enchaîne des cycles de navigation avec un temps de réflexion de 1 à 3 s.
+
+> **Deux pièges k6 rencontrés sur ce scénario**, tous deux silencieux (401 en
+> cascade, sans message) :
+>
+> 1. Les données renvoyées par `setup()` sont **sérialisées en JSON** avant
+>    d'être copiées vers les VUs. Renvoyer `res.cookies` tel quel ne marche pas :
+>    les objets cookie enveloppés par k6 perdent leur champ `value`. Il faut en
+>    extraire les chaînes brutes.
+> 2. k6 **vide le cookie jar entre chaque itération** (option `noCookiesReset`).
+>    Les cookies doivent donc être réinjectés à *chaque* itération, pas
+>    seulement à la première — sinon le premier parcours passe et tous les
+>    suivants tombent en 401.
+
+C'est un contournement délibéré du plafond de `/auth/login` (5 req/60 s par IP,
+anti-bruteforce). Avec un login par VU, 93 % des tentatives repartaient en `429`
+et le test ne mesurait plus que le throttler. Le scénario s'adapte à la
+protection, pas l'inverse — et c'est aussi plus fidèle : on veut mesurer la
+navigation, pas l'authentification.
 
 > Tous les VUs utilisent le même compte : l'atlas couleurs étant caché en Redis,
 > les requêtes se répètent. Pour un stress DB plus franc, utilise plusieurs
@@ -66,15 +84,29 @@ bougent le plus :
 
 ## Le throttler fausse-t-il le test ?
 
-L'API applique un rate-limiting (`@nestjs/throttler` : 100 req/60 s par IP).
-Depuis **une seule machine**, k6 récolte donc vite des `429`. Ces réponses :
+Deux plafonds cohabitent (`@nestjs/throttler`) :
 
-- **ne sont pas** comptées comme des échecs (`http_req_failed` reste bas) ;
-- sont suivies à part via le compteur **`rate_limited`** affiché dans le résumé k6.
+| Portée | Limite | Défini dans |
+|---|---|---|
+| Global (toutes routes) | 100 000 req/60 s | `app.module.ts` |
+| `POST /auth/login` | **5 req/60 s** | `auth.controller.ts` |
 
-Les graphes Grafana bougent quand même (le serveur traite chaque connexion, même
-pour renvoyer un 429). Mais pour un **vrai stress métier** — saturer réellement
-l'API et non son garde-fou — il faut soit :
+Le plafond global est assez large pour ne pas gêner un test de charge. Seul
+celui du login mord — d'où la connexion mutualisée dans `setup()`.
 
-- desserrer/désactiver temporairement le throttler sur l'environnement cible,
-- soit distribuer la charge depuis plusieurs IP (k6 Cloud / plusieurs machines).
+À savoir : le `ThrottlerModule` est configuré **sans storage Redis**, donc chaque
+réplica API compte dans sa propre mémoire. La limite effective est multipliée par
+le nombre de réplicas derrière le load balancer.
+
+Les `429` éventuels :
+
+- **ne sont pas** comptés comme des échecs (`http_req_failed` reste bas) ;
+- sont suivis à part via le compteur **`rate_limited`** du résumé k6.
+
+Attention à la lecture des percentiles : un `429` répond en ~25 ms et tire la
+médiane vers le bas. Si `rate_limited` est élevé, compare avec la ligne
+`{ expected_response:true }` du résumé, qui exclut ces réponses — c'est elle qui
+donne le vrai temps de réponse.
+
+Pour saturer l'API depuis plusieurs IP (et non depuis une seule machine),
+il faut distribuer la charge : k6 Cloud, ou plusieurs machines.

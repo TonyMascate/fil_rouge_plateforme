@@ -27,15 +27,20 @@ describe('GlobalExceptionFilter', () => {
   describe('catch', () => {
     it('formate une HttpException correctement', () => {
       const host = buildHost();
-      const exception = new HttpException({ code: 'AUTH_ERROR', message: 'Non autorisé', details: [] }, HttpStatus.UNAUTHORIZED);
+      const exception = new HttpException(
+        { code: 'AUTH_ERROR', message: 'Non autorisé', details: [] },
+        HttpStatus.UNAUTHORIZED,
+      );
 
       filter.catch(exception, host as any);
 
       expect(host._status).toHaveBeenCalledWith(HttpStatus.UNAUTHORIZED);
-      expect(host._json).toHaveBeenCalledWith(expect.objectContaining({
-        statusCode: HttpStatus.UNAUTHORIZED,
-        message: 'Non autorisé',
-      }));
+      expect(host._json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          statusCode: HttpStatus.UNAUTHORIZED,
+          message: 'Non autorisé',
+        }),
+      );
     });
 
     it('retourne une réponse 500 pour une erreur inconnue', () => {
@@ -45,9 +50,11 @@ describe('GlobalExceptionFilter', () => {
       filter.catch(new Error('Crash imprévu'), host as any);
 
       expect(host._status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
-      expect(host._json).toHaveBeenCalledWith(expect.objectContaining({
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      }));
+      expect(host._json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        }),
+      );
       consoleSpy.mockRestore();
     });
 

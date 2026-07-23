@@ -58,7 +58,10 @@ export class AlbumService {
   private toUrlMap(s3Map: Map<string, string[]>): Map<string, string[]> {
     const urlMap = new Map<string, string[]>();
     for (const [albumId, keys] of s3Map) {
-      urlMap.set(albumId, keys.map((key) => this.aws.getSignedImageUrl(key)));
+      urlMap.set(
+        albumId,
+        keys.map((key) => this.aws.getSignedImageUrl(key)),
+      );
     }
     return urlMap;
   }
@@ -198,9 +201,7 @@ export class AlbumService {
       throw new ApiException(
         ErrorCode.ALBUM_PHOTO_ALREADY_EXISTS,
         HttpStatus.CONFLICT,
-        existingCount > 1
-          ? `${existingCount} photos sont déjà dans cet album`
-          : "Cette photo est déjà dans l'album",
+        existingCount > 1 ? `${existingCount} photos sont déjà dans cet album` : "Cette photo est déjà dans l'album",
         [],
       );
     }

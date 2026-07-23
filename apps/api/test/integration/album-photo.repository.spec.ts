@@ -37,15 +37,23 @@ describe('AlbumPhotoRepository — Intégration', () => {
   }
 
   function createPhotoWithCells(s3Key: string, colorCells: string[]): Promise<Photo> {
-    return photoRepo.save({ s3Key, originalName: 'f.jpg', status: PhotoStatus.COMPLETED, fileSizeBytes: 100, userId: user.id, colorCells });
+    return photoRepo.save({
+      s3Key,
+      originalName: 'f.jpg',
+      status: PhotoStatus.COMPLETED,
+      fileSizeBytes: 100,
+      userId: user.id,
+      colorCells,
+    });
   }
 
   // Insertion avec added_at explicite pour tester l'ordre de la window function
   async function addPhotoToAlbumAt(albumId: string, photoId: string, addedAt: Date): Promise<void> {
-    await dataSource.query(
-      `INSERT INTO album_photos (album_id, photo_id, added_at) VALUES ($1, $2, $3)`,
-      [albumId, photoId, addedAt],
-    );
+    await dataSource.query(`INSERT INTO album_photos (album_id, photo_id, added_at) VALUES ($1, $2, $3)`, [
+      albumId,
+      photoId,
+      addedAt,
+    ]);
   }
 
   describe('getCoversS3KeysForAlbums', () => {
@@ -56,9 +64,7 @@ describe('AlbumPhotoRepository — Intégration', () => {
 
     it('retourne au maximum 4 clés par album (window function ROW_NUMBER)', async () => {
       const album = await albumRepo.save({ name: 'Test', userId: user.id });
-      const photos = await Promise.all(
-        Array.from({ length: 6 }, (_, idx) => createPhoto(`key-${idx}.jpg`)),
-      );
+      const photos = await Promise.all(Array.from({ length: 6 }, (_, idx) => createPhoto(`key-${idx}.jpg`)));
       for (const photo of photos) {
         await albumPhotoRepo.save({ albumId: album.id, photoId: photo.id });
       }
@@ -115,7 +121,7 @@ describe('AlbumPhotoRepository — Intégration', () => {
   });
 
   describe('countByAlbumIds', () => {
-    it("retourne une Map vide pour un tableau vide", async () => {
+    it('retourne une Map vide pour un tableau vide', async () => {
       const result = await repo.countByAlbumIds([]);
       expect(result.size).toBe(0);
     });
@@ -123,9 +129,7 @@ describe('AlbumPhotoRepository — Intégration', () => {
     it('compte correctement le nombre de photos par album', async () => {
       const album1 = await albumRepo.save({ name: 'A1', userId: user.id });
       const album2 = await albumRepo.save({ name: 'A2', userId: user.id });
-      const photos = await Promise.all([
-        createPhoto('p1.jpg'), createPhoto('p2.jpg'), createPhoto('p3.jpg'),
-      ]);
+      const photos = await Promise.all([createPhoto('p1.jpg'), createPhoto('p2.jpg'), createPhoto('p3.jpg')]);
 
       await albumPhotoRepo.save([
         { albumId: album1.id, photoId: photos[0].id },
@@ -142,7 +146,7 @@ describe('AlbumPhotoRepository — Intégration', () => {
   describe('findPhotosByCellPage', () => {
     const query = { page: 1, limit: 20, order: 'desc' as const };
 
-    it('renvoie les photos de l\'album dans une cellule, avec le total (sans planter sur le comptage)', async () => {
+    it("renvoie les photos de l'album dans une cellule, avec le total (sans planter sur le comptage)", async () => {
       const album = await albumRepo.save({ name: 'A', userId: user.id });
       const blue = await createPhotoWithCells('blue.jpg', ['c-9-0']);
       const neutral = await createPhotoWithCells('neutral.jpg', ['n-1']);
@@ -157,14 +161,27 @@ describe('AlbumPhotoRepository — Intégration', () => {
       expect(rows[0].photo.s3Key).toBe('blue.jpg');
     });
 
-    it('exclut les photos hors album, hors cellule, et limite à l\'utilisateur', async () => {
-      const other = await userRepo.save({ email: 'o3@e.com', password: 'x', firstName: 'O', lastName: 'U', role: Role.USER });
+    it("exclut les photos hors album, hors cellule, et limite à l'utilisateur", async () => {
+      const other = await userRepo.save({
+        email: 'o3@e.com',
+        password: 'x',
+        firstName: 'O',
+        lastName: 'U',
+        role: Role.USER,
+      });
       const album = await albumRepo.save({ name: 'A', userId: user.id });
 
       const match = await createPhotoWithCells('match.jpg', ['c-9-0']);
       const wrongCell = await createPhotoWithCells('wrong-cell.jpg', ['c-4-1']);
       const notInAlbum = await createPhotoWithCells('not-in-album.jpg', ['c-9-0']);
-      const otherUserPhoto = await photoRepo.save({ s3Key: 'other.jpg', originalName: 'f.jpg', status: PhotoStatus.COMPLETED, fileSizeBytes: 100, userId: other.id, colorCells: ['c-9-0'] });
+      const otherUserPhoto = await photoRepo.save({
+        s3Key: 'other.jpg',
+        originalName: 'f.jpg',
+        status: PhotoStatus.COMPLETED,
+        fileSizeBytes: 100,
+        userId: other.id,
+        colorCells: ['c-9-0'],
+      });
 
       await albumPhotoRepo.save([
         { albumId: album.id, photoId: match.id },

@@ -47,7 +47,7 @@ export class AlbumController {
   }
 
   @Get(':id/photo-ids')
-  @ApiOperation({ summary: 'Récupérer les IDs des photos d\'un album' })
+  @ApiOperation({ summary: "Récupérer les IDs des photos d'un album" })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })
   getPhotoIds(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: { userId: string }) {
     return this.albumService.getPhotoIds(id, user.userId);
@@ -56,11 +56,7 @@ export class AlbumController {
   @Patch(':id')
   @ApiOperation({ summary: 'Renommer un album' })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })
-  update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateAlbumDto,
-    @CurrentUser() user: { userId: string },
-  ) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateAlbumDto, @CurrentUser() user: { userId: string }) {
     return this.albumService.update(id, dto, user.userId);
   }
 
@@ -73,7 +69,7 @@ export class AlbumController {
   }
 
   @Get(':id/photos')
-  @ApiOperation({ summary: 'Lister les photos d\'un album (paginé)' })
+  @ApiOperation({ summary: "Lister les photos d'un album (paginé)" })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })
   getPhotos(
     @Param('id', ParseUUIDPipe) id: string,
@@ -97,7 +93,7 @@ export class AlbumController {
 
   @Delete(':id/photos/:photoId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Retirer une photo d\'un album' })
+  @ApiOperation({ summary: "Retirer une photo d'un album" })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })
   @ApiParam({ name: 'photoId', type: String, format: 'uuid' })
   removePhoto(
@@ -109,7 +105,7 @@ export class AlbumController {
   }
 
   @Get(':id/members')
-  @ApiOperation({ summary: 'Lister les membres d\'un album' })
+  @ApiOperation({ summary: "Lister les membres d'un album" })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })
   getMembers(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: { userId: string }) {
     return this.albumService.getMembers(id, user.userId);
@@ -128,7 +124,7 @@ export class AlbumController {
 
   @Delete(':id/members/:memberId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Retirer un membre d\'un album' })
+  @ApiOperation({ summary: "Retirer un membre d'un album" })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })
   @ApiParam({ name: 'memberId', type: String, format: 'uuid' })
   removeMember(

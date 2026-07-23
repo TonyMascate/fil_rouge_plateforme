@@ -1,11 +1,4 @@
-import {
-  Entity,
-  PrimaryColumn,
-  CreateDateColumn,
-  ManyToOne,
-  JoinColumn,
-  Index,
-} from 'typeorm';
+import { Entity, PrimaryColumn, CreateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { Album } from './album.entity';
 import { User } from '@app/users/entities/user.entity';
 

@@ -55,7 +55,14 @@ describe('AuthService', () => {
 
   describe('validateUser', () => {
     it('retourne le user sans mot de passe si les credentials sont valides', async () => {
-      const storedUser = { id: '1', email: 'test@test.com', password: 'hashed', role: 'user', firstName: 'Jean', lastName: 'Dupont' };
+      const storedUser = {
+        id: '1',
+        email: 'test@test.com',
+        password: 'hashed',
+        role: 'user',
+        firstName: 'Jean',
+        lastName: 'Dupont',
+      };
       mockUserRepository.findOne.mockResolvedValue(storedUser);
       (argon2.verify as jest.Mock).mockResolvedValue(true);
 
@@ -74,7 +81,14 @@ describe('AuthService', () => {
     });
 
     it('retourne null si le mot de passe est incorrect', async () => {
-      const storedUser = { id: '1', email: 'test@test.com', password: 'hashed', role: 'user', firstName: 'Jean', lastName: 'Dupont' };
+      const storedUser = {
+        id: '1',
+        email: 'test@test.com',
+        password: 'hashed',
+        role: 'user',
+        firstName: 'Jean',
+        lastName: 'Dupont',
+      };
       mockUserRepository.findOne.mockResolvedValue(storedUser);
       (argon2.verify as jest.Mock).mockResolvedValue(false);
 
@@ -86,7 +100,13 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it('génère les tokens et sauvegarde le refresh token', async () => {
-      const user = { id: '1', email: 'test@test.com', role: 'user', firstName: 'Jean', lastName: 'Dupont' } as unknown as User;
+      const user = {
+        id: '1',
+        email: 'test@test.com',
+        role: 'user',
+        firstName: 'Jean',
+        lastName: 'Dupont',
+      } as unknown as User;
       mockConfigService.getOrThrow.mockReturnValue('secret');
       mockJwtService.signAsync.mockResolvedValue('token-value');
       (argon2.hash as jest.Mock).mockResolvedValue('hashed_refresh');

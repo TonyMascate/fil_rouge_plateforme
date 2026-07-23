@@ -108,11 +108,27 @@ describe('AlbumService', () => {
     });
 
     it('retourne les albums propres et partagés avec membres', async () => {
-      const sharedAlbum = { id: 'shared-uuid', name: 'Partagé', userId: 'other-user', createdAt: new Date('2025-12-01'), updatedAt: new Date('2025-12-01') };
+      const sharedAlbum = {
+        id: 'shared-uuid',
+        name: 'Partagé',
+        userId: 'other-user',
+        createdAt: new Date('2025-12-01'),
+        updatedAt: new Date('2025-12-01'),
+      };
       mockAlbumRepo.find.mockResolvedValue([baseAlbum]);
       mockAlbumMemberRepo.find.mockResolvedValue([{ album: sharedAlbum, userId: OWNER_ID, createdAt: new Date() }]);
-      mockAlbumPhotoRepo.countByAlbumIds.mockResolvedValue(new Map([[ALBUM_ID, 3], ['shared-uuid', 1]]));
-      mockAlbumPhotoRepo.getCoversS3KeysForAlbums.mockResolvedValue(new Map([[ALBUM_ID, ['opt/a.jpg']], ['shared-uuid', []]]));
+      mockAlbumPhotoRepo.countByAlbumIds.mockResolvedValue(
+        new Map([
+          [ALBUM_ID, 3],
+          ['shared-uuid', 1],
+        ]),
+      );
+      mockAlbumPhotoRepo.getCoversS3KeysForAlbums.mockResolvedValue(
+        new Map([
+          [ALBUM_ID, ['opt/a.jpg']],
+          ['shared-uuid', []],
+        ]),
+      );
       mockAlbumMemberRepo.getMembersForAlbums.mockResolvedValue([
         { albumId: ALBUM_ID, id: 'member-uuid', email: 'member@test.com', firstName: 'Alice', lastName: 'B' },
       ]);
@@ -138,7 +154,7 @@ describe('AlbumService', () => {
       expect(result.photoCount).toBe(5);
     });
 
-    it('retourne l\'album pour un membre (non-propriétaire)', async () => {
+    it("retourne l'album pour un membre (non-propriétaire)", async () => {
       const memberAlbum = { ...baseAlbum, userId: 'other-owner' };
       mockAlbumRepo.findOne.mockResolvedValue(memberAlbum);
       mockAlbumMemberRepo.findOne.mockResolvedValue({ albumId: ALBUM_ID, userId: OWNER_ID });
@@ -165,7 +181,7 @@ describe('AlbumService', () => {
   });
 
   describe('update', () => {
-    it('renomme l\'album', async () => {
+    it("renomme l'album", async () => {
       mockAlbumRepo.findOne.mockResolvedValue({ ...baseAlbum });
       mockAlbumRepo.save.mockImplementation((album: any) => Promise.resolve(album));
       mockAlbumPhotoRepo.count.mockResolvedValue(0);
@@ -177,7 +193,7 @@ describe('AlbumService', () => {
       expect(result.name).toBe('Nouveau nom');
     });
 
-    it('lève ApiException si le user n\'est pas propriétaire', async () => {
+    it("lève ApiException si le user n'est pas propriétaire", async () => {
       mockAlbumRepo.findOne.mockResolvedValue(baseAlbum);
 
       await expect(service.update(ALBUM_ID, { name: 'Test' }, 'other-uuid')).rejects.toThrow(ApiException);
@@ -185,7 +201,7 @@ describe('AlbumService', () => {
   });
 
   describe('remove', () => {
-    it('supprime l\'album', async () => {
+    it("supprime l'album", async () => {
       mockAlbumRepo.findOne.mockResolvedValue(baseAlbum);
       mockAlbumRepo.delete.mockResolvedValue({});
 
@@ -196,9 +212,11 @@ describe('AlbumService', () => {
   });
 
   describe('getPhotos', () => {
-    it('retourne les photos paginées de l\'album', async () => {
+    it("retourne les photos paginées de l'album", async () => {
       mockAlbumRepo.findOne.mockResolvedValue(baseAlbum);
-      const photoRows = [{ photo: { id: 'p1', s3Key: 'opt/a.jpg', originalName: 'a.jpg', createdAt: new Date(), shareToken: null } }];
+      const photoRows = [
+        { photo: { id: 'p1', s3Key: 'opt/a.jpg', originalName: 'a.jpg', createdAt: new Date(), shareToken: null } },
+      ];
       mockAlbumPhotoRepo.findPhotosPage.mockResolvedValue([photoRows, 1]);
 
       const result = await service.getPhotos(ALBUM_ID, OWNER_ID, { page: 1, limit: 20 } as any);
@@ -209,7 +227,7 @@ describe('AlbumService', () => {
   });
 
   describe('addPhotos', () => {
-    it('ajoute des photos valides à l\'album', async () => {
+    it("ajoute des photos valides à l'album", async () => {
       mockAlbumRepo.findOne.mockResolvedValue(baseAlbum);
       mockAlbumPhotoRepo.count.mockResolvedValue(0);
       mockPhotoRepo.find.mockResolvedValue([{ id: 'p1' }, { id: 'p2' }]);
@@ -220,7 +238,7 @@ describe('AlbumService', () => {
       expect(mockAlbumPhotoRepo.insert).toHaveBeenCalled();
     });
 
-    it('lève ApiException si une photo est déjà dans l\'album', async () => {
+    it("lève ApiException si une photo est déjà dans l'album", async () => {
       mockAlbumRepo.findOne.mockResolvedValue(baseAlbum);
       mockAlbumPhotoRepo.count.mockResolvedValue(1);
 
@@ -229,7 +247,7 @@ describe('AlbumService', () => {
   });
 
   describe('removePhoto', () => {
-    it('retire une photo de l\'album', async () => {
+    it("retire une photo de l'album", async () => {
       mockAlbumRepo.findOne.mockResolvedValue(baseAlbum);
       mockAlbumPhotoRepo.delete.mockResolvedValue({});
 
@@ -254,9 +272,14 @@ describe('AlbumService', () => {
   });
 
   describe('addMember', () => {
-    it('ajoute un membre à l\'album', async () => {
+    it("ajoute un membre à l'album", async () => {
       mockAlbumRepo.findOne.mockResolvedValue(baseAlbum);
-      mockUserRepo.findOne.mockResolvedValue({ id: 'member-uuid', email: 'member@test.com', firstName: 'Alice', lastName: 'B' });
+      mockUserRepo.findOne.mockResolvedValue({
+        id: 'member-uuid',
+        email: 'member@test.com',
+        firstName: 'Alice',
+        lastName: 'B',
+      });
       mockAlbumMemberRepo.findOne.mockResolvedValue(null);
       mockAlbumMemberRepo.insert.mockResolvedValue({});
 
@@ -266,23 +289,33 @@ describe('AlbumService', () => {
       expect(mockAlbumMemberRepo.insert).toHaveBeenCalled();
     });
 
-    it('lève ApiException si l\'utilisateur est introuvable', async () => {
+    it("lève ApiException si l'utilisateur est introuvable", async () => {
       mockAlbumRepo.findOne.mockResolvedValue(baseAlbum);
       mockUserRepo.findOne.mockResolvedValue(null);
 
       await expect(service.addMember(ALBUM_ID, 'unknown@test.com', OWNER_ID)).rejects.toThrow(ApiException);
     });
 
-    it('lève ApiException si le propriétaire essaie de se partager l\'album', async () => {
+    it("lève ApiException si le propriétaire essaie de se partager l'album", async () => {
       mockAlbumRepo.findOne.mockResolvedValue(baseAlbum);
-      mockUserRepo.findOne.mockResolvedValue({ id: OWNER_ID, email: 'owner@test.com', firstName: 'Jean', lastName: 'D' });
+      mockUserRepo.findOne.mockResolvedValue({
+        id: OWNER_ID,
+        email: 'owner@test.com',
+        firstName: 'Jean',
+        lastName: 'D',
+      });
 
       await expect(service.addMember(ALBUM_ID, 'owner@test.com', OWNER_ID)).rejects.toThrow(ApiException);
     });
 
     it('ne reinsère pas si le membre existe déjà', async () => {
       mockAlbumRepo.findOne.mockResolvedValue(baseAlbum);
-      mockUserRepo.findOne.mockResolvedValue({ id: 'member-uuid', email: 'member@test.com', firstName: 'Alice', lastName: 'B' });
+      mockUserRepo.findOne.mockResolvedValue({
+        id: 'member-uuid',
+        email: 'member@test.com',
+        firstName: 'Alice',
+        lastName: 'B',
+      });
       mockAlbumMemberRepo.findOne.mockResolvedValue({ albumId: ALBUM_ID, userId: 'member-uuid' });
 
       await service.addMember(ALBUM_ID, 'member@test.com', OWNER_ID);
@@ -292,7 +325,7 @@ describe('AlbumService', () => {
   });
 
   describe('removeMember', () => {
-    it('retire un membre de l\'album', async () => {
+    it("retire un membre de l'album", async () => {
       mockAlbumRepo.findOne.mockResolvedValue(baseAlbum);
       mockAlbumMemberRepo.delete.mockResolvedValue({});
 
@@ -303,7 +336,7 @@ describe('AlbumService', () => {
   });
 
   describe('getPhotoIds', () => {
-    it('retourne les IDs des photos de l\'album', async () => {
+    it("retourne les IDs des photos de l'album", async () => {
       mockAlbumRepo.findOne.mockResolvedValue(baseAlbum);
       mockAlbumPhotoRepo.findPhotoIds.mockResolvedValue(['p1', 'p2']);
 

@@ -85,7 +85,7 @@ describe('PhotoService', () => {
   });
 
   describe('registerUpload', () => {
-    it('sauvegarde la photo et ajoute un job d\'optimisation', async () => {
+    it("sauvegarde la photo et ajoute un job d'optimisation", async () => {
       mockAwsService.headObject.mockResolvedValue({ ContentLength: 2048 });
       const savedPhoto = { id: 'photo-uuid', status: PhotoStatus.PENDING };
       mockPhotoRepository.save.mockResolvedValue(savedPhoto);
@@ -132,7 +132,7 @@ describe('PhotoService', () => {
       expect(result.url).toBeNull();
     });
 
-    it('retourne le statut et l\'URL quand la photo est COMPLETED', async () => {
+    it("retourne le statut et l'URL quand la photo est COMPLETED", async () => {
       const photo = { id: 'photo-uuid', userId: 'user-uuid', status: PhotoStatus.COMPLETED, s3Key: 'opt/photo.jpg' };
       mockPhotoRepository.findOne.mockResolvedValue(photo);
 
@@ -142,7 +142,7 @@ describe('PhotoService', () => {
       expect(result.url).not.toBeNull();
     });
 
-    it("lève ApiException si la photo appartient à un autre utilisateur", async () => {
+    it('lève ApiException si la photo appartient à un autre utilisateur', async () => {
       const photo = { id: 'photo-uuid', userId: 'other-user', status: PhotoStatus.COMPLETED, s3Key: 'opt/photo.jpg' };
       mockPhotoRepository.findOne.mockResolvedValue(photo);
 
@@ -157,7 +157,7 @@ describe('PhotoService', () => {
   });
 
   describe('deletePhoto', () => {
-    it('supprime la photo en base et l\'objet S3', async () => {
+    it("supprime la photo en base et l'objet S3", async () => {
       const photo = { id: 'photo-uuid', userId: 'user-uuid', s3Key: 'opt/photo.jpg' };
       mockPhotoRepository.findOne.mockResolvedValue(photo);
       mockPhotoRepository.delete.mockResolvedValue({});
@@ -171,7 +171,7 @@ describe('PhotoService', () => {
   });
 
   describe('sharePhoto', () => {
-    it('génère et sauvegarde un share token si aucun n\'existe', async () => {
+    it("génère et sauvegarde un share token si aucun n'existe", async () => {
       const photo = { id: 'photo-uuid', userId: 'user-uuid', shareToken: null };
       mockPhotoRepository.findOne.mockResolvedValue(photo);
       mockPhotoRepository.save.mockImplementation((updated: any) => Promise.resolve(updated));
@@ -205,7 +205,7 @@ describe('PhotoService', () => {
       expect(mockPhotoRepository.save).toHaveBeenCalled();
     });
 
-    it('ne sauvegarde pas si aucun share token n\'existe', async () => {
+    it("ne sauvegarde pas si aucun share token n'existe", async () => {
       const photo = { id: 'photo-uuid', userId: 'user-uuid', shareToken: null };
       mockPhotoRepository.findOne.mockResolvedValue(photo);
 
@@ -242,9 +242,7 @@ describe('PhotoService', () => {
 
   describe('listForUser', () => {
     it('retourne une liste paginée de photos', async () => {
-      const photos = [
-        { id: '1', s3Key: 'a.jpg', originalName: 'a.jpg', createdAt: new Date(), shareToken: null },
-      ];
+      const photos = [{ id: '1', s3Key: 'a.jpg', originalName: 'a.jpg', createdAt: new Date(), shareToken: null }];
       mockPhotoRepository.findAndCount.mockResolvedValue([photos, 1]);
 
       const result = await service.listForUser('user-uuid', { page: 1, limit: 20, order: 'desc' } as any);
@@ -256,7 +254,7 @@ describe('PhotoService', () => {
   });
 
   describe('getColorAtlas', () => {
-    it('renvoie la grille complète d\'atlas avec les counts par cellule (cache miss)', async () => {
+    it("renvoie la grille complète d'atlas avec les counts par cellule (cache miss)", async () => {
       mockRedisService.get.mockResolvedValue(null);
       mockPhotoRepository.countByColorCell.mockResolvedValue([
         { cellId: 'c-0-1', count: 3 },
@@ -276,7 +274,9 @@ describe('PhotoService', () => {
     });
 
     it('sert le cache sans requêter la base si présent', async () => {
-      const cached = [{ cellId: 'c-0-0', kind: 'chromatic', hueIndex: 0, lightIndex: 0, hex: '#000', label: 'x', count: 2 }];
+      const cached = [
+        { cellId: 'c-0-0', kind: 'chromatic', hueIndex: 0, lightIndex: 0, hex: '#000', label: 'x', count: 2 },
+      ];
       mockRedisService.get.mockResolvedValue(JSON.stringify(cached));
 
       const result = await service.getColorAtlas('user-uuid');
@@ -285,7 +285,7 @@ describe('PhotoService', () => {
       expect(mockPhotoRepository.countByColorCell).not.toHaveBeenCalled();
     });
 
-    it('filtré par album : ne lit pas le cache et passe l\'albumId au repository', async () => {
+    it("filtré par album : ne lit pas le cache et passe l'albumId au repository", async () => {
       mockPhotoRepository.countByColorCell.mockResolvedValue([{ cellId: 'c-4-1', count: 2 }]);
 
       await service.getColorAtlas('user-uuid', 'album-uuid');
@@ -299,15 +299,17 @@ describe('PhotoService', () => {
   });
 
   describe('listByCell', () => {
-    it('renvoie les photos d\'une cellule, paginées', async () => {
-      const photos = [
-        { id: '1', s3Key: 'a.jpg', originalName: 'a.jpg', createdAt: new Date(), shareToken: null },
-      ];
+    it("renvoie les photos d'une cellule, paginées", async () => {
+      const photos = [{ id: '1', s3Key: 'a.jpg', originalName: 'a.jpg', createdAt: new Date(), shareToken: null }];
       mockPhotoRepository.findByColorCellPage.mockResolvedValue([photos, 1]);
 
       const result = await service.listByCell('user-uuid', 'c-8-2', { page: 1, limit: 20, order: 'desc' } as any);
 
-      expect(mockPhotoRepository.findByColorCellPage).toHaveBeenCalledWith('user-uuid', 'c-8-2', { page: 1, limit: 20, order: 'desc' });
+      expect(mockPhotoRepository.findByColorCellPage).toHaveBeenCalledWith('user-uuid', 'c-8-2', {
+        page: 1,
+        limit: 20,
+        order: 'desc',
+      });
       expect(result.cellId).toBe('c-8-2');
       expect(result.items).toHaveLength(1);
       expect(result.items[0]).toHaveProperty('url');
@@ -323,14 +325,18 @@ describe('PhotoService', () => {
         1,
       ]);
 
-      const result = await service.listByCell('user-uuid', 'c-8-2', { page: 1, limit: 20, order: 'desc' } as any, 'album-uuid');
-
-      expect(mockAlbumPhotoRepository.findPhotosByCellPage).toHaveBeenCalledWith(
-        'album-uuid',
+      const result = await service.listByCell(
         'user-uuid',
         'c-8-2',
-        { page: 1, limit: 20, order: 'desc' },
+        { page: 1, limit: 20, order: 'desc' } as any,
+        'album-uuid',
       );
+
+      expect(mockAlbumPhotoRepository.findPhotosByCellPage).toHaveBeenCalledWith('album-uuid', 'user-uuid', 'c-8-2', {
+        page: 1,
+        limit: 20,
+        order: 'desc',
+      });
       // La requête directe sur photos n'est PAS utilisée dans ce cas.
       expect(mockPhotoRepository.findByColorCellPage).not.toHaveBeenCalled();
       expect(result.cellId).toBe('c-8-2');

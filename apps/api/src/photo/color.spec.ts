@@ -2,7 +2,7 @@ import { classifyHexToCell, getAtlasCell, isValidCellId } from '@repo/shared';
 import { extractPalette, cellsFromPalette } from './color';
 
 describe('color (API)', () => {
-  describe('classification en cellules d\'atlas (via @repo/shared)', () => {
+  describe("classification en cellules d'atlas (via @repo/shared)", () => {
     it('range les neutres dans des cellules « n-* »', () => {
       expect(classifyHexToCell('#000000')).toMatch(/^n-/);
       expect(classifyHexToCell('#808080')).toMatch(/^n-/);
@@ -23,7 +23,7 @@ describe('color (API)', () => {
       expect(classifyHexToCell('#ff0000')).not.toBe(classifyHexToCell('#1a5fd0'));
     });
 
-    it('produit toujours un cellId connu de l\'atlas', () => {
+    it("produit toujours un cellId connu de l'atlas", () => {
       for (const hex of ['#000000', '#ffffff', '#ff0000', '#1a5fd0', '#6b4423', '#f3c0d0']) {
         expect(isValidCellId(classifyHexToCell(hex))).toBe(true);
         expect(getAtlasCell(classifyHexToCell(hex))).toBeDefined();

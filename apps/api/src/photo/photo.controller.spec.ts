@@ -56,7 +56,7 @@ describe('PhotoController', () => {
   });
 
   describe('getQuota', () => {
-    it('retourne le quota de stockage de l\'utilisateur courant', async () => {
+    it("retourne le quota de stockage de l'utilisateur courant", async () => {
       const quota = { usedBytes: 1024, maxBytes: 500 * 1024 * 1024 };
       mockPhotoService.getQuotaForUser.mockResolvedValue(quota);
 
@@ -68,7 +68,7 @@ describe('PhotoController', () => {
   });
 
   describe('getStatus', () => {
-    it('retourne le statut d\'une photo', async () => {
+    it("retourne le statut d'une photo", async () => {
       const status = { id: 'photo-uuid', status: PhotoStatus.COMPLETED, url: 'https://cdn.example.com/photo.jpg' };
       mockPhotoService.getStatus.mockResolvedValue(status);
 
@@ -92,8 +92,18 @@ describe('PhotoController', () => {
   });
 
   describe('getColorAtlas', () => {
-    it('retourne l\'atlas couleur de l\'utilisateur', async () => {
-      const atlas = [{ cellId: 'c-0-1', kind: 'chromatic', hueIndex: 0, lightIndex: 1, hex: '#e0382b', label: 'rouge moyen', count: 3 }];
+    it("retourne l'atlas couleur de l'utilisateur", async () => {
+      const atlas = [
+        {
+          cellId: 'c-0-1',
+          kind: 'chromatic',
+          hueIndex: 0,
+          lightIndex: 1,
+          hex: '#e0382b',
+          label: 'rouge moyen',
+          count: 3,
+        },
+      ];
       mockPhotoService.getColorAtlas.mockResolvedValue(atlas);
 
       const result = await controller.getColorAtlas(currentUser);
@@ -102,7 +112,7 @@ describe('PhotoController', () => {
       expect(result).toEqual(atlas);
     });
 
-    it('transmet l\'albumId quand il est fourni', async () => {
+    it("transmet l'albumId quand il est fourni", async () => {
       mockPhotoService.getColorAtlas.mockResolvedValue([]);
 
       await controller.getColorAtlas(currentUser, 'album-uuid');
@@ -112,22 +122,48 @@ describe('PhotoController', () => {
   });
 
   describe('getColorCellPhotos', () => {
-    it('retourne les photos d\'une cellule valide', async () => {
+    it("retourne les photos d'une cellule valide", async () => {
       const response = { cellId: 'c-8-2', items: [], page: 1, limit: 20, total: 0, totalPages: 0 };
       mockPhotoService.listByCell.mockResolvedValue(response);
 
-      const result = await controller.getColorCellPhotos('c-8-2', { page: 1, limit: 20, order: 'desc' } as any, currentUser);
+      const result = await controller.getColorCellPhotos(
+        'c-8-2',
+        { page: 1, limit: 20, order: 'desc' } as any,
+        currentUser,
+      );
 
-      expect(mockPhotoService.listByCell).toHaveBeenCalledWith('user-uuid', 'c-8-2', { page: 1, limit: 20, order: 'desc' }, undefined);
+      expect(mockPhotoService.listByCell).toHaveBeenCalledWith(
+        'user-uuid',
+        'c-8-2',
+        { page: 1, limit: 20, order: 'desc' },
+        undefined,
+      );
       expect(result).toEqual(response);
     });
 
-    it('transmet l\'albumId à listByCell quand il est fourni', async () => {
-      mockPhotoService.listByCell.mockResolvedValue({ cellId: 'c-8-2', items: [], page: 1, limit: 20, total: 0, totalPages: 0 });
+    it("transmet l'albumId à listByCell quand il est fourni", async () => {
+      mockPhotoService.listByCell.mockResolvedValue({
+        cellId: 'c-8-2',
+        items: [],
+        page: 1,
+        limit: 20,
+        total: 0,
+        totalPages: 0,
+      });
 
-      await controller.getColorCellPhotos('c-8-2', { page: 1, limit: 20, order: 'desc' } as any, currentUser, 'album-uuid');
+      await controller.getColorCellPhotos(
+        'c-8-2',
+        { page: 1, limit: 20, order: 'desc' } as any,
+        currentUser,
+        'album-uuid',
+      );
 
-      expect(mockPhotoService.listByCell).toHaveBeenCalledWith('user-uuid', 'c-8-2', { page: 1, limit: 20, order: 'desc' }, 'album-uuid');
+      expect(mockPhotoService.listByCell).toHaveBeenCalledWith(
+        'user-uuid',
+        'c-8-2',
+        { page: 1, limit: 20, order: 'desc' },
+        'album-uuid',
+      );
     });
 
     it('lève une erreur 400 si le cellId est inconnu', () => {
@@ -183,7 +219,7 @@ describe('PhotoController', () => {
       expect(result).toHaveProperty('photoId');
     });
 
-    it('supprime l\'objet S3 et relance l\'erreur si registerUpload échoue', async () => {
+    it("supprime l'objet S3 et relance l'erreur si registerUpload échoue", async () => {
       mockRedisService.get.mockResolvedValue('user-uuid');
       mockAwsService.completeMultipartUpload.mockResolvedValue({});
       mockRedisService.del.mockResolvedValue(1);
@@ -198,7 +234,7 @@ describe('PhotoController', () => {
   });
 
   describe('assertUploadOwner — accès refusé', () => {
-    it('lève ApiException si l\'uploadId n\'appartient pas à l\'utilisateur', async () => {
+    it("lève ApiException si l'uploadId n'appartient pas à l'utilisateur", async () => {
       mockRedisService.get.mockResolvedValue('other-user-uuid');
 
       await expect(
@@ -253,14 +289,11 @@ describe('PhotoController', () => {
   });
 
   describe('listParts', () => {
-    it('retourne les parts d\'un upload en cours', async () => {
+    it("retourne les parts d'un upload en cours", async () => {
       mockRedisService.get.mockResolvedValue('user-uuid');
       mockAwsService.listParts.mockResolvedValue([{ PartNumber: 1, ETag: 'etag', Size: 1024 }]);
 
-      const result = await controller.listParts(
-        { key: 'raw/photo.jpg', uploadId: 'upload-123' } as any,
-        currentUser,
-      );
+      const result = await controller.listParts({ key: 'raw/photo.jpg', uploadId: 'upload-123' } as any, currentUser);
 
       expect(mockAwsService.listParts).toHaveBeenCalledWith('raw/photo.jpg', 'upload-123');
       expect(result).toHaveLength(1);
@@ -268,15 +301,12 @@ describe('PhotoController', () => {
   });
 
   describe('abortMultipart', () => {
-    it('annule l\'upload et supprime la clé Redis', async () => {
+    it("annule l'upload et supprime la clé Redis", async () => {
       mockRedisService.get.mockResolvedValue('user-uuid');
       mockAwsService.abortMultipartUpload.mockResolvedValue({});
       mockRedisService.del.mockResolvedValue(1);
 
-      await controller.abortMultipart(
-        { key: 'raw/photo.jpg', uploadId: 'upload-123' } as any,
-        currentUser,
-      );
+      await controller.abortMultipart({ key: 'raw/photo.jpg', uploadId: 'upload-123' } as any, currentUser);
 
       expect(mockAwsService.abortMultipartUpload).toHaveBeenCalledWith('raw/photo.jpg', 'upload-123');
       expect(mockRedisService.del).toHaveBeenCalled();
