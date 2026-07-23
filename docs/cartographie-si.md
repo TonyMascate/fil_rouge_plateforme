@@ -2,7 +2,7 @@
 
 **Projet :** Fil Rouge — Plateforme de gestion de photos et albums
 **Auteur :** Tony Mascate
-**Date :** Janvier 2025
+**Date :** Janvier 2026
 
 ---
 
@@ -28,12 +28,12 @@ l'analyse de risques et l'accessibilité.
 
 ### 1.1 Acteurs
 
-| Acteur             | Description                                                                                                              |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| **Visiteur**       | Internaute non authentifié : peut créer un compte, se connecter, ou consulter une ressource partagée via un lien public. |
-| **Utilisateur**    | Compte authentifié : gère ses photos, ses albums, ses partages et explore sa bibliothèque par la couleur.                |
-| **Membre d'album** | Utilisateur avec qui un album a été partagé (album collaboratif) : consulte l'album partagé.                             |
-| **Administrateur** | Rôle `ADMIN` : supervision (peut accéder/supprimer au-delà de la propriété stricte).                                     |
+| Acteur             | Description                                                                                                                                                                                                              |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Visiteur**       | Internaute non authentifié : peut créer un compte, se connecter, ou consulter une ressource partagée via un lien public.                                                                                                 |
+| **Utilisateur**    | Compte authentifié : gère ses photos, ses albums, ses partages et explore sa bibliothèque par la couleur.                                                                                                                |
+| **Membre d'album** | Utilisateur avec qui un album a été partagé (album collaboratif) : consulte l'album partagé.                                                                                                                             |
+| **Administrateur** | Rôle `ADMIN` : supervision de la plateforme via les tableaux de bord Grafana. Dans l'API, le rôle ne protège aujourd'hui qu'un endpoint de contrôle — il n'ouvre **aucun** accès élargi aux ressources des utilisateurs. |
 
 ### 1.2 Processus métier
 
@@ -41,25 +41,38 @@ l'analyse de risques et l'accessibilité.
 flowchart TD
     V["Visiteur"]
     U["Utilisateur"]
+    M["Membre d'album"]
     A["Administrateur"]
 
     subgraph Processus["Processus métier de Kroma"]
-        P1["Gérer son compte<br/>(inscription, connexion, suppression — RGPD)"]
+        P1["Gérer son compte<br/>(inscription, connexion, déconnexion)"]
         P2["Importer ses photos"]
         P3["Organiser sa bibliothèque<br/>(galerie, albums)"]
         P4["Explorer par la couleur<br/>(exploration chromatique)"]
         P5["Partager<br/>(lien public, album collaboratif)"]
-        P6["Superviser la plateforme"]
+        P6["Superviser la plateforme<br/>(tableaux de bord Grafana)"]
+        P7["Supprimer son compte<br/>(RGPD — droit à l'effacement)"]
     end
 
     V --> P1
+    V -->|"consulte un lien public"| P5
     U --> P1
     U --> P2
     U --> P3
     U --> P4
     U --> P5
+    M -->|"consulte l'album partagé"| P5
+    U -.-> P7
     A --> P6
+
+    classDef cible stroke-dasharray: 5 5
+    class P7 cible
 ```
+
+> **Lecture :** le trait plein correspond aux processus outillés dans la plateforme. Le trait
+> **pointillé** marque un processus **cible, non implémenté à ce jour** : la suppression de compte
+> (droit à l'effacement RGPD) n'expose aucune route côté API — seules les photos, albums et
+> adhésions d'album sont supprimables. C'est l'écart de conformité principal identifié sur le projet.
 
 Ces processus se déclinent en cas d'utilisation détaillés (diagrammes UML), disponibles dans
 [`use_cases/`](use_cases/) : connexion/inscription, upload, détail image, gestion d'album, ajout d'image
@@ -112,10 +125,12 @@ graph LR
   Browser["Navigateur"]
 
   subgraph Frontend["Frontend — Next.js 16"]
+    Proxy["Proxy (middleware)\nvérif. JWT + refresh"]
     AuthUI["UI Auth"]
     GalleryUI["UI Galerie"]
     AlbumUI["UI Albums"]
     ExploreUI["UI Exploration chromatique"]
+    ShareUI["UI Partage public"]
   end
 
   subgraph API["API — NestJS"]
@@ -123,6 +138,7 @@ graph LR
     UserMod["Users"]
     PhotoMod["Photos\n(upload, quota, couleurs)"]
     AlbumMod["Albums\n(+ membres)"]
+    ShareMod["Partage public\n(lien révocable)"]
     AwsMod["AWS\n(S3 + CloudFront)"]
     Worker["Worker BullMQ\n(Sharp : WebP + couleur)"]
   end
@@ -130,7 +146,7 @@ graph LR
   subgraph Data["Données"]
     PgBouncer["PgBouncer"]
     PostgreSQL[("PostgreSQL")]
-    Redis[("Redis")]
+    Redis[("Redis\nfile BullMQ · session upload · cache atlas")]
   end
 
   subgraph AWS["AWS"]
@@ -138,13 +154,17 @@ graph LR
     CloudFront["CloudFront"]
   end
 
-  Browser -->|"HTTPS"| Frontend
-  Browser -->|"CDN"| CloudFront
+  %% Le navigateur consomme l'API en direct (React Query, sous-domaine api.)
+  Browser -->|"HTTPS — pages"| Frontend
+  Browser -->|"REST"| AuthMod
+  Browser -->|"REST"| UserMod
+  Browser -->|"REST"| PhotoMod
+  Browser -->|"REST"| AlbumMod
+  Browser -->|"CDN — URL signée"| CloudFront
 
-  Frontend -->|"REST"| AuthMod
-  Frontend -->|"REST"| UserMod
-  Frontend -->|"REST"| PhotoMod
-  Frontend -->|"REST"| AlbumMod
+  %% Le serveur Next.js n'appelle l'API que sur ces deux flux
+  Proxy -->|"refresh de session"| AuthMod
+  ShareUI -->|"rendu serveur du lien"| ShareMod
 
   AuthMod -->|"cookie JWT"| Browser
   AuthMod -->|"inscription"| UserMod
@@ -152,14 +172,20 @@ graph LR
   UserMod --> PgBouncer
   PhotoMod --> PgBouncer
   PhotoMod --> AwsMod
-  PhotoMod -->|"enqueue"| Worker
-  AlbumMod --> PhotoMod
+  PhotoMod -->|"session upload · cache atlas"| Redis
+  PhotoMod -->|"enqueue"| Redis
   AlbumMod --> PgBouncer
+  AlbumMod --> AwsMod
+  ShareMod --> PgBouncer
+  ShareMod --> AwsMod
+
+  Redis -->|"dequeue"| Worker
   Worker --> AwsMod
+  Worker -->|"statut, palette, cellules"| PgBouncer
+  Worker -->|"invalide le cache atlas"| Redis
+
   AwsMod -->|"AWS SDK"| S3
   S3 --- CloudFront
-
-  API -->|"cache"| Redis
   PgBouncer --> PostgreSQL
 ```
 
@@ -167,40 +193,45 @@ graph LR
 
 ```mermaid
 graph LR
-  subgraph App["Application (VPS)"]
+  subgraph App["Conteneurs du VPS"]
     API["API NestJS"]
-    Frontend["Frontend Next.js"]
+    Autres["Autres conteneurs\n(frontend, postgres, redis, caddy,\nstack observabilité…)"]
   end
 
   subgraph Obs["Stack observabilité"]
-    Promtail["Promtail"]
+    Promtail["Promtail\n(socket Docker :\ntous les conteneurs)"]
+    cAdvisor["cAdvisor"]
     Prometheus["Prometheus"]
     Loki["Loki"]
     Grafana["Grafana"]
   end
 
-  API -->|"logs JSON"| Promtail
-  Frontend -->|"logs JSON"| Promtail
+  API -->|"logs JSON (Pino)"| Promtail
+  Autres -->|"logs stdout"| Promtail
+  App -.->|"CPU / RAM / réseau des conteneurs"| cAdvisor
   Promtail -->|"push"| Loki
-  Prometheus -->|"scrape métriques"| API
+  Prometheus -->|"scrape métriques applicatives"| API
+  Prometheus -->|"scrape métriques conteneurs"| cAdvisor
   Loki --> Grafana
   Prometheus --> Grafana
 ```
 
 ### Interactions clés
 
-| Flux                 | Source           | Destination     | Protocole        | Donnée                 |
-| -------------------- | ---------------- | --------------- | ---------------- | ---------------------- |
-| Requêtes utilisateur | Browser          | Next.js         | HTTPS :443       | Pages HTML / JSON      |
-| Appels API           | Next.js          | NestJS          | HTTP :4000       | JSON (REST)            |
-| Auth tokens          | NestJS           | Browser         | HTTP-only cookie | JWT                    |
-| Données métier       | NestJS           | PgBouncer       | TCP :5432        | SQL                    |
-| Connexions BDD       | PgBouncer        | PostgreSQL      | TCP :5432        | SQL (pooled)           |
-| Cache                | NestJS           | Redis           | TCP :6379        | Clé-valeur             |
-| Upload photos        | NestJS           | Amazon S3       | HTTPS (AWS SDK)  | Binaire                |
-| Distribution photos  | CloudFront (CDN) | Browser         | HTTPS            | Binaire (mis en cache) |
-| Logs                 | NestJS           | Promtail → Loki | HTTP             | JSON structuré         |
-| Métriques            | Prometheus       | NestJS          | HTTP :9464       | Prometheus format      |
+| Flux                     | Source           | Destination     | Protocole                        | Donnée                          |
+| ------------------------ | ---------------- | --------------- | -------------------------------- | ------------------------------- |
+| Requêtes utilisateur     | Browser          | Next.js         | HTTPS :443                       | Pages HTML / RSC                |
+| Appels API (client)      | Browser          | NestJS          | HTTPS :443 (sous-domaine `api.`) | JSON (REST) + cookies           |
+| Appels API (serveur)     | Next.js          | NestJS          | HTTP :3000 (réseau Swarm)        | Refresh de session, lien public |
+| Auth tokens              | NestJS           | Browser         | HTTP-only cookie                 | JWT                             |
+| Données métier           | NestJS           | PgBouncer       | TCP :5432                        | SQL                             |
+| Connexions BDD           | PgBouncer        | PostgreSQL      | TCP :5432                        | SQL (pooled)                    |
+| File de traitement image | NestJS ↔ Worker  | Redis           | TCP :6379                        | Jobs BullMQ                     |
+| Cache & sessions upload  | NestJS           | Redis           | TCP :6379                        | Clé-valeur (TTL)                |
+| Upload photos            | NestJS           | Amazon S3       | HTTPS (AWS SDK)                  | Binaire                         |
+| Distribution photos      | CloudFront (CDN) | Browser         | HTTPS                            | Binaire signé (mis en cache)    |
+| Logs                     | NestJS           | Promtail → Loki | HTTP                             | JSON structuré                  |
+| Métriques                | Prometheus       | NestJS          | HTTP :3000 `/metrics`            | Format Prometheus               |
 
 ---
 
@@ -228,11 +259,13 @@ graph TB
       Next2["«container»\nNext.js :3000"]
     end
 
+    Caddy["«container»\nCaddy :80/:443\n(reverse proxy + TLS)"]
+
     subgraph APISvc["Service : api (4 réplicas)"]
-      API1["«container»\nNestJS :4000"]
-      API2["«container»\nNestJS :4000"]
-      API3["«container»\nNestJS :4000"]
-      API4["«container»\nNestJS :4000"]
+      API1["«container»\nNestJS :3000"]
+      API2["«container»\nNestJS :3000"]
+      API3["«container»\nNestJS :3000"]
+      API4["«container»\nNestJS :3000"]
     end
 
     subgraph DBSvc["Service : données"]
@@ -244,24 +277,28 @@ graph TB
     subgraph ObsSvc["Service : observabilité"]
       Prometheus["«container»\nPrometheus :9090"]
       Loki["«container»\nLoki :3100"]
-      Grafana["«container»\nGrafana :3001"]
+      Grafana["«container»\nGrafana :3000"]
       Promtail["«container»\nPromtail"]
       cAdvisor["«container»\ncAdvisor :8080"]
     end
 
     PGVol[("Volume\ndb-data")]
     RedisVol[("Volume\nredis-data")]
+    DockerSock[/"socket Docker\n/var/run/docker.sock"/]
   end
 
   S3["«external»\nAmazon S3 + CloudFront"]
   Browser["«device»\nClient Browser"]
 
   DevMachine -->|"git push"| GHActions
-  GHCR -->|"SSH + docker stack deploy"| VPS
+  GHActions -->|"SSH : copie des configs\n+ docker stack deploy"| VPS
+  GHCR -.->|"docker pull\n(--with-registry-auth)"| VPS
 
-  Browser -->|"HTTPS :443"| FrontendSvc
+  Browser -->|"HTTPS :443"| Caddy
   Browser -->|"HTTPS (CDN)"| S3
-  FrontendSvc -->|"HTTP :4000"| APISvc
+  Caddy -->|"HTTP :3000"| FrontendSvc
+  Caddy -->|"HTTP :3000 (api.)"| APISvc
+  FrontendSvc -->|"HTTP :3000"| APISvc
   APISvc -->|"TCP :5432"| PgBouncer
   PgBouncer -->|"TCP :5432"| PostgreSQL
   APISvc -->|"TCP :6379"| Redis
@@ -271,10 +308,9 @@ graph TB
 
   %% AWS est un service externe, non déployé via CI/CD
 
-  Promtail -->|"scrape logs"| APISvc
-  Promtail -->|"scrape logs"| FrontendSvc
+  DockerSock -->|"logs de tous les conteneurs"| Promtail
   Promtail -->|"HTTP :3100"| Loki
-  Prometheus -->|"scrape :9464"| APISvc
+  Prometheus -->|"scrape :3000/metrics"| APISvc
   Prometheus -->|"scrape :8080"| cAdvisor
   Loki --> Grafana
   Prometheus --> Grafana
@@ -282,16 +318,18 @@ graph TB
 
 ### Ports et protocoles
 
-| Service            | Port exposé | Protocole                                   | Accessible depuis        |
-| ------------------ | ----------- | ------------------------------------------- | ------------------------ |
-| Next.js (frontend) | :3000       | HTTP (interne) / HTTPS :443 (reverse proxy) | Internet                 |
-| NestJS (API)       | :4000       | HTTP                                        | Réseau interne Swarm     |
-| PgBouncer          | :5432       | TCP                                         | Réseau interne Swarm     |
-| PostgreSQL         | :5432       | TCP                                         | PgBouncer uniquement     |
-| Redis              | :6379       | TCP                                         | Réseau interne Swarm     |
-| Prometheus         | :9090       | HTTP                                        | Réseau interne Swarm     |
-| Grafana            | :3001       | HTTP                                        | Administrateur (protégé) |
-| Loki               | :3100       | HTTP                                        | Promtail uniquement      |
+| Service            | Port exposé | Protocole | Accessible depuis                           |
+| ------------------ | ----------- | --------- | ------------------------------------------- |
+| Caddy              | :80 / :443  | HTTP(S)   | Internet (seuls ports publiés par le stack) |
+| Next.js (frontend) | :3000       | HTTP      | Caddy — `fil-rouge-plateforme.com`          |
+| NestJS (API)       | :3000       | HTTP      | Caddy — `api.fil-rouge-plateforme.com`      |
+| PgBouncer          | :5432       | TCP       | Réseau interne Swarm                        |
+| PostgreSQL         | :5432       | TCP       | PgBouncer uniquement                        |
+| Redis              | :6379       | TCP       | Réseau interne Swarm                        |
+| cAdvisor           | :8080       | HTTP      | Prometheus uniquement                       |
+| Prometheus         | :9090       | HTTP      | Caddy — `prom.fil-rouge-plateforme.com`     |
+| Grafana            | :3000       | HTTP      | Caddy — `monitor.fil-rouge-plateforme.com`  |
+| Loki               | :3100       | HTTP      | Promtail uniquement                         |
 
 ### Points critiques identifiés
 

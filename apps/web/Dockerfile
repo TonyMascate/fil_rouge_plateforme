@@ -58,7 +58,10 @@ WORKDIR /app
 
 COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/bun.lock ./bun.lock
-RUN bun install --frozen-lockfile --ignore-scripts
+# Pas de --frozen-lockfile : le lock lu ici est celui régénéré par turbo prune,
+# qui perd le bloc trustedDependencies du lock racine (écart systématique).
+# Les versions restent figées par le lock pruné.
+RUN bun install --ignore-scripts
 
 COPY --from=pruner /app/out/full/ .
 

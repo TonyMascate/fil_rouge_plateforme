@@ -138,6 +138,11 @@ jobs:
             docker login ghcr.io -u ${{ github.actor }} --password-stdin <<< "${{ secrets.TOKEN }}"
             docker pull ghcr.io/tonymascate/fil-rouge-api:latest
             docker stack deploy --with-registry-auth -c stack.yml mon-app
+
+            for service in prometheus loki promtail; do
+              docker service update --force "mon-app_$service"
+            done
+
             docker image prune -f
 
   migrate:

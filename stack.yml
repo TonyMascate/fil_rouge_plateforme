@@ -205,9 +205,11 @@ services:
     deploy:
       placement:
         constraints: [node.labels.type == manager]
-      labels:
-        caddy: prom.fil-rouge-plateforme.com
-        caddy.reverse_proxy: "mon-app_prometheus:9090"
+      # Volontairement sans label caddy : Prometheus n'a aucune authentification
+      # native, et l'exposer publiait /config, /targets et toute l'API de requêtes
+      # (cartographie de l'infra, IP internes, routes de l'API). Grafana l'interroge
+      # par le réseau interne (http://prometheus:9090, cf. provisioning/datasources),
+      # et l'onglet Explore de Grafana remplace l'interface de Prometheus.
       resources:
         limits:
           memory: 1G
