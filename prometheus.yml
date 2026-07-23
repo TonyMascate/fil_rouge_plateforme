@@ -19,4 +19,6 @@ scrape_configs:
       - names:
         - 'tasks.mon-app_api'
         type: 'A'
-        port: 3001
+        # Doit correspondre à PORT dans stack.yml (3000). 3001 est la valeur par
+        # défaut du dev (main.ts) et ne vaut pas en production.
+        port: 3000
