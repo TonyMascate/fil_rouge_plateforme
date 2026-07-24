@@ -1,7 +1,7 @@
 import { type Oklab, classifyToCell, oklabToOklch, oklabToRgb, rgbToHex, rgbToOklab } from '@repo/shared';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Extraction de palette — fonctions PURES côté API (dépendent de Buffer, donc
+// Extraction de palette - fonctions PURES côté API (dépendent de Buffer, donc
 // non partageables avec le navigateur). Toute la science des couleurs (OKLCH,
 // atlas, classement) vit dans `@repo/shared/color` ; ici on se contente de lire
 // les pixels et de faire tourner un k-means déterministe.
@@ -132,7 +132,7 @@ export function extractPalette(rawRgbBuffer: Buffer): PaletteEntry[] {
 }
 
 /**
- * Liste dédupliquée des cellules d'atlas couvertes par une palette — alimente la
+ * Liste dédupliquée des cellules d'atlas couvertes par une palette - alimente la
  * colonne indexée `color_cells` (une photo peut appartenir à plusieurs cellules).
  */
 export function cellsFromPalette(palette: PaletteEntry[]): string[] {

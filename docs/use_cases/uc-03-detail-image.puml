@@ -1,6 +1,6 @@
-@startuml UC-03 — Visionnage du détail d'une image
+@startuml UC-03 - Visionnage du détail d'une image
 
-title UC-03 — Visionnage du détail d'une image
+title UC-03 - Visionnage du détail d'une image
 
 left to right direction
 
@@ -25,7 +25,7 @@ skinparam note {
 
 actor "Utilisateur\nauthentifié" as User
 
-rectangle "Kroma — Détail image" {
+rectangle "Kroma - Détail image" {
 
   usecase "Voir le détail\nd'une image" as UC_ViewDetail
   usecase "Consulter le statut\nde traitement" as UC_GetStatus

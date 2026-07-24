@@ -1,6 +1,6 @@
-@startuml UC-08 — Partage d'une image via lien public
+@startuml UC-08 - Partage d'une image via lien public
 
-title UC-08 — Partage d'une image via lien public
+title UC-08 - Partage d'une image via lien public
 
 left to right direction
 
@@ -26,7 +26,7 @@ skinparam note {
 actor "Utilisateur\nauthentifié" as User
 actor "Visiteur\nanonyme" as Visitor
 
-rectangle "Kroma — Partage public" {
+rectangle "Kroma - Partage public" {
 
   usecase "Activer le partage\npublic d'une image" as UC_Share
   usecase "Désactiver le partage\npublic" as UC_Unshare

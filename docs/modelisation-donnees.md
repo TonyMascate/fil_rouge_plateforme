@@ -1,12 +1,12 @@
-# Modélisation des données — MCD / MLD / MPD / Diagramme de classes
+# Modélisation des données - MCD / MLD / MPD / Diagramme de classes
 
-**Projet :** Fil Rouge — Plateforme de gestion de photos et albums (Kroma)
+**Projet :** Fil Rouge - Plateforme de gestion de photos et albums (Kroma)
 **Auteur :** Tony Mascate
-**Date :** Juin 2026 _(mise à jour — modèle aligné sur l'implémentation livrée)_
+**Date :** Juin 2026 _(mise à jour - modèle aligné sur l'implémentation livrée)_
 
 ---
 
-## Avertissement — évolution du modèle
+## Avertissement - évolution du modèle
 
 Ce document remplace la première modélisation produite en phase de conception. Le modèle a évolué
 pendant le développement ; les diagrammes ci-dessous reflètent **le schéma réellement implémenté**
@@ -16,18 +16,18 @@ code. Les principaux écarts avec la conception initiale sont :
 | Conception initiale                                   | Implémentation livrée                                                                                                                                                                                                     |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Table `LIEN` (token + expiration) rattachée à l'album | Pas de table dédiée. Le partage public est un **`share_token`** porté par la photo ; l'expiration n'est pas implémentée (« could have »)                                                                                  |
-| `ALBUM(title, shared:boolean)`                        | `albums(name, …)` — le partage collaboratif passe par la table **`album_members`**                                                                                                                                        |
+| `ALBUM(title, shared:boolean)`                        | `albums(name, …)` - le partage collaboratif passe par la table **`album_members`**                                                                                                                                        |
 | `PHOTO(title, type_mime)`                             | `photos(s3_key, original_name, status, file_size_bytes, dominant_color, **palette**, **color_cells**, share_token)`                                                                                                       |
 | Pas de rôle, pas de statut                            | Ajout du **`role`** (RBAC), du **`status`** de traitement et des colonnes couleur (**`palette`** + **`color_cells`** indexée GIN) pour l'**exploration chromatique** ; `dominant_color` conservée pour rétrocompatibilité |
 | Pas de gestion de session                             | Ajout de la table **`refresh_token`** (révocation des jetons)                                                                                                                                                             |
 
 ---
 
-## 1. MCD — Modèle Conceptuel de Données
+## 1. MCD - Modèle Conceptuel de Données
 
 > **Diagramme source (PlantUML) : [`mcd.puml`](mcd.puml)**
 
-## 2. MLD — Modèle Logique de Données
+## 2. MLD - Modèle Logique de Données
 
 > Passage au relationnel : les associations (1,n) deviennent des clés étrangères ; les associations
 > (n,n) deviennent des tables de jointure. Clés primaires soulignées `__…__`, clés étrangères `#…`.
@@ -55,18 +55,18 @@ refresh_token (__id__, tokenHash, isRevoked, expiresAt, #userId, createdAt)
 
 ---
 
-## 3. MPD — Modèle Physique de Données (PostgreSQL)
+## 3. MPD - Modèle Physique de Données (PostgreSQL)
 
 ![alt text](MPD_KROMA.png)
 
 **Choix physiques :**
 
 - **Identifiants UUID** générés en base : non devinables, utiles pour les accès par lien.
-- **Types ENUM PostgreSQL** pour `role` (valeurs stockées `role_user` / `role_admin`) et `status` (`PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`) — intégrité au niveau du SGBD.
+- **Types ENUM PostgreSQL** pour `role` (valeurs stockées `role_user` / `role_admin`) et `status` (`PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`) - intégrité au niveau du SGBD.
 - **Nommage des colonnes non uniforme** (reflété tel quel) : `photos`, `albums`, `album_photos`, `album_members` en `snake_case` ; `users` et `refresh_token` en `camelCase` (`firstName`, `lastName`, `createdAt`, `tokenHash`, `isRevoked`, `expiresAt`, `userId`), leurs entités ne fixant pas de `name:` explicite.
 - **Index** sur `photos.file_size_bytes` (calcul du quota), `albums.user_id` et `album_members.user_id` (listes par utilisateur).
 - **Index GIN** sur `photos.color_cells` (colonne tableau) : adapté à la recherche d'appartenance d'une valeur dans un tableau, il prépare la montée en charge de l'exploration chromatique (« quelles photos contiennent la cellule X ? »).
-- **Colonnes couleur** (`palette` en `jsonb`, `color_cells` en `text[]`) : une photo porte une palette de 3–5 couleurs pondérées et appartient donc à **plusieurs** cellules d'atlas — d'où le tableau plutôt qu'une simple colonne scalaire.
+- **Colonnes couleur** (`palette` en `jsonb`, `color_cells` en `text[]`) : une photo porte une palette de 3–5 couleurs pondérées et appartient donc à **plusieurs** cellules d'atlas - d'où le tableau plutôt qu'une simple colonne scalaire.
 - Les tables de liaison `album_photos` / `album_members` portent leur date (`added_at` / `created_at`) pour l'historique et le tri.
 
 ---
@@ -167,4 +167,4 @@ classDiagram
 
 ---
 
-_Document rédigé dans le cadre du Fil Rouge — certification Expert en Informatique et Systèmes d'Information, 3W Academy._
+_Document rédigé dans le cadre du Fil Rouge - certification Expert en Informatique et Systèmes d'Information, 3W Academy._

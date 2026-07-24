@@ -1,6 +1,6 @@
-@startuml UC-01 — Connexion et Inscription sécurisée
+@startuml UC-01 - Connexion et Inscription sécurisée
 
-title UC-01 — Connexion et Inscription sécurisée (JWT + Refresh Token)
+title UC-01 - Connexion et Inscription sécurisée (JWT + Refresh Token)
 
 left to right direction
 
@@ -26,7 +26,7 @@ skinparam note {
 actor "Visiteur" as Visiteur
 actor "Utilisateur\nauthentifié" as User
 
-rectangle "Kroma — Authentification" {
+rectangle "Kroma - Authentification" {
 
   usecase "S'inscrire" as UC_Register
   usecase "Se connecter" as UC_Login

@@ -1,6 +1,6 @@
-# WBS & Planning (Gantt) — Plateforme de gestion de photos
+# WBS & Planning (Gantt) - Plateforme de gestion de photos
 
-**Projet :** Fil Rouge — Plateforme de gestion de photos et albums (« Kroma »)
+**Projet :** Fil Rouge - Plateforme de gestion de photos et albums (« Kroma »)
 **Auteur :** Tony Mascate
 **Date :** Juin 2026
 **Version :** 1.0
@@ -13,18 +13,18 @@
 
 ---
 
-## 1. WBS — Organigramme des tâches
+## 1. WBS - Organigramme des tâches
 
 ```
 Projet Kroma
 │
-├── LOT 1 — Cadrage & avant-projet
+├── LOT 1 - Cadrage & avant-projet
 │   ├── 1.1 Initialisation du dépôt (monorepo, conventions)
 │   ├── 1.2 Étude d'opportunité (Go/No-Go)
 │   ├── 1.3 Note de cadrage
-│   └── 1.4 Killer feature — propositions & matrice de décision
+│   └── 1.4 Killer feature - propositions & matrice de décision
 │
-├── LOT 2 — Conception & documentation
+├── LOT 2 - Conception & documentation
 │   ├── 2.1 Personas
 │   ├── 2.2 Benchmark concurrentiel
 │   ├── 2.3 User stories
@@ -37,7 +37,7 @@ Projet Kroma
 │   ├── 2.10 Spécifications API (Swagger)
 │   └── 2.11 Analyse des risques (EBIOS)
 │
-├── LOT 3 — Socle technique & infrastructure (DevOps)
+├── LOT 3 - Socle technique & infrastructure (DevOps)
 │   ├── 3.1 Monorepo Turborepo + Bun
 │   ├── 3.2 Infrastructure Docker Swarm
 │   ├── 3.3 CI/CD GitHub Actions (build / deploy)
@@ -47,7 +47,7 @@ Projet Kroma
 │   ├── 3.7 Déploiement de la stack via CI/CD (vs VPS manuel)
 │   └── 3.8 Backup & restore PostgreSQL vers S3
 │
-├── LOT 4 — Authentification & sécurité
+├── LOT 4 - Authentification & sécurité
 │   ├── 4.1 Auth JWT + Argon2 (API)
 │   ├── 4.2 Auth front + middleware
 │   ├── 4.3 Rate limiting (NestJS Throttler)
@@ -56,7 +56,7 @@ Projet Kroma
 │   ├── 4.6 URLs signées CloudFront
 │   └── 4.7 Protection CSRF
 │
-├── LOT 5 — Fonctionnalités cœur
+├── LOT 5 - Fonctionnalités cœur
 │   ├── 5.1 Upload des images (API + front)
 │   ├── 5.2 Galerie chronologique
 │   ├── 5.3 Détail & suppression d'une photo
@@ -64,26 +64,26 @@ Projet Kroma
 │   ├── 5.5 Gestion des albums
 │   └── 5.6 Partage d'album (entre utilisateurs)
 │
-├── LOT 6 — Killer feature : Exploration Chromatique
+├── LOT 6 - Killer feature : Exploration Chromatique
 │   ├── 6.1 R&D extraction couleur (POC OKLCH ; piste gRPC étudiée puis écartée)
 │   ├── 6.2 Extraction de palette OKLCH à l'upload
 │   ├── 6.3 Atlas / nuancier fixe (53 cellules)
 │   ├── 6.4 Page d'exploration (front + back)
 │   └── 6.5 Rework v2 (atlas OKLCH, intégration thème app)
 │
-├── LOT 7 — Pages vitrine (Frontend)
+├── LOT 7 - Pages vitrine (Frontend)
 │   ├── 7.1 Landing page
 │   ├── 7.2 Page des fonctionnalités
 │   ├── 7.3 Page de tarification
 │   ├── 7.4 Pages login / création de compte
 │   └── 7.5 Responsive (audit & corrections)
 │
-├── LOT 8 — Observabilité
+├── LOT 8 - Observabilité
 │   ├── 8.1 Métriques Prometheus (mises en place avec Docker Swarm / réplicas)
 │   ├── 8.2 Logs Loki + pino
 │   └── 8.3 Dashboards Grafana
 │
-├── LOT 9 — Qualité & recette
+├── LOT 9 - Qualité & recette
 │   ├── 9.1 Tests unitaires (API)
 │   ├── 9.2 Tests d'intégration (testcontainers)
 │   ├── 9.3 Tests E2E (Supertest API / Playwright web)
@@ -91,7 +91,7 @@ Projet Kroma
 │   ├── 9.5 SonarQube + linter (quality gate bloquant en CI)
 │   └── 9.6 Recette manuelle & reprise d'anomalies
 │
-└── LOT 10 — Pilotage & livraison
+└── LOT 10 - Pilotage & livraison
     ├── 10.1 Documents de pilotage (WBS, Gantt, RACI, budget)
     ├── 10.2 Dossier professionnel RNCP
     └── 10.3 Préparation soutenance (COPIL simulé)
@@ -146,11 +146,11 @@ attendu.
 
 ## 3. Planning (diagramme de Gantt)
 
-### 3.1 Vue macro — une barre par lot
+### 3.1 Vue macro - une barre par lot
 
 ```mermaid
 gantt
-    title Vue macro Kroma — 1 barre par lot (janvier à juin 2026)
+    title Vue macro Kroma - 1 barre par lot (janvier à juin 2026)
     dateFormat  YYYY-MM-DD
     axisFormat  %d/%m
 
@@ -171,7 +171,7 @@ gantt
 
 - Chaque barre est l'**enveloppe** du lot : du début de sa première tâche à la fin
   de sa dernière tâche. Elle ne représente **pas** un travail continu sur toute la
-  période — le détail, avec les interruptions réelles, figure en §3.2.
+  période - le détail, avec les interruptions réelles, figure en §3.2.
 - Les lots 2 et 3 sont les plus étirés parce qu'ils portent des activités
   volontairement **continues ou tardives** : veille technologique et ADR menés sur
   toute la durée du projet et diagrammes UML / EBIOS en fin de parcours (lot 2) ;
@@ -181,20 +181,20 @@ gantt
 - Le **parallélisme** est lisible d'un coup d'œil : les lots 2, 7 et 8 se déroulent
   en marge des lots cœur sans jamais les bloquer.
 
-### 3.2 Vue détaillée — tâches par lot
+### 3.2 Vue détaillée - tâches par lot
 
 ```mermaid
 gantt
-    title Planning Kroma — janvier à juin 2026 (sections = lots du WBS)
+    title Planning Kroma - janvier à juin 2026 (sections = lots du WBS)
     dateFormat  YYYY-MM-DD
     axisFormat  %d/%m
 
-    section LOT 1 — Cadrage
+    section LOT 1 - Cadrage
     Initialisation du dépôt               :crit, l11, 2026-01-06, 4d
     Étude d'opportunité & note de cadrage :l12, 2026-01-08, 8d
-    Killer feature — matrice de décision  :l14, 2026-01-08, 8d
+    Killer feature - matrice de décision  :l14, 2026-01-08, 8d
 
-    section LOT 2 — Conception & doc
+    section LOT 2 - Conception & doc
     Personas / Benchmark / User stories   :l21, 2026-01-15, 10d
     Modélisation données / Cartographie SI :l26, 2026-01-22, 8d
     Maquettes & architecture des pages    :l29, 2026-01-29, 10d
@@ -202,7 +202,7 @@ gantt
     Veille techno + ADR (continu)         :l24, 2026-01-19, 95d
     Diagrammes UML + analyse EBIOS        :l28, 2026-06-08, 6d
 
-    section LOT 3 — Socle technique & infra
+    section LOT 3 - Socle technique & infra
     CI/CD GitHub Actions                  :crit, l33, 2026-01-06, 12d
     Monorepo Turborepo + Bun              :crit, l31, 2026-01-17, 12d
     Infrastructure Docker Swarm           :crit, l32, 2026-01-21, 16d
@@ -210,37 +210,37 @@ gantt
     Ansible + Docker Secrets              :l35, 2026-06-01, 5d
     Backup & restore PostgreSQL vers S3   :l38, 2026-06-04, 4d
 
-    section LOT 4 — Authentification & sécurité
+    section LOT 4 - Authentification & sécurité
     Auth JWT + Argon2 (API)               :crit, l41, 2026-02-22, 12d
     Auth front + throttle + RBAC          :crit, l42, 2026-03-06, 6d
     URLs signées + sécurité upload        :l46, 2026-05-26, 5d
 
-    section LOT 5 — Fonctionnalités cœur
+    section LOT 5 - Fonctionnalités cœur
     Upload des images                     :crit, l51, 2026-04-13, 12d
     Galerie / détail / suppression        :crit, l52, 2026-05-18, 11d
     Partage de photo (lien public)        :l54, 2026-05-26, 6d
     Gestion des albums + partage          :crit, l55, 2026-05-29, 8d
 
-    section LOT 6 — Killer feature
+    section LOT 6 - Killer feature
     POC + R&D extraction OKLCH            :l61, 2026-05-12, 8d
     Extraction palette + atlas            :crit, l62, 2026-05-19, 10d
     Page exploration + rework v2          :crit, l65, 2026-06-15, 8d
 
-    section LOT 7 — Pages vitrine
+    section LOT 7 - Pages vitrine
     Landing / fonctionnalités / tarifs    :l71, 2026-05-18, 8d
     Login / création de compte            :l74, 2026-05-26, 5d
     Responsive (audit & corrections)      :l75, 2026-06-18, 6d
 
-    section LOT 8 — Observabilité
+    section LOT 8 - Observabilité
     Métriques Prometheus (avec l'infra)   :l81, 2026-01-28, 8d
     Logs Loki + Grafana + dashboards      :l82, 2026-03-18, 6d
 
-    section LOT 9 — Qualité & recette
+    section LOT 9 - Qualité & recette
     Tests (unit / intégration / E2E)      :crit, l91, 2026-06-09, 8d
     Recette manuelle & anomalies          :l96, 2026-06-18, 6d
     SonarQube quality gate (CI)           :crit, l95, 2026-06-22, 3d
 
-    section LOT 10 — Pilotage & livraison
+    section LOT 10 - Pilotage & livraison
     Dossier RNCP & prép. soutenance       :l102, 2026-06-15, 10d
 ```
 
@@ -258,7 +258,7 @@ Justification : rien ne se déploie sans la chaîne **CI/CD + infrastructure Swa
 aucune fonctionnalité applicative n'est accessible sans l'**authentification**. La
 killer feature dépend directement du **téléversement** : c'est à l'ingestion que
 chaque photo est indexée (palette OKLCH + cellules d'atlas), l'album n'étant qu'un
-**filtre optionnel** — par défaut, l'exploration porte sur toute la bibliothèque. La
+**filtre optionnel** - par défaut, l'exploration porte sur toute la bibliothèque. La
 galerie et les albums ne sont donc pas des prérequis de la killer feature, mais font
 partie du cœur applicatif que la **campagne de tests finale** doit couvrir, avant la
 passerelle qualité bloquante préalable à toute livraison sur `main`.
@@ -269,4 +269,4 @@ cœur sans jamais bloquer la chaîne principale.
 
 ---
 
-_Document rédigé dans le cadre du Fil Rouge — certification Expert en Informatique et Systèmes d'Information, 3W Academy._
+_Document rédigé dans le cadre du Fil Rouge - certification Expert en Informatique et Systèmes d'Information, 3W Academy._

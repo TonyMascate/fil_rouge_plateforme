@@ -1,4 +1,4 @@
-# Pipeline d'upload photos — Note de soutenance
+# Pipeline d'upload photos - Note de soutenance
 
 ## 1. Contexte et besoin
 
@@ -11,7 +11,7 @@ La plateforme permet aux utilisateurs d'uploader des photos. Le besoin impose pl
 
 ## 2. Architecture retenue
 
-### 2.1 Diagramme 1 — Phase upload (synchrone, côté utilisateur)
+### 2.1 Diagramme 1 - Phase upload (synchrone, côté utilisateur)
 
 ```mermaid
 sequenceDiagram
@@ -45,7 +45,7 @@ sequenceDiagram
     API-->>B: { photoId, status: PENDING }
 ```
 
-### 2.2 Diagramme 2 — Phase traitement (asynchrone, côté worker)
+### 2.2 Diagramme 2 - Phase traitement (asynchrone, côté worker)
 
 Faire le traitement sur le serveur pendant l'upload ( à vérifier )
 
@@ -76,7 +76,7 @@ sequenceDiagram
     Note over W: Si échec : retry 3x (backoff exponentiel 2s/4s/8s)<br/>puis @OnWorkerEvent('failed') → status = FAILED
 ```
 
-### 2.3 Diagramme 3 — Affichage (polling + CDN)
+### 2.3 Diagramme 3 - Affichage (polling + CDN)
 
 ```mermaid
 sequenceDiagram
@@ -113,7 +113,7 @@ Le navigateur upload directement vers S3 via des URLs présignées fournies par 
 - Le « producteur » est `PhotoService.registerUpload` → il appelle `queue.add(...)` qui pousse dans Redis
 - Le « consommateur » est `PhotoProcessor` (décoré `@Processor('image-queue')`) → il boucle en permanence sur Redis pour récupérer les jobs
 
-Les deux tournent dans le **même binaire Node** pour l'instant. Pour scaler, on pourrait déporter le `PhotoProcessor` dans un second process/machine sans changer une ligne de code — c'est tout l'intérêt de passer par Redis comme bus.
+Les deux tournent dans le **même binaire Node** pour l'instant. Pour scaler, on pourrait déporter le `PhotoProcessor` dans un second process/machine sans changer une ligne de code - c'est tout l'intérêt de passer par Redis comme bus.
 
 ## 3. Les presigned URLs expliquées en détail
 
@@ -234,7 +234,7 @@ Le monorepo Turbo expose un package `@repo/shared` contenant les schémas Zod. L
 
 ## 5. Décryptage du code
 
-### 5.1 Wrapper S3 — `AwsService`
+### 5.1 Wrapper S3 - `AwsService`
 
 Fichier : [apps/api/src/aws/aws.service.ts](../../apps/api/src/aws/aws.service.ts)
 
@@ -254,25 +254,25 @@ Le service encapsule toutes les interactions S3 pour que le reste du code n'ait 
 
 **Point clé :** le `S3Client` est instancié une seule fois via `ConfigService.getOrThrow` (crash au boot si une variable manque, pas en runtime).
 
-### 5.2 Endpoints REST — `PhotoController`
+### 5.2 Endpoints REST - `PhotoController`
 
 Fichier : [apps/api/src/photo/photo.controller.ts](../../apps/api/src/photo/photo.controller.ts)
 
 Tous les endpoints sont protégés par `@UseGuards(JwtAuthGuard)` au niveau du controller, et le `CsrfGuard` + `ThrottlerGuard` sont globaux via `APP_GUARD`.
 
-| Méthode | Route | Rôle |
-|---|---|---|
-| POST | `/photos/uploads/multipart` | Initialise l'upload, retourne `{ uploadId, key }` |
-| POST | `/photos/uploads/multipart/sign-part` | Signe une URL PUT pour une part |
-| POST | `/photos/uploads/multipart/list-parts` | Liste les parts déjà uploadées (reprise) |
-| POST | `/photos/uploads/multipart/complete` | Assemble les parts côté S3, insère la photo en DB et enqueue le job |
-| POST | `/photos/uploads/multipart/abort` | Annule un upload en cours |
-| GET | `/photos/:id/status` | Retourne le status actuel (polling) |
-| GET | `/photos` | Liste paginée des photos `COMPLETED` du user |
+| Méthode | Route                                  | Rôle                                                                |
+| ------- | -------------------------------------- | ------------------------------------------------------------------- |
+| POST    | `/photos/uploads/multipart`            | Initialise l'upload, retourne `{ uploadId, key }`                   |
+| POST    | `/photos/uploads/multipart/sign-part`  | Signe une URL PUT pour une part                                     |
+| POST    | `/photos/uploads/multipart/list-parts` | Liste les parts déjà uploadées (reprise)                            |
+| POST    | `/photos/uploads/multipart/complete`   | Assemble les parts côté S3, insère la photo en DB et enqueue le job |
+| POST    | `/photos/uploads/multipart/abort`      | Annule un upload en cours                                           |
+| GET     | `/photos/:id/status`                   | Retourne le status actuel (polling)                                 |
+| GET     | `/photos`                              | Liste paginée des photos `COMPLETED` du user                        |
 
 **Détail important :** le user courant est extrait via le décorateur custom `@CurrentUser()` qui retourne `{ userId, role, email }` depuis le payload JWT validé par passport-jwt. Le token JWT est lu dans le cookie HttpOnly `access_token` par un `ExtractJwt.fromExtractors` custom.
 
-### 5.3 Logique métier — `PhotoService`
+### 5.3 Logique métier - `PhotoService`
 
 Fichier : [apps/api/src/photo/photo.service.ts](../../apps/api/src/photo/photo.service.ts)
 
@@ -292,9 +292,9 @@ Fichier : [apps/api/src/photo/photo.service.ts](../../apps/api/src/photo/photo.s
 **`listForUser(userId, query)`** :
 
 1. `findAndCount({ where: { userId, status: COMPLETED }, skip: (page-1)*limit, take: limit })` → pagination côté DB (pas en mémoire).
-2. Retourne `{ items, page, limit, total, totalPages }` — chaque `item.url` est une URL CloudFront **signée** générée à la volée depuis la `s3_key`.
+2. Retourne `{ items, page, limit, total, totalPages }` - chaque `item.url` est une URL CloudFront **signée** générée à la volée depuis la `s3_key`.
 
-### 5.4 Worker d'optimisation — `PhotoProcessor`
+### 5.4 Worker d'optimisation - `PhotoProcessor`
 
 Fichier : [apps/api/src/photo/photo.processor.ts](../../apps/api/src/photo/photo.processor.ts)
 
@@ -307,17 +307,17 @@ C'est un `@Processor('image-queue')` qui extend `WorkerHost` de `@nestjs/bullmq`
 await this.photoRepo.update(photoId, { status: PROCESSING });
 
 // 2. Calcule la clé de sortie : raw/xxx.jpg → optimized/xxx.webp
-const optimizedKey = rawKey.replace('raw/', 'optimized/').replace(/\.[^/.]+$/, '.webp');
+const optimizedKey = rawKey.replace("raw/", "optimized/").replace(/\.[^/.]+$/, ".webp");
 
-// 3. Pipeline en streaming — pas de RAM pour l'image entière
-const inputStream = await this.aws.downloadStream(rawKey);      // S3 → Node
-const transform = sharp()                                        // resize + encode
-  .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
+// 3. Pipeline en streaming - pas de RAM pour l'image entière
+const inputStream = await this.aws.downloadStream(rawKey); // S3 → Node
+const transform = sharp() // resize + encode
+  .resize(1920, 1920, { fit: "inside", withoutEnlargement: true })
   .webp({ quality: 82 });
 const passThrough = new PassThrough();
 
-const uploadPromise = this.aws.uploadStream(optimizedKey, passThrough, 'image/webp');
-inputStream.pipe(transform).pipe(passThrough);                   // branche les 3
+const uploadPromise = this.aws.uploadStream(optimizedKey, passThrough, "image/webp");
+inputStream.pipe(transform).pipe(passThrough); // branche les 3
 await uploadPromise;
 
 // 4. Supprime le raw
@@ -334,39 +334,40 @@ await this.photoRepo.update(photoId, {
 
 **Gestion d'erreur** via `@OnWorkerEvent('failed')` : log l'erreur avec contexte (photoId, jobId), update la photo en `FAILED`. BullMQ aura déjà fait 3 tentatives avec backoff avant d'arriver ici.
 
-### 5.5 Entité TypeORM — `Photo`
+### 5.5 Entité TypeORM - `Photo`
 
 Fichier : [apps/api/src/photo/entities/photo.entity.ts](../../apps/api/src/photo/entities/photo.entity.ts)
 
 ```ts
-@Entity('photos')
+@Entity("photos")
 export class Photo {
-  @PrimaryGeneratedColumn('uuid') id: string;
-  @Column({ name: 's3_key' }) s3Key: string;
-  @Column({ name: 'original_name' }) originalName: string;
-  @Column({ type: 'enum', enum: PhotoStatus, default: PENDING }) status: PhotoStatus;
-  @Index() @Column({ name: 'file_size_bytes', type: 'int', nullable: true }) fileSizeBytes: number | null;
-  @Column({ name: 'user_id' }) userId: string;
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_id' }) user: User;
-  @Column({ name: 'dominant_color', type: 'varchar', length: 7, nullable: true }) dominantColor: string | null;
-  @Column({ name: 'palette', type: 'jsonb', nullable: true }) palette: { hex: string; cellId: string; weight: number }[] | null;
-  @Column({ name: 'color_cells', type: 'text', array: true, nullable: true }) colorCells: string[] | null;
-  @Column({ name: 'share_token', type: 'varchar', length: 32, nullable: true, unique: true }) shareToken: string | null;
-  @CreateDateColumn({ name: 'created_at' }) createdAt: Date;
-  @UpdateDateColumn({ name: 'updated_at' }) updatedAt: Date;
+  @PrimaryGeneratedColumn("uuid") id: string;
+  @Column({ name: "s3_key" }) s3Key: string;
+  @Column({ name: "original_name" }) originalName: string;
+  @Column({ type: "enum", enum: PhotoStatus, default: PENDING }) status: PhotoStatus;
+  @Index() @Column({ name: "file_size_bytes", type: "int", nullable: true }) fileSizeBytes: number | null;
+  @Column({ name: "user_id" }) userId: string;
+  @ManyToOne(() => User, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "user_id" })
+  user: User;
+  @Column({ name: "dominant_color", type: "varchar", length: 7, nullable: true }) dominantColor: string | null;
+  @Column({ name: "palette", type: "jsonb", nullable: true }) palette: { hex: string; cellId: string; weight: number }[] | null;
+  @Column({ name: "color_cells", type: "text", array: true, nullable: true }) colorCells: string[] | null;
+  @Column({ name: "share_token", type: "varchar", length: 32, nullable: true, unique: true }) shareToken: string | null;
+  @CreateDateColumn({ name: "created_at" }) createdAt: Date;
+  @UpdateDateColumn({ name: "updated_at" }) updatedAt: Date;
 }
 ```
 
 **Choix :**
 
 - **Index sur `file_size_bytes`** : le calcul du quota agrège cette colonne (`storageUsedByUser`) ; l'index évite un full scan. (`user_id` est aussi filtré systématiquement.)
-- **`onDelete: 'CASCADE'`** : si on supprime un user, ses photos sont supprimées automatiquement (la suppression réelle des fichiers S3 demanderait un hook applicatif — en roadmap).
+- **`onDelete: 'CASCADE'`** : si on supprime un user, ses photos sont supprimées automatiquement (la suppression réelle des fichiers S3 demanderait un hook applicatif - en roadmap).
 - **Colonnes couleur** (`dominant_color`, `palette` en `jsonb`, `color_cells` en `text[]` indexée GIN) : renseignées par le worker à l'ingestion, elles alimentent l'**exploration chromatique** (cf. [killer-feature-exploration-chromatique.md](./killer-feature-exploration-chromatique.md)).
 - **`share_token`** (unique, nullable) : jeton de partage public révocable.
 - **Plus de colonne `cloudfront_url`** : l'URL n'est plus stockée, elle est signée à la volée depuis `s3_key` à chaque lecture (cf. [urls-cloudfront-signees.md](./urls-cloudfront-signees.md)). Tant que `status != COMPLETED`, `url = null` côté API.
 
-### 5.6 Contrat partagé front/back — `@repo/shared`
+### 5.6 Contrat partagé front/back - `@repo/shared`
 
 Fichier : [packages/shared/src/schemas/photos.schema.ts](../../packages/shared/src/schemas/photos.schema.ts)
 
@@ -394,7 +395,7 @@ Côté front : `import type { CreateMultipartResponseDto } from "@repo/shared"` 
 
 **Un bug dans le schéma se détecte au build des deux côtés**, pas à l'exécution.
 
-### 5.7 Intégration Uppy côté front — `PhotoUploader`
+### 5.7 Intégration Uppy côté front - `PhotoUploader`
 
 Fichier : [apps/web/components/PhotoUploader.tsx](../../apps/web/components/PhotoUploader.tsx)
 
@@ -407,16 +408,24 @@ new UppyCore({
   },
   autoProceed: true,
 }).use(AwsS3, {
-  limit: 4,                    // 4 parts en parallèle
-  shouldUseMultipart: true,    // force multipart même pour les petits fichiers
-  createMultipartUpload(file)  { /* POST /photos/uploads/multipart */ },
-  signPart(file, opts)         { /* POST /photos/uploads/multipart/sign-part */ },
-  listParts(file, opts)        { /* POST /photos/uploads/multipart/list-parts */ },
+  limit: 4, // 4 parts en parallèle
+  shouldUseMultipart: true, // force multipart même pour les petits fichiers
+  createMultipartUpload(file) {
+    /* POST /photos/uploads/multipart */
+  },
+  signPart(file, opts) {
+    /* POST /photos/uploads/multipart/sign-part */
+  },
+  listParts(file, opts) {
+    /* POST /photos/uploads/multipart/list-parts */
+  },
   completeMultipartUpload(file, opts) {
     /* POST /photos/uploads/multipart/complete */
     /* puis POST /photos/upload-complete pour enqueue le job */
   },
-  abortMultipartUpload(file, opts) { /* POST /photos/uploads/multipart/abort */ },
+  abortMultipartUpload(file, opts) {
+    /* POST /photos/uploads/multipart/abort */
+  },
 });
 ```
 
@@ -424,7 +433,7 @@ Uppy appelle ces callbacks au bon moment. Chaque callback fait un appel axios ve
 
 **Rendu headless** : j'utilise `UppyContextProvider` + `Dropzone` + `FilesList` (Uppy 5 headless), sans la Dashboard monolithique. Ça permet de styler en Tailwind dans le design system du projet.
 
-### 5.8 Polling du status — `usePhotoStatus`
+### 5.8 Polling du status - `usePhotoStatus`
 
 Fichier : [apps/web/lib/usePhotoStatus.ts](../../apps/web/lib/usePhotoStatus.ts)
 
@@ -451,7 +460,7 @@ Hook React Query qui poll `/photos/:id/status` toutes les 2 secondes, **sauf** s
 - **Quota de stockage par utilisateur** : avant toute création de multipart upload, on vérifie que `stockage_utilisé + taille_nouveau_fichier ≤ quota`. Le calcul est intentionnellement asymétrique :
   - **Photos existantes** → on somme leurs `file_size_bytes` optimisées (taille après Sharp, stockée par le worker via `HeadObject` post-upload). C'est ce qui est réellement stocké et facturé sur S3.
   - **Nouveau fichier** → on utilise la taille raw envoyée par le front (`file.size` Uppy). On ne connaît pas encore la taille optimisée, donc on est conservateur.
-  - **Résultat** : `SELECT COALESCE(SUM(file_size_bytes), 0) FROM photos WHERE user_id = ? AND status = 'COMPLETED'` + `dto.fileSize > MAX_STORAGE_PER_USER_BYTES` (défaut 500 MB, configurable via env). Si dépassement → 403 `QUOTA_EXCEEDED` **avant** de toucher S3 — aucun coût engagé.
+  - **Résultat** : `SELECT COALESCE(SUM(file_size_bytes), 0) FROM photos WHERE user_id = ? AND status = 'COMPLETED'` + `dto.fileSize > MAX_STORAGE_PER_USER_BYTES` (défaut 500 MB, configurable via env). Si dépassement → 403 `QUOTA_EXCEEDED` **avant** de toucher S3 - aucun coût engagé.
 
 - **Lifecycle rules S3** (AWS console, bucket `fil-rouge-bucket-s3`) :
   - `abort-incomplete-multipart` : annule les multipart uploads non terminés au bout de 24h → pas de parts orphelines facturées si un user ferme son navigateur en plein upload.
@@ -463,14 +472,14 @@ Hook React Query qui poll `/photos/:id/status` toutes les 2 secondes, **sauf** s
 
 ## 7. Trade-offs assumés
 
-| Choix | Trade-off | Justification |
-|---|---|---|
-| Polling status (2s) | Load DB, pas temps-réel | Plus simple que WebSocket/SSE, suffisant pour un upload photo |
-| TypeORM `synchronize: true` en dev | Risque si activé en prod | Gagne du temps en dev, strictement désactivé en prod (variable `DB_SYNC`) |
-| Pas de génération multi-tailles | Pas de thumbnail dédié | Une seule taille 1920px, CloudFront + balise `<img sizes>` fait le reste |
+| Choix                                 | Trade-off                                                   | Justification                                                                                      |
+| ------------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Polling status (2s)                   | Load DB, pas temps-réel                                     | Plus simple que WebSocket/SSE, suffisant pour un upload photo                                      |
+| TypeORM `synchronize: true` en dev    | Risque si activé en prod                                    | Gagne du temps en dev, strictement désactivé en prod (variable `DB_SYNC`)                          |
+| Pas de génération multi-tailles       | Pas de thumbnail dédié                                      | Une seule taille 1920px, CloudFront + balise `<img sizes>` fait le reste                           |
 | URLs CloudFront signées (TTL arrondi) | Validité variable (1×–2× le TTL), un peu de CPU par réponse | Vraie confidentialité (403 sans signature valide) ; arrondi du TTL pour garder des URLs cacheables |
-| Queue Redis sans haute dispo | Perte potentielle de jobs si Redis crash | Un job perdu = user qui doit re-uploader. Acceptable V1. |
-| Worker dans le même process que l'API | Pas d'isolation CPU | Simplifie le déploiement MVP, déportable sans changement de code |
+| Queue Redis sans haute dispo          | Perte potentielle de jobs si Redis crash                    | Un job perdu = user qui doit re-uploader. Acceptable V1.                                           |
+| Worker dans le même process que l'API | Pas d'isolation CPU                                         | Simplifie le déploiement MVP, déportable sans changement de code                                   |
 
 ## 8. Métrologie / observabilité
 
@@ -490,7 +499,7 @@ Hook React Query qui poll `/photos/:id/status` toutes les 2 secondes, **sauf** s
 ## 10. Questions probables du jury + réponses
 
 **Q : L'upload passe par NestJS ?**
-R : Non, seulement les métadonnées (uploadId, key, partNumber, ETags) — quelques centaines d'octets de JSON. Les octets de l'image vont **directement du navigateur à S3** via les URLs présignées. NestJS ne fait que signer des droits d'accès.
+R : Non, seulement les métadonnées (uploadId, key, partNumber, ETags) - quelques centaines d'octets de JSON. Les octets de l'image vont **directement du navigateur à S3** via les URLs présignées. NestJS ne fait que signer des droits d'accès.
 
 **Q : Pourquoi pas un upload direct HTTP vers l'API ?**
 R : Parce que l'API Node.js devient alors un tuyau qui transporte des GB. On perd en parallélisme (bloque le worker Node), en fiabilité (pas de reprise), et on paie deux fois la bande passante (entrée + sortie vers S3). Le multipart presigned transforme l'API en simple **coordinateur de droits d'accès**.
@@ -522,13 +531,13 @@ R :
 **Q : Tu as testé avec des images malicieuses ?**
 R : Validation Zod sur le contentType et le filename (longueurs, trim). Sharp détecte les images corrompues et lève → retry BullMQ → FAILED après 3 tentatives. Le bucket raw/ étant privé (pas servi publiquement), une image piégée ne peut pas être exploitée avant d'être passée par Sharp, qui ré-encode en WebP et élimine tout contenu suspect (metadata, code embarqué, polyglot files).
 
-## Annexe — Fichiers clés
+## Annexe - Fichiers clés
 
-- [apps/api/src/aws/aws.service.ts](../../apps/api/src/aws/aws.service.ts) — Wrapper S3 (presigned URLs + stream download/upload)
-- [apps/api/src/photo/photo.service.ts](../../apps/api/src/photo/photo.service.ts) — Orchestration métier
-- [apps/api/src/photo/photo.processor.ts](../../apps/api/src/photo/photo.processor.ts) — Worker BullMQ + Sharp
-- [apps/api/src/photo/photo.controller.ts](../../apps/api/src/photo/photo.controller.ts) — Endpoints REST
-- [apps/api/src/photo/entities/photo.entity.ts](../../apps/api/src/photo/entities/photo.entity.ts) — Entité TypeORM
-- [packages/shared/src/schemas/photos.schema.ts](../../packages/shared/src/schemas/photos.schema.ts) — Contrat front/back (Zod)
-- [apps/web/components/PhotoUploader.tsx](../../apps/web/components/PhotoUploader.tsx) — Intégration Uppy côté front
-- [apps/web/lib/usePhotoStatus.ts](../../apps/web/lib/usePhotoStatus.ts) — Polling React Query
+- [apps/api/src/aws/aws.service.ts](../../apps/api/src/aws/aws.service.ts) - Wrapper S3 (presigned URLs + stream download/upload)
+- [apps/api/src/photo/photo.service.ts](../../apps/api/src/photo/photo.service.ts) - Orchestration métier
+- [apps/api/src/photo/photo.processor.ts](../../apps/api/src/photo/photo.processor.ts) - Worker BullMQ + Sharp
+- [apps/api/src/photo/photo.controller.ts](../../apps/api/src/photo/photo.controller.ts) - Endpoints REST
+- [apps/api/src/photo/entities/photo.entity.ts](../../apps/api/src/photo/entities/photo.entity.ts) - Entité TypeORM
+- [packages/shared/src/schemas/photos.schema.ts](../../packages/shared/src/schemas/photos.schema.ts) - Contrat front/back (Zod)
+- [apps/web/components/PhotoUploader.tsx](../../apps/web/components/PhotoUploader.tsx) - Intégration Uppy côté front
+- [apps/web/lib/usePhotoStatus.ts](../../apps/web/lib/usePhotoStatus.ts) - Polling React Query

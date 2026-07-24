@@ -1,6 +1,6 @@
-# Budget estimatif — Plateforme de gestion de photos
+# Budget estimatif - Plateforme de gestion de photos
 
-**Projet :** Fil Rouge — Plateforme de gestion de photos et albums (« Kroma »)
+**Projet :** Fil Rouge - Plateforme de gestion de photos et albums (« Kroma »)
 **Auteur :** Tony Mascate
 **Date :** Juin 2026
 **Version :** 1.0
@@ -29,7 +29,7 @@
 
 | Poste                                       | Estimation       | Détail / hypothèse                                                                                                                    |
 | ------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **Développement technique** (~48 j × 550 €) | 24 – 29 K€       | Infra/CI-CD, auth & sécurité, fonctionnalités cœur, killer feature, pages, observabilité — **tests unitaires & d'intégration inclus** |
+| **Développement technique** (~48 j × 550 €) | 24 – 29 K€       | Infra/CI-CD, auth & sécurité, fonctionnalités cœur, killer feature, pages, observabilité - **tests unitaires & d'intégration inclus** |
 | **Conception & documentation** (~21 j)      | 10 – 13 K€       | Cadrage, personas, user stories, modélisation, maquettes, ADR, dossier RNCP                                                           |
 | **Recette & qualité** (~5 j)                | 2,5 – 3,5 K€     | Recette manuelle bout-en-bout, tests E2E, reprise d'anomalies (tests unitaires/intégration déjà dans le développement)                |
 | **Infrastructure & hébergement (1 an)**     | < 1 K€           | VPS EU + stockage objet + CDN                                                                                                         |
@@ -62,4 +62,4 @@ Le travail étant fourni par le porteur dans un cadre de formation, le coût mon
 
 ---
 
-_Document rédigé dans le cadre du Fil Rouge — certification Expert en Informatique et Systèmes d'Information, 3W Academy._
+_Document rédigé dans le cadre du Fil Rouge - certification Expert en Informatique et Systèmes d'Information, 3W Academy._

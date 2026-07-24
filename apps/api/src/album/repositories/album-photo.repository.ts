@@ -66,7 +66,7 @@ export class AlbumPhotoRepository extends Repository<AlbumPhoto> {
   }
 
   // Photos d'un album appartenant à un utilisateur et tombant dans une cellule
-  // d'atlas donnée — alimente l'exploration chromatique filtrée par album.
+  // d'atlas donnée - alimente l'exploration chromatique filtrée par album.
   async findPhotosByCellPage(
     albumId: string,
     userId: string,

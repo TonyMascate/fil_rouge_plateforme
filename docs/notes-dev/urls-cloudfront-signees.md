@@ -1,4 +1,4 @@
-# URLs CloudFront signées — Note de soutenance
+# URLs CloudFront signées - Note de soutenance
 
 > Complète [pipeline-upload-photos.md](./pipeline-upload-photos.md). Ce document décrit comment les images
 > optimisées sont passées d'un accès **public permanent** à un accès **privé via URL signée à durée limitée**.
@@ -39,7 +39,7 @@ Le schéma repose sur une **paire de clés RSA** (asymétrique) :
 1. L'**API** détient la **clé privée** (secret).
 2. Quand l'API répond une URL d'image, elle fabrique une « police » (`{ url, dateLessThan }`) et la **signe**
    avec la clé privée.
-3. **CloudFront** détient la **clé publique** correspondante (enregistrée dans un *key group*). À chaque requête
+3. **CloudFront** détient la **clé publique** correspondante (enregistrée dans un _key group_). À chaque requête
    il vérifie la signature et la date. Valide + non expirée → 200. Sinon → **403**.
 
 Propriétés : **expiration** (TTL court), **infalsifiable** (sans la clé privée, pas de signature valide ; changer
@@ -48,14 +48,14 @@ code applicatif).
 
 ### 2.2 Différence avec les presigned URLs de l'upload
 
-Le projet utilise déjà des signatures **côté S3** pour l'upload (cf. note pipeline §3) — ne pas confondre :
+Le projet utilise déjà des signatures **côté S3** pour l'upload (cf. note pipeline §3) - ne pas confondre :
 
-| | Presigned S3 (upload) | Signed URL CloudFront (lecture) |
-|---|---|---|
-| Crypto | HMAC-SHA256 (**symétrique**, dérivée de `AWS_SECRET_ACCESS_KEY`) | RSA-SHA1 (**asymétrique**, clé privée/publique dédiée) |
-| Qui vérifie | S3 | CloudFront |
-| Opération | `PUT` d'une part précise | `GET` d'un objet via le CDN |
-| Package | `@aws-sdk/s3-request-presigner` | `@aws-sdk/cloudfront-signer` |
+|             | Presigned S3 (upload)                                            | Signed URL CloudFront (lecture)                        |
+| ----------- | ---------------------------------------------------------------- | ------------------------------------------------------ |
+| Crypto      | HMAC-SHA256 (**symétrique**, dérivée de `AWS_SECRET_ACCESS_KEY`) | RSA-SHA1 (**asymétrique**, clé privée/publique dédiée) |
+| Qui vérifie | S3                                                               | CloudFront                                             |
+| Opération   | `PUT` d'une part précise                                         | `GET` d'un objet via le CDN                            |
+| Package     | `@aws-sdk/s3-request-presigner`                                  | `@aws-sdk/cloudfront-signer`                           |
 
 ### 2.3 Analogie
 
@@ -102,16 +102,16 @@ sequenceDiagram
 L'API ne publie plus d'URL permanente : à chaque lecture elle **signe localement** une URL valable quelques
 heures, et CloudFront **refuse (403)** toute requête sans signature valide → les images sont réellement privées.
 
-## 4. Le code — fichiers concernés
+## 4. Le code - fichiers concernés
 
-### 4.1 `AwsService` — la signature
+### 4.1 `AwsService` - la signature
 
 Fichier : [apps/api/src/aws/aws.service.ts](../../apps/api/src/aws/aws.service.ts)
 
 #### a) L'import du signer
 
 ```ts
-import { getSignedUrl as getCloudFrontSignedUrl } from '@aws-sdk/cloudfront-signer';
+import { getSignedUrl as getCloudFrontSignedUrl } from "@aws-sdk/cloudfront-signer";
 ```
 
 On **alias** l'import car le service importe déjà `getSignedUrl` depuis `@aws-sdk/s3-request-presigner` (pour
@@ -205,7 +205,7 @@ systématiquement, et on re-signerait à chaque requête. En arrondissant à une
 toute la fenêtre → cacheable. Le `+2` garantit une validité comprise entre **1× et 2× le TTL** (sans l'offset, une
 requête en fin de fenêtre recevrait une URL quasi expirée).
 
-### 4.2 `PhotoService` — signe à la lecture
+### 4.2 `PhotoService` - signe à la lecture
 
 Fichier : [apps/api/src/photo/photo.service.ts](../../apps/api/src/photo/photo.service.ts)
 
@@ -245,16 +245,14 @@ items: photos.map((photo) => ({
 return {
   id: photo.id,
   status: photo.status,
-  url: photo.status === PhotoStatus.COMPLETED
-    ? this.aws.getSignedImageUrl(photo.s3Key)
-    : null,
+  url: photo.status === PhotoStatus.COMPLETED ? this.aws.getSignedImageUrl(photo.s3Key) : null,
 };
 ```
 
 > Comme la signature est purement locale (calcul RSA, ~µs, pas d'appel réseau), signer N photos dans un `map`
 > reste négligeable même pour une page de galerie.
 
-### 4.3 `PhotoProcessor` — ne stocke plus l'URL
+### 4.3 `PhotoProcessor` - ne stocke plus l'URL
 
 Fichier : [apps/api/src/photo/photo.processor.ts](../../apps/api/src/photo/photo.processor.ts)
 
@@ -282,11 +280,11 @@ public async down(qr: QueryRunner) { await qr.query(`ALTER TABLE "photos" ADD "c
 
 Fichier : `apps/api/.env` (local, gitignoré) + secret GitHub **`ENV_PROD`** (prod) :
 
-| Variable | Rôle |
-|---|---|
-| `CLOUDFRONT_KEY_PAIR_ID` | ID de la clé publique enregistrée dans CloudFront (format `K…`) |
-| `CLOUDFRONT_PRIVATE_KEY_BASE64` | Clé privée PEM encodée base64 (`base64 -w0 private_key.pem`) — évite les soucis de multi-ligne en `.env`/Docker/CI |
-| `CLOUDFRONT_SIGNED_URL_TTL_SECONDS` | Durée de validité (défaut 3600) |
+| Variable                            | Rôle                                                                                                               |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `CLOUDFRONT_KEY_PAIR_ID`            | ID de la clé publique enregistrée dans CloudFront (format `K…`)                                                    |
+| `CLOUDFRONT_PRIVATE_KEY_BASE64`     | Clé privée PEM encodée base64 (`base64 -w0 private_key.pem`) - évite les soucis de multi-ligne en `.env`/Docker/CI |
+| `CLOUDFRONT_SIGNED_URL_TTL_SECONDS` | Durée de validité (défaut 3600)                                                                                    |
 
 Dépendance ajoutée : `@aws-sdk/cloudfront-signer` ([apps/api/package.json](../../apps/api/package.json)).
 
@@ -298,7 +296,7 @@ La signature côté code ne protège **rien** tant que l'infra n'est pas verroui
    `openssl rsa -pubout -in private_key.pem -out public_key.pem`.
 2. **CloudFront → Public keys** : importer `public_key.pem` → récupérer l'ID `K…` → `CLOUDFRONT_KEY_PAIR_ID`.
 3. **CloudFront → Key groups** : créer un key group contenant cette clé publique.
-4. **S3 verrouillé** : *Block all public access* = ON + bucket policy autorisant **uniquement**
+4. **S3 verrouillé** : _Block all public access_ = ON + bucket policy autorisant **uniquement**
    `cloudfront.amazonaws.com` via OAC, avec condition sur l'ARN de la distribution :
 
 ```json
@@ -328,11 +326,11 @@ La signature côté code ne protège **rien** tant que l'infra n'est pas verroui
 
 Test concret réalisé après activation (objet réel `optimized/<uuid>.webp`) :
 
-| URL | Avant enforcement | Après enforcement |
-|---|---|---|
-| Non signée (`/optimized/uuid.webp`) | 200 | **403** ✅ |
-| Signée (`?Expires&Signature&Key-Pair-Id`) | 200 | **200** ✅ |
-| Accès direct S3 (hors CloudFront) | 403 | **403** ✅ |
+| URL                                       | Avant enforcement | Après enforcement |
+| ----------------------------------------- | ----------------- | ----------------- |
+| Non signée (`/optimized/uuid.webp`)       | 200               | **403** ✅        |
+| Signée (`?Expires&Signature&Key-Pair-Id`) | 200               | **200** ✅        |
+| Accès direct S3 (hors CloudFront)         | 403               | **403** ✅        |
 
 Le 403 sur la non signée prouve que l'enforcement est actif ; le 200 sur la signée prouve que la clé privée de
 l'API correspond bien à la clé publique enregistrée dans CloudFront.
@@ -346,12 +344,12 @@ les fichiers `.pem` peuvent être archivés hors repo une fois la clé publique 
 
 ## 7. Trade-offs assumés
 
-| Choix | Trade-off | Justification |
-|---|---|---|
-| Signer à la lecture (pas de stockage) | Un peu de CPU par réponse (RSA local, ~µs) | Une URL stockée expirerait ; signer à la volée est la seule option correcte |
-| TTL arrondi à une fenêtre | Validité variable (1×–2× TTL) | Rend les URLs cacheables (sinon cache toujours raté) |
-| RSA-SHA1 (canned policy) | Algo daté imposé par CloudFront | Standard CloudFront ; suffisant car la sécurité tient à la clé privée, pas à SHA1 |
-| Même clé dev/prod possible | Moins d'isolation | Recommandé : une paire dédiée par environnement (à faire pour la prod) |
+| Choix                                 | Trade-off                                  | Justification                                                                     |
+| ------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------- |
+| Signer à la lecture (pas de stockage) | Un peu de CPU par réponse (RSA local, ~µs) | Une URL stockée expirerait ; signer à la volée est la seule option correcte       |
+| TTL arrondi à une fenêtre             | Validité variable (1×–2× TTL)              | Rend les URLs cacheables (sinon cache toujours raté)                              |
+| RSA-SHA1 (canned policy)              | Algo daté imposé par CloudFront            | Standard CloudFront ; suffisant car la sécurité tient à la clé privée, pas à SHA1 |
+| Même clé dev/prod possible            | Moins d'isolation                          | Recommandé : une paire dédiée par environnement (à faire pour la prod)            |
 
 ## 8. Questions probables du jury + réponses
 
@@ -369,18 +367,19 @@ comportement voulu pour le partage. Pour révoquer avant expiration, il faudrait
 futur partage, invalider le token applicatif).
 
 **Q : Et si on ne verrouille pas S3 ?**
-R : La signature ne sert à rien : l'objet resterait accessible en direct sur S3. D'où *Block public access* + OAC
-+ condition `SourceArn` sur la bucket policy. L'accès direct S3 renvoie 403.
+R : La signature ne sert à rien : l'objet resterait accessible en direct sur S3. D'où _Block public access_ + OAC
+
+- condition `SourceArn` sur la bucket policy. L'accès direct S3 renvoie 403.
 
 **Q : Comment éviter une coupure d'images au déploiement ?**
 R : Déployer le code de signature **avant** d'activer le Trusted key group. Tant qu'il n'est pas activé,
 CloudFront sert les images en ignorant les query params.
 
-## Annexe — Fichiers clés
+## Annexe - Fichiers clés
 
-- [apps/api/src/aws/aws.service.ts](../../apps/api/src/aws/aws.service.ts) — `getSignedImageUrl` (signature RSA CloudFront)
-- [apps/api/src/photo/photo.service.ts](../../apps/api/src/photo/photo.service.ts) — signature à la lecture (list/colors/status)
-- [apps/api/src/photo/photo.processor.ts](../../apps/api/src/photo/photo.processor.ts) — ne stocke plus l'URL
-- [apps/api/src/photo/entities/photo.entity.ts](../../apps/api/src/photo/entities/photo.entity.ts) — colonne `cloudfront_url` retirée
-- [apps/api/src/config/database.config.ts](../../apps/api/src/config/database.config.ts) — `synchronize: false`, schéma géré par migrations
-- [packages/shared/src/schemas/photos.schema.ts](../../packages/shared/src/schemas/photos.schema.ts) — `url: z.url()` (inchangé, accepte les query params signés)
+- [apps/api/src/aws/aws.service.ts](../../apps/api/src/aws/aws.service.ts) - `getSignedImageUrl` (signature RSA CloudFront)
+- [apps/api/src/photo/photo.service.ts](../../apps/api/src/photo/photo.service.ts) - signature à la lecture (list/colors/status)
+- [apps/api/src/photo/photo.processor.ts](../../apps/api/src/photo/photo.processor.ts) - ne stocke plus l'URL
+- [apps/api/src/photo/entities/photo.entity.ts](../../apps/api/src/photo/entities/photo.entity.ts) - colonne `cloudfront_url` retirée
+- [apps/api/src/config/database.config.ts](../../apps/api/src/config/database.config.ts) - `synchronize: false`, schéma géré par migrations
+- [packages/shared/src/schemas/photos.schema.ts](../../packages/shared/src/schemas/photos.schema.ts) - `url: z.url()` (inchangé, accepte les query params signés)

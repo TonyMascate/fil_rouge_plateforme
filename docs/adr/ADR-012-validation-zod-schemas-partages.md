@@ -1,4 +1,4 @@
-# ADR-012 — Validation API : Zod + Schémas partagés
+# ADR-012 - Validation API : Zod + Schémas partagés
 
 - **Statut :** Accepté
 - **Date :** 2025-03-13
@@ -16,14 +16,14 @@ Mon API NestJS doit valider les données entrantes (body, params, query) pour ga
 
 ### Librairie de validation
 
-| Critère                        | Zod (nestjs-zod)              | class-validator (NestJS natif)| Joi                           | Valibot                       |
-|--------------------------------|-------------------------------|-------------------------------|-------------------------------|-------------------------------|
-| TypeScript-first               | Oui (inférence de types)      | Partiel (décorateurs)         | Non (types manuels)           | Oui                           |
-| Partage front/back             | Oui (schéma = code TS)        | Non (décorateurs NestJS only) | Partiellement                 | Oui                           |
-| Inférence de types             | Excellente (`z.infer<>`)      | Via `class-transformer`       | Non                           | Excellente                    |
-| Intégration NestJS             | Via `nestjs-zod`              | Native (`ValidationPipe`)     | Via pipe custom               | Via pipe custom               |
-| Taille bundle                  | ~14 KB                        | ~11 KB                        | ~25 KB                        | ~8 KB (modulaire)             |
-| Écosystème                     | Très riche (react-hook-form, tRPC…) | Moyen                   | Bon                           | En croissance                 |
+| Critère            | Zod (nestjs-zod)                    | class-validator (NestJS natif) | Joi                 | Valibot           |
+| ------------------ | ----------------------------------- | ------------------------------ | ------------------- | ----------------- |
+| TypeScript-first   | Oui (inférence de types)            | Partiel (décorateurs)          | Non (types manuels) | Oui               |
+| Partage front/back | Oui (schéma = code TS)              | Non (décorateurs NestJS only)  | Partiellement       | Oui               |
+| Inférence de types | Excellente (`z.infer<>`)            | Via `class-transformer`        | Non                 | Excellente        |
+| Intégration NestJS | Via `nestjs-zod`                    | Native (`ValidationPipe`)      | Via pipe custom     | Via pipe custom   |
+| Taille bundle      | ~14 KB                              | ~11 KB                         | ~25 KB              | ~8 KB (modulaire) |
+| Écosystème         | Très riche (react-hook-form, tRPC…) | Moyen                          | Bon                 | En croissance     |
 
 ---
 
@@ -37,13 +37,13 @@ Mon API NestJS doit valider les données entrantes (body, params, query) pour ga
 
 1. **Schémas partagés front/back (partiel) :** Les schémas liés aux photos (`PhotoResponseSchema`, `CreateMultipartSchema`, `PhotoListQuerySchema`, etc.) et aux utilisateurs (`UserCreateSchema`, `UserLoginSchema`) sont définis dans `packages/shared` et utilisés par le frontend (formulaires via `react-hook-form` + `@hookform/resolvers/zod`) et le backend. Les schémas d'album (`CreateAlbumSchema`, `UpdateAlbumSchema`, `AddPhotosSchema`, `AddMemberSchema`) sont définis localement dans `apps/api/src/album/dto/album.dto.ts` car ils ne sont pas encore utilisés côté frontend.
 
-2. **Inférence de types automatique :** `z.infer<typeof MySchema>` génère le type TypeScript correspondant au schéma. Pas besoin de maintenir une interface séparée du schéma de validation — le type EST la validation.
+2. **Inférence de types automatique :** `z.infer<typeof MySchema>` génère le type TypeScript correspondant au schéma. Pas besoin de maintenir une interface séparée du schéma de validation - le type EST la validation.
 
 3. **`nestjs-zod` pour l'intégration NestJS :** Le module `nestjs-zod` fournit un `ZodValidationPipe` global et des décorateurs pour utiliser les schémas Zod directement dans les DTOs NestJS. Compatible avec le système d'injection de dépendances et les guards de NestJS.
 
 4. **Messages d'erreur explicites :** Zod génère des messages d'erreur structurés avec le chemin du champ et la raison de l'échec. Côté API, ces erreurs sont renvoyées au client avec un format standardisé. Côté frontend, `react-hook-form` les affiche directement sous les champs du formulaire.
 
-5. **Richesse de l'écosystème Zod :** `z.string().email()`, `z.string().uuid()`, `z.number().min()`, refinements customs, transformations — toutes les règles du projet sont expressibles avec Zod sans configuration additionnelle.
+5. **Richesse de l'écosystème Zod :** `z.string().email()`, `z.string().uuid()`, `z.number().min()`, refinements customs, transformations - toutes les règles du projet sont expressibles avec Zod sans configuration additionnelle.
 
 6. **Contrats d'API explicites :** Les schémas dans `@repo/shared` servent de documentation vivante des contrats d'API. Un développeur lisant `CreateAlbumSchema` ou `CreateMultipartSchema` comprend immédiatement quels champs sont attendus, leurs types et leurs contraintes.
 
@@ -52,12 +52,14 @@ Mon API NestJS doit valider les données entrantes (body, params, query) pour ga
 ## Conséquences
 
 **Positives :**
+
 - Validation cohérente front/back depuis une source unique.
 - Types TypeScript inférés automatiquement depuis les schémas.
 - Moins de risque de régression : modifier un champ obligatoire en base = erreur TypeScript côté frontend.
 - Messages d'erreur standardisés pour l'API.
 
 **Négatives / Risques :**
-- `nestjs-zod` est un package communautaire (pas officiel NestJS) — mises à jour dépendantes de son mainteneur.
+
+- `nestjs-zod` est un package communautaire (pas officiel NestJS) - mises à jour dépendantes de son mainteneur.
 - Les schémas Zod complexes (avec `.transform()`, `.refine()`) peuvent être difficiles à déboguer.
 - Ajouter Zod à `packages/shared` augmente légèrement la taille du bundle frontend (même si tree-shakeable).

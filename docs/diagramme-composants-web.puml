@@ -1,0 +1,74 @@
+@startuml diagramme-composants-web
+' ─────────────────────────────────────────────────────────────────────────────
+' Kroma - Diagramme de composants UML 2 du frontend (apps/web, Next.js)
+' Vue d'ensemble : les briques de l'application web + l'infra qu'elle consomme.
+' Notation : composants + nœuds + paquetages, reliés uniquement par des
+' dépendances (traits pointillés), sans label — même parti-pris que le
+' diagramme de l'API.
+' Rendu : kroki.io (type=plantuml) ou extension PlantUML VS Code.
+' ─────────────────────────────────────────────────────────────────────────────
+title Kroma - Modules du frontend (Next.js)
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam defaultTextAlignment center
+skinparam nodesep 30
+skinparam ranksep 55
+skinparam component {
+  BackgroundColor #EAF2FB
+  BorderColor #2C5A8C
+  FontColor #1a1a1a
+}
+skinparam node {
+  BackgroundColor #EAF2FB
+  BorderColor #2C5A8C
+}
+
+package "Web (Next.js)" {
+  component "Middleware\n(proxy.ts)" as Proxy <<middleware>>
+
+  package "App Router (pages)" {
+    component "(public)" as Public <<route group>>
+    component "(auth)" as Auth <<route group>>
+  }
+
+  component "RootLayout" as Layout
+  component "GetSession" as Session <<server-only>>
+  component "Providers" as Providers <<TanStack Query>>
+  component "Composants" as UI <<UI de fonctionnalités>>
+  component "shadcn/ui" as Shadcn <<bibliothèque UI>>
+  component "Hooks" as Hooks <<React Query>>
+  component "Client HTTP\n(axios)" as Axios
+}
+
+component "@repo/shared" as Shared <<paquet partagé>>
+node "API Kroma\n(NestJS)" as Api
+node "Amazon S3" as S3
+node "Amazon CloudFront" as Cdn
+
+' ── Layout racine & session serveur ──
+Layout ..> Providers
+Layout ..> Session
+Layout ..> UI
+
+' ── Pages → composants de fonctionnalités ──
+Public ..> UI
+Auth   ..> UI
+
+' ── Composants ──
+UI ..> Hooks
+UI ..> Shadcn
+UI ..> Shared
+UI ..> S3
+UI ..> Cdn
+
+' ── Couche données ──
+Hooks ..> Axios
+Hooks ..> Providers
+Hooks ..> Shared
+Axios ..> Api
+
+' ── Garde de session côté edge ──
+Proxy ..> Api
+
+@enduml

@@ -1,6 +1,6 @@
-# Note de cadrage — Plateforme de gestion de photos
+# Note de cadrage - Plateforme de gestion de photos
 
-**Projet :** Fil Rouge — Plateforme de gestion de photos et albums (« Kroma »)
+**Projet :** Fil Rouge - Plateforme de gestion de photos et albums (« Kroma »)
 **Auteur :** Tony Mascate
 **Date :** Juin 2026
 **Version :** 1.0
@@ -36,7 +36,7 @@ Aucune solution n'occupe le quadrant **« self-hosted RGPD-compliant + UX modern
 
 ## 3. Périmètre
 
-### 3.1 Inclus (livré ou en cours — cf. [user-stories.md](user-stories.md))
+### 3.1 Inclus (livré ou en cours - cf. [user-stories.md](user-stories.md))
 
 - **Authentification & compte** : inscription, connexion, déconnexion (JWT + Argon2).
 - **Photos** : upload multiple, galerie chronologique, suppression, détail (date, nom).
@@ -47,9 +47,9 @@ Aucune solution n'occupe le quadrant **« self-hosted RGPD-compliant + UX modern
 
 ### 3.2 Exclu / reporté (roadmap)
 
-- Modification et réinitialisation de mot de passe (US-04), suppression de compte / droit à l'oubli automatisé (US-05 — schéma prêt via cascades, pas de purge implémentée).
+- Modification et réinitialisation de mot de passe (US-04), suppression de compte / droit à l'oubli automatisé (US-05 - schéma prêt via cascades, pas de purge implémentée).
 - Favoris, tags manuels, détail lieu/taille (US-09, US-11, US-10 partiel).
-- Recherche et filtres (par date, favori, tag — US-27 à US-29).
+- Recherche et filtres (par date, favori, tag - US-27 à US-29).
 - Création d'album directement depuis l'exploration chromatique (US-25), filtres avancés (US-26).
 - Photo de couverture d'album (US-17), expiration des liens de partage (US-21).
 - Application mobile native, édition photo intégrée, gestion des doublons.
@@ -69,8 +69,8 @@ Aucune solution n'occupe le quadrant **« self-hosted RGPD-compliant + UX modern
 
 ## 5. Personas cibles
 
-- **Léa, 28 ans, particulier non-technique** — veut retrouver, partager et garder ses photos privées sans payer un abonnement mensuel. Killer feature utilisée : **albums + partage**.
-- **Maxime, 24 ans, photographe amateur** — organise mentalement par ambiance colorielle, perd du temps en tri manuel. Killer feature utilisée : **exploration chromatique**.
+- **Léa, 28 ans, particulier non-technique** - veut retrouver, partager et garder ses photos privées sans payer un abonnement mensuel. Killer feature utilisée : **albums + partage**.
+- **Maxime, 24 ans, photographe amateur** - organise mentalement par ambiance colorielle, perd du temps en tri manuel. Killer feature utilisée : **exploration chromatique**.
 
 ---
 
@@ -94,21 +94,21 @@ Aucune solution n'occupe le quadrant **« self-hosted RGPD-compliant + UX modern
 3. **Documentation projet** ([docs/](.)) : personas, user stories, benchmark, modélisation des données (MCD/MLD/MPD), cartographie SI, diagrammes de flux, 15 ADR, notes Green IT et dev.
 4. **Pipelines CI/CD** GitHub Actions (build/déploiement API, web, infra, backup/restore BDD).
 5. **Observabilité** : métriques Prometheus + dashboards Grafana, logs Loki/pino.
-6. **Dossier professionnel RNCP** (.docx) — bloc optionnel DevOps.
+6. **Dossier professionnel RNCP** (.docx) - bloc optionnel DevOps.
 
 ---
 
 ## 8. Jalons (macro-planning)
 
-| Jalon                     | Contenu                                                               |    Statut     |
-| ------------------------- | --------------------------------------------------------------------- | :-----------: |
-| J1 — Cadrage & conception | Personas, user stories, benchmark, modélisation, ADR                  |    Validé     |
-| J2 — Socle technique      | Monorepo, infra Swarm, CI/CD, auth, observabilité (métriques, logs, dashboards) |    Validé     |
-| J3 — Fonctionnalités cœur | Upload, galerie, albums, partage, pages vitrine + responsive          |    Validé     |
-| J4 — Killer feature       | Exploration Chromatique v2 (atlas OKLCH)                              |    Validé     |
-| J5 — Qualité & sécurité   | Tests, durcissement (CSRF, throttling, sécurité upload), URLs signées |    Validé     |
-| J6 — Roadmap produit      | Recherche/filtres, favoris/tags, gestion de compte                    | à implémenter |
-| J7 — Dossier & soutenance | Finalisation du dossier RNCP et préparation jury                      |    Validé     |
+| Jalon                     | Contenu                                                                         |    Statut     |
+| ------------------------- | ------------------------------------------------------------------------------- | :-----------: |
+| J1 - Cadrage & conception | Personas, user stories, benchmark, modélisation, ADR                            |    Validé     |
+| J2 - Socle technique      | Monorepo, infra Swarm, CI/CD, auth, observabilité (métriques, logs, dashboards) |    Validé     |
+| J3 - Fonctionnalités cœur | Upload, galerie, albums, partage, pages vitrine + responsive                    |    Validé     |
+| J4 - Killer feature       | Exploration Chromatique v2 (atlas OKLCH)                                        |    Validé     |
+| J5 - Qualité & sécurité   | Tests, durcissement (CSRF, throttling, sécurité upload), URLs signées           |    Validé     |
+| J6 - Roadmap produit      | Recherche/filtres, favoris/tags, gestion de compte                              | à implémenter |
+| J7 - Dossier & soutenance | Finalisation du dossier RNCP et préparation jury                                |    Validé     |
 
 > **Vue macro.** Ces jalons regroupent les 10 lots du projet. Le découpage détaillé,
 > chiffré (charge par lot) et daté (Gantt) figure dans [wbs-planning.md](wbs-planning.md).
@@ -137,4 +137,4 @@ Aucune solution n'occupe le quadrant **« self-hosted RGPD-compliant + UX modern
 
 ---
 
-_Document rédigé dans le cadre du Fil Rouge — certification Expert en Informatique et Systèmes d'Information, 3W Academy._
+_Document rédigé dans le cadre du Fil Rouge - certification Expert en Informatique et Systèmes d'Information, 3W Academy._

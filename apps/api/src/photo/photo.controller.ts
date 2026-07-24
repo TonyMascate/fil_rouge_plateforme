@@ -48,7 +48,7 @@ import { CompleteMultipartDto, CreateMultipartDto, MultipartKeyDto, SignPartDto 
 @ApiExtraModels(ApiErrorDto)
 @ApiHeader({
   name: 'X-XSRF-TOKEN',
-  description: 'Token CSRF (valeur du cookie XSRF-TOKEN) — requis sur toutes les mutations',
+  description: 'Token CSRF (valeur du cookie XSRF-TOKEN) - requis sur toutes les mutations',
   required: true,
 })
 @Controller('photos')
@@ -169,7 +169,7 @@ export class PhotoController {
   }
 
   @Get('colors')
-  @ApiOperation({ summary: 'Exploration chromatique — atlas de couleurs avec le nombre de photos par cellule' })
+  @ApiOperation({ summary: 'Exploration chromatique - atlas de couleurs avec le nombre de photos par cellule' })
   @ApiQuery({
     name: 'albumId',
     required: false,

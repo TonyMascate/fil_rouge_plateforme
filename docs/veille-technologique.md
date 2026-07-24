@@ -1,9 +1,9 @@
 # Dossier de Veille Technologique
 
-**Projet :** Fil Rouge — Plateforme de gestion de photos et albums
+**Projet :** Fil Rouge - Plateforme de gestion de photos et albums
 **Auteur :** Tony Mascate
 **Période couverte :** 2025 – 2026
-**Certification :** Expert en Informatique et Systèmes d'Information — 3W Academy (BC1)
+**Certification :** Expert en Informatique et Systèmes d'Information - 3W Academy (BC1)
 
 ---
 
@@ -17,7 +17,7 @@
 6. [Bases de données & cache](#6-bases-de-données--cache)
 7. [Infrastructure & DevOps](#7-infrastructure--devops)
 8. [Observabilité](#8-observabilité)
-9. [Killer feature — Exploration chromatique](#9-killer-feature--exploration-chromatique)
+9. [Killer feature - Exploration chromatique](#9-killer-feature--exploration-chromatique)
 10. [Recommandations](#10-recommandations)
 11. [Sources](#11-sources)
 
@@ -42,15 +42,15 @@ Les sources ont été sélectionnées selon leur autorité et leur fiabilité. C
 | #   | Source                                                           | Type                            | Fiabilité      | Rôle                                                |
 | --- | ---------------------------------------------------------------- | ------------------------------- | -------------- | --------------------------------------------------- |
 | S1  | Documentations officielles (NestJS, Next.js, PostgreSQL…)        | Primaire                        | Élevée         | Référence de vérité sur les APIs et comportements   |
-| S2  | State of JavaScript 2024 (stateofjs.com)                         | Enquête communautaire           | Élevée         | Tendances d'adoption dans l'écosystème JS/TS        |
-| S3  | Stack Overflow Developer Survey 2024                             | Enquête communautaire           | Élevée         | Popularité, satisfaction et adoption des outils     |
+| S2  | State of JavaScript 2025 (stateofjs.com)                         | Enquête communautaire           | Élevée         | Tendances d'adoption dans l'écosystème JS/TS        |
+| S3  | Stack Overflow Developer Survey 2025                             | Enquête communautaire           | Élevée         | Popularité, satisfaction et adoption des outils     |
 | S4  | npm Trends (npmtrends.com)                                       | Statistiques de téléchargements | Élevée         | Mesure objective de l'adoption d'une librairie      |
 | S5  | GitHub (stars, issues, releases, commits)                        | Indicateur communautaire        | Moyenne-élevée | Santé de l'écosystème, vélocité de maintenance      |
 | S6  | TechEmpower Framework Benchmarks                                 | Benchmark indépendant           | Élevée         | Comparaison de performance des frameworks backend   |
 | S7  | OWASP (owasp.org)                                                | Standard sécurité               | Élevée         | Référence en matière de sécurité applicative        |
-| S8  | RFC 7519 — JWT Standard (IETF)                                   | Standard technique              | Élevée         | Spécification formelle du protocole JWT             |
-| S9  | Règlement EU 2016/679 — RGPD                                     | Texte législatif officiel       | Authoritative  | Cadre légal sur la protection des données           |
-| S10 | Règlement EU 2024/1689 — IA Act                                  | Texte législatif officiel       | Authoritative  | Cadre légal sur l'usage de l'IA                     |
+| S8  | RFC 7519 - JWT Standard (IETF)                                   | Standard technique              | Élevée         | Spécification formelle du protocole JWT             |
+| S9  | Règlement EU 2016/679 - RGPD                                     | Texte législatif officiel       | Authoritative  | Cadre légal sur la protection des données           |
+| S10 | Règlement EU 2024/1689 - IA Act                                  | Texte législatif officiel       | Authoritative  | Cadre légal sur l'usage de l'IA                     |
 | S11 | Clarifying Lawful Overseas Use of Data Act (Cloud Act, 2018)     | Loi fédérale US                 | Authoritative  | Risques liés aux fournisseurs cloud américains      |
 | S12 | Référentiel Général d'Amélioration de l'Accessibilité (RGAA 4.1) | Standard national               | Élevée         | Critères d'accessibilité numérique                  |
 | S13 | Tests pratiques assistés par IA (Claude, GitHub Copilot)         | Expérimentation                 | Moyenne        | Validation de comportements et de benchmarks locaux |
@@ -70,7 +70,7 @@ Les informations issues de sources de type enquête (S2, S3) ont été recoupée
 
 ## 2. Cadre réglementaire
 
-### 2.1 RGPD — Règlement Général sur la Protection des Données (EU 2016/679)
+### 2.1 RGPD - Règlement Général sur la Protection des Données (EU 2016/679)
 
 **Pertinence pour le projet :** La plateforme traite des données à caractère personnel (photos, comptes utilisateurs, métadonnées). Elle est directement soumise au RGPD.
 
@@ -84,25 +84,25 @@ Les informations issues de sources de type enquête (S2, S3) ont été recoupée
 
 **Orientations réglementaires 2025 :** La CNIL a intensifié ses contrôles sur les cookies et le transfert de données vers des pays tiers. Les sanctions pour non-conformité ont atteint des montants records en 2023-2024 (Meta : 1,2 Md€). L'auto-hébergement des données constitue une réponse directe à ces risques.
 
-### 2.2 IA Act — Règlement sur l'Intelligence Artificielle (EU 2024/1689)
+### 2.2 IA Act - Règlement sur l'Intelligence Artificielle (EU 2024/1689)
 
 **Contexte :** L'IA Act est entré en vigueur en août 2024 avec une application progressive jusqu'en 2026. Il classe les systèmes d'IA par niveau de risque.
 
-**Pertinence pour le projet :** La killer feature (exploration chromatique — classement des photos par palette de couleurs extraite en espace OKLab) n'implémente pas de modèle d'IA au sens strict : il s'agit d'un calcul algorithmique déterministe (conversion colorimétrique + k-means), sans apprentissage automatique ni prise de décision autonome. Elle reste dans la catégorie **risque minimal** du règlement.
+**Pertinence pour le projet :** La killer feature (exploration chromatique - classement des photos par palette de couleurs extraite en espace OKLab) n'implémente pas de modèle d'IA au sens strict : il s'agit d'un calcul algorithmique déterministe (conversion colorimétrique + k-means), sans apprentissage automatique ni prise de décision autonome. Elle reste dans la catégorie **risque minimal** du règlement.
 
 **Anticipation :** Si l'application devait intégrer une fonctionnalité de reconnaissance de couleurs automatique (ex. : tagging automatique des photos par palette dominante), cela constituerait un système d'IA de **faible risque** soumis aux obligations de transparence envers l'utilisateur (article 52 de l'IA Act).
 
 **Recommandation :** Toute évolution vers de l'IA générative ou de la classification automatique dans l'application devra faire l'objet d'une évaluation de conformité IA Act avant déploiement.
 
-### 2.3 Cloud Act — Clarifying Lawful Overseas Use of Data Act (US, 2018)
+### 2.3 Cloud Act - Clarifying Lawful Overseas Use of Data Act (US, 2018)
 
 **Contexte :** Le Cloud Act autorise les autorités américaines à contraindre des fournisseurs de cloud américains (AWS, Azure, GCP, Cloudflare…) à communiquer des données hébergées, y compris en dehors des États-Unis.
 
 **Impact sur le projet :** Le choix d'un VPS auto-hébergé avec Docker Swarm plutôt qu'un PaaS américain (Heroku, Render, Railway) élimine ce risque. Aucune donnée utilisateur ne transite par un service soumis au Cloud Act.
 
-**Vecteurs résiduels à surveiller :** Les images Docker sont stockées sur GitHub Container Registry (ghcr.io), propriété de Microsoft (US). Ces images ne contiennent pas de données utilisateurs — uniquement du code applicatif — ce qui limite le risque de manière significative.
+**Vecteurs résiduels à surveiller :** Les images Docker sont stockées sur GitHub Container Registry (ghcr.io), propriété de Microsoft (US). Ces images ne contiennent pas de données utilisateurs - uniquement du code applicatif - ce qui limite le risque de manière significative.
 
-### 2.4 Accessibilité — RGAA 4.1 / WCAG 2.1
+### 2.4 Accessibilité - RGAA 4.1 / WCAG 2.1
 
 **Contexte :** Le Référentiel Général d'Amélioration de l'Accessibilité (RGAA 4.1) est obligatoire pour les services publics français et constitue la référence pour toute application professionnelle.
 
@@ -134,7 +134,7 @@ Next.js 16 (sorti en octobre 2025) consolide le modèle de rendu hybride introdu
 | Compatibilité Tailwind v4 + shadcn/ui | Excellente                        | Bonne                         | Bonne                          |
 | Adoption 2024                         | 1er framework React en entreprise | En déclin                     | En croissance (Remix)          |
 
-**Bénéfice Green IT :** Les React Server Components réduisent la quantité de JavaScript envoyée au navigateur. Pour une page galerie d'images, le composant de liste peut rester entièrement côté serveur, éliminant son bundle JS du payload client — typiquement entre 20 et 60 KB selon la complexité.
+**Bénéfice Green IT :** Les React Server Components réduisent la quantité de JavaScript envoyée au navigateur. Pour une page galerie d'images, le composant de liste peut rester entièrement côté serveur, éliminant son bundle JS du payload client - typiquement entre 20 et 60 KB selon la complexité.
 
 **Tendance 2025 :** Le Partial Prerendering (PPR), introduit expérimentalement dans les versions précédentes, permet de mélanger statique et dynamique sur une même page sans overhead. C'est la prochaine évolution majeure du modèle de rendu.
 
@@ -189,7 +189,7 @@ Tailwind CSS v4 abandonne le fichier `tailwind.config.js` au profit de directive
 **Contexte :** TanStack Query (anciennement React Query) est la solution de référence pour la gestion du **state serveur** côté client. La v5 (sortie en 2023) a refondu l'API pour plus de cohérence et introduit le support natif du streaming Suspense.
 
 **Positionnement dans l'architecture :**
-Dans un projet Next.js avec App Router, React Query ne remplace pas les Server Components — il les complète. Les RSC gèrent les requêtes serveur ; React Query gère le state côté client pour les interactions dynamiques (mutations, invalidations, pagination).
+Dans un projet Next.js avec App Router, React Query ne remplace pas les Server Components - il les complète. Les RSC gèrent les requêtes serveur ; React Query gère le state côté client pour les interactions dynamiques (mutations, invalidations, pagination).
 
 | Critère                  | React Query v5               | SWR (Vercel)        | Zustand + fetch | Redux Toolkit Query |
 | ------------------------ | ---------------------------- | ------------------- | --------------- | ------------------- |
@@ -250,7 +250,7 @@ NestJS maintient sa position de framework Node.js le plus adopté en entreprise 
 
 ---
 
-### 4.3 Bun — Runtime & Package Manager
+### 4.3 Bun - Runtime & Package Manager
 
 **Source principale :** Documentation officielle Bun (S1), benchmarks Bun (S6), npm Trends (S4)
 
@@ -271,7 +271,7 @@ NestJS maintient sa position de framework Node.js le plus adopté en entreprise 
 
 ---
 
-### 4.4 Pino — Logging structuré
+### 4.4 Pino - Logging structuré
 
 **Source principale :** Documentation officielle Pino (S1), benchmarks Pino (S1)
 
@@ -311,7 +311,7 @@ NestJS maintient sa position de framework Node.js le plus adopté en entreprise 
 
 ---
 
-### 5.2 Argon2 — Hachage des mots de passe
+### 5.2 Argon2 - Hachage des mots de passe
 
 **Source principale :** OWASP Password Storage Cheat Sheet (S7)
 
@@ -324,9 +324,9 @@ NestJS maintient sa position de framework Node.js le plus adopté en entreprise 
 | PBKDF2           | Faible         | Faible          | Très faible                    | 3e (compatibilité FIPS) |
 | SHA-256 (direct) | Très faible    | Très faible     | Nulle                          | **À proscrire**         |
 
-**Avantage d'Argon2 :** Sa nature **memory-hard** rend les attaques par dictionnaire sur GPU économiquement non viables — augmenter la puissance de calcul ne suffit pas, il faut aussi augmenter la RAM proportionnellement.
+**Avantage d'Argon2 :** Sa nature **memory-hard** rend les attaques par dictionnaire sur GPU économiquement non viables - augmenter la puissance de calcul ne suffit pas, il faut aussi augmenter la RAM proportionnellement.
 
-**Implémentation :** Package `argon2` (Node.js, bindings C natifs — pas de pure JS) avec les paramètres recommandés par OWASP : `memoryCost: 65536`, `timeCost: 3`, `parallelism: 4`.
+**Implémentation :** Package `argon2` (Node.js, bindings C natifs - pas de pure JS) avec les paramètres recommandés par OWASP : `memoryCost: 65536`, `timeCost: 3`, `parallelism: 4`.
 
 ---
 
@@ -342,7 +342,7 @@ NestJS maintient sa position de framework Node.js le plus adopté en entreprise 
 | OAC (Ownership-Based) | Guard `resource.userId === currentUser.id`     | Protéger les ressources d'un utilisateur       |
 | Partage public        | UUID non-devinable comme token d'accès         | Albums / photos partagés sans authentification |
 
-**OWASP Top 10 2021 — A01 (Broken Access Control) :** C'est la vulnérabilité la plus répandue. L'implémentation centralisée via des Guards NestJS réutilisables permet une couverture systématique sans répétition de logique métier.
+**OWASP Top 10 2021 - A01 (Broken Access Control) :** C'est la vulnérabilité la plus répandue. L'implémentation centralisée via des Guards NestJS réutilisables permet une couverture systématique sans répétition de logique métier.
 
 ---
 
@@ -370,7 +370,7 @@ NestJS maintient sa position de framework Node.js le plus adopté en entreprise 
 
 **Contexte :** PostgreSQL maintient sa position de SGBDR open-source le plus populaire en 2024-2025, dépassant MySQL dans plusieurs enquêtes (Stack Overflow Developer Survey 2024 : PostgreSQL #1 pour la quatrième année consécutive).
 
-**PostgreSQL 17 (sorti septembre 2024) — nouveautés pertinentes :**
+**PostgreSQL 17 (sorti septembre 2024) - nouveautés pertinentes :**
 
 - Améliorations des performances sur les requêtes avec sous-SELECT (jusqu'à 20x plus rapide sur certains patterns)
 - Amélioration de la gestion des connections pour les poolers (PgBouncer)
@@ -388,11 +388,11 @@ NestJS maintient sa position de framework Node.js le plus adopté en entreprise 
 
 ---
 
-### 6.2 PgBouncer — Connection Pooling
+### 6.2 PgBouncer - Connection Pooling
 
 **Source principale :** Documentation officielle PgBouncer (S1)
 
-**Contexte :** PostgreSQL alloue un processus par connexion active. Dans une architecture multi-réplicas (Docker Swarm), sans pooler, chaque réplica API maintient son propre pool de connexions — ce qui peut saturer les `max_connections` de PostgreSQL (défaut : 100).
+**Contexte :** PostgreSQL alloue un processus par connexion active. Dans une architecture multi-réplicas (Docker Swarm), sans pooler, chaque réplica API maintient son propre pool de connexions - ce qui peut saturer les `max_connections` de PostgreSQL (défaut : 100).
 
 **PgBouncer en mode transaction pooling :**
 Une connexion côté PostgreSQL est allouée uniquement pendant la durée d'une transaction, puis restituée au pool. Cette mutualisation permet à 10 réplicas ayant chacun 5 connexions actives de consommer seulement 10 à 15 connexions PostgreSQL réelles.
@@ -413,7 +413,7 @@ Une connexion côté PostgreSQL est allouée uniquement pendant la durée d'une 
 
 **Contexte :** Redis 7.x (LTS) maintient sa position de référence pour les caches in-memory et les stores de state distribués. La version Redis Stack intègre des modules additionnels (RedisJSON, RediSearch) mais introduit une licence non open-source (depuis Redis 7.4 avec la licence SSPL).
 
-**Décision sur la licence :** Le déploiement utilise l'image officielle `redis:alpine` (`stack.yml` / `docker-compose.yaml`). Point de vigilance : le tag n'est pas épinglé, alors que Redis 7.4–7.x est passé sous **SSPL** (non libre). Pour la reproductibilité **et** la conformité de licence, il est recommandé d'**épingler une version au modèle libre** — `redis:7.2-alpine` (BSD 3-Clause) ou Redis 8.x (retour à l'open source sous AGPLv3 en 2025).
+**Décision sur la licence :** Le déploiement utilise l'image officielle `redis:alpine` (`stack.yml` / `docker-compose.yaml`). Point de vigilance : le tag n'est pas épinglé, alors que Redis 7.4–7.x est passé sous **SSPL** (non libre). Pour la reproductibilité **et** la conformité de licence, il est recommandé d'**épingler une version au modèle libre** - `redis:7.2-alpine` (BSD 3-Clause) ou Redis 8.x (retour à l'open source sous AGPLv3 en 2025).
 
 | Critère                | Redis                                | Memcached         | Base de données (PostgreSQL) | In-memory Node.js |
 | ---------------------- | ------------------------------------ | ----------------- | ---------------------------- | ----------------- |
@@ -423,7 +423,7 @@ Une connexion côté PostgreSQL est allouée uniquement pendant la durée d'une 
 | Performance            | <1ms                                 | <1ms              | ~5-10ms                      | <0.1ms            |
 | Persistance            | Optionnelle (RDB/AOF)                | Non               | Oui                          | Non               |
 
-**Point clé pour l'architecture multi-réplicas :** Un cache in-memory Node.js local est incompatible avec plusieurs réplicas — chaque réplica aurait son propre état, créant des incohérences. Redis centralise le cache, ce qui en fait la seule solution viable avec Docker Swarm.
+**Point clé pour l'architecture multi-réplicas :** Un cache in-memory Node.js local est incompatible avec plusieurs réplicas - chaque réplica aurait son propre état, créant des incohérences. Redis centralise le cache, ce qui en fait la seule solution viable avec Docker Swarm.
 
 ---
 
@@ -448,7 +448,7 @@ Une connexion côté PostgreSQL est allouée uniquement pendant la durée d'une 
 
 ---
 
-### 7.2 Turborepo — Orchestration Monorepo
+### 7.2 Turborepo - Orchestration Monorepo
 
 **Source principale :** Documentation officielle Turborepo (S1), npm Trends (S4)
 
@@ -463,11 +463,11 @@ Une connexion côté PostgreSQL est allouée uniquement pendant la durée d'une 
 | Config minimale        | Oui (~30 lignes) | Non (verbose)   | Oui      | N/A                  |
 | `turbo prune` (Docker) | Oui              | Non             | Non      | Non                  |
 
-**Bénéfice clé — `turbo prune` :** Cette commande génère un sous-ensemble minimal du monorepo contenant uniquement les dépendances de l'app ciblée. Utilisée dans le Dockerfile multi-stage, elle réduit la taille des images Docker en excluant les workspaces non utilisés.
+**Bénéfice clé - `turbo prune` :** Cette commande génère un sous-ensemble minimal du monorepo contenant uniquement les dépendances de l'app ciblée. Utilisée dans le Dockerfile multi-stage, elle réduit la taille des images Docker en excluant les workspaces non utilisés.
 
 ---
 
-### 7.3 CI/CD — GitHub Actions & ghcr.io
+### 7.3 CI/CD - GitHub Actions & ghcr.io
 
 **Source principale :** Documentation GitHub Actions (S1), GitHub Security Best Practices (S7)
 
@@ -526,7 +526,7 @@ Push sur main
 
 ---
 
-## 9. Killer Feature — Exploration chromatique
+## 9. Killer Feature - Exploration chromatique
 
 ### 9.1 Analyse du besoin
 
@@ -544,14 +544,14 @@ Trois décisions technologiques structurent la feature : l'**espace colorimétri
 
 **Source principale :** Spécification CSS Color Module 4 du W3C (S1), article de référence OKLab de B. Ottosson (S14), documentation MDN (S1).
 
-| Critère                          | RGB            | HSL / HSV          | CIELAB (1976)        | **OKLab / OKLCH (2020)**   |
-| -------------------------------- | -------------- | ------------------ | -------------------- | -------------------------- |
-| Perceptuellement uniforme        | Non            | Non                | Approximativement    | **Oui**                    |
-| Distances ≈ différences perçues  | Non            | Non                | Correct (sauf bleus) | **Oui (corrige les bleus)**|
-| Coordonnées « rangeables »       | Non            | Teinte/saturation  | a/b cartésien        | **OKLCH : teinte/chroma/clarté** |
-| Moyennes fidèles (pas de ternes) | Non            | Non                | Oui                  | **Oui**                    |
-| Standard web                     | Oui            | Oui (`hsl()`)      | Via `lab()`          | **Oui (`oklch()`, CSS 4)** |
-| Complexité d'implémentation      | Nulle          | Faible             | Moyenne              | Moyenne (2 matrices)       |
+| Critère                          | RGB   | HSL / HSV         | CIELAB (1976)        | **OKLab / OKLCH (2020)**         |
+| -------------------------------- | ----- | ----------------- | -------------------- | -------------------------------- |
+| Perceptuellement uniforme        | Non   | Non               | Approximativement    | **Oui**                          |
+| Distances ≈ différences perçues  | Non   | Non               | Correct (sauf bleus) | **Oui (corrige les bleus)**      |
+| Coordonnées « rangeables »       | Non   | Teinte/saturation | a/b cartésien        | **OKLCH : teinte/chroma/clarté** |
+| Moyennes fidèles (pas de ternes) | Non   | Non               | Oui                  | **Oui**                          |
+| Standard web                     | Oui   | Oui (`hsl()`)     | Via `lab()`          | **Oui (`oklch()`, CSS 4)**       |
+| Complexité d'implémentation      | Nulle | Faible            | Moyenne              | Moyenne (2 matrices)             |
 
 **RGB / HSL** décrivent la couleur pour l'écran, pas pour l'œil : un même écart chiffré ne correspond pas à une même différence ressentie, et les moyennes de couleurs vives tirent vers le terne. Inadaptés à un regroupement ou à un classement perceptuels.
 
@@ -561,29 +561,29 @@ Trois décisions technologiques structurent la feature : l'**espace colorimétri
 
 ### 9.3 Choix de l'algorithme d'extraction de palette
 
-**Source principale :** Littérature classique sur la quantification de couleurs (median cut — Heckbert 1982 ; octree — Gervautz 1988) et le clustering (k-means / k-means++).
+**Source principale :** Littérature classique sur la quantification de couleurs (median cut - Heckbert 1982 ; octree - Gervautz 1988) et le clustering (k-means / k-means++).
 
-| Approche                | Qualité perceptuelle | Déterministe        | Coût        | Verdict                                  |
-| ----------------------- | -------------------- | ------------------- | ----------- | ---------------------------------------- |
-| Moyenne naïve (1×1 px)  | Très faible (terne)  | Oui                 | Trivial     | Rejetée (couleur grisâtre insignifiante) |
-| Histogramme de teinte   | Moyenne              | Oui                 | Faible      | POC v1 (1 seule couleur dominante)       |
-| Median cut / Octree     | Bonne                | Oui                 | Moyen       | Adapté, mais buckets figés en RGB        |
-| **k-means (en OKLab)**  | **Élevée**           | **Oui (init fixe)** | Moyen (50×50)| **Retenu**                              |
+| Approche               | Qualité perceptuelle | Déterministe        | Coût          | Verdict                                  |
+| ---------------------- | -------------------- | ------------------- | ------------- | ---------------------------------------- |
+| Moyenne naïve (1×1 px) | Très faible (terne)  | Oui                 | Trivial       | Rejetée (couleur grisâtre insignifiante) |
+| Histogramme de teinte  | Moyenne              | Oui                 | Faible        | POC v1 (1 seule couleur dominante)       |
+| Median cut / Octree    | Bonne                | Oui                 | Moyen         | Adapté, mais buckets figés en RGB        |
+| **k-means (en OKLab)** | **Élevée**           | **Oui (init fixe)** | Moyen (50×50) | **Retenu**                               |
 
-Le **k-means** regroupe les pixels en *k* couleurs représentatives par proximité perceptuelle (en OKLab). Son seul défaut — le non-déterminisme dû à l'initialisation aléatoire — est neutralisé par une **initialisation déterministe** (*farthest-first* à partir du pixel le plus central), ce qui rend la palette reproductible donc cacheable. Le calcul tourne sur une vignette réduite (50×50 = 2500 px) pour rester rapide.
+Le **k-means** regroupe les pixels en _k_ couleurs représentatives par proximité perceptuelle (en OKLab). Son seul défaut - le non-déterminisme dû à l'initialisation aléatoire - est neutralisé par une **initialisation déterministe** (_farthest-first_ à partir du pixel le plus central), ce qui rend la palette reproductible donc cacheable. Le calcul tourne sur une vignette réduite (50×50 = 2500 px) pour rester rapide.
 
 ### 9.4 Choix de la bibliothèque de traitement d'image (serveur)
 
 **Source principale :** Documentation officielle et benchmarks Sharp/libvips (S1, S5).
 
-| Critère              | **Sharp (libvips)** | Jimp (pur JS)   | ImageMagick / gm | node-canvas        |
-| -------------------- | ------------------- | --------------- | ---------------- | ------------------ |
-| Performance          | **Excellente**      | Faible          | Bonne            | Moyenne            |
-| Streaming / pipeline | **Oui (`clone()`)** | Non             | Partiel          | Non                |
-| Dépendance externe   | Binaire libvips embarqué | Aucune     | Binaire système  | Cairo natif        |
-| Déjà dans le projet  | **Oui (upload WebP)**| Non            | Non              | Non                |
+| Critère              | **Sharp (libvips)**      | Jimp (pur JS) | ImageMagick / gm | node-canvas |
+| -------------------- | ------------------------ | ------------- | ---------------- | ----------- |
+| Performance          | **Excellente**           | Faible        | Bonne            | Moyenne     |
+| Streaming / pipeline | **Oui (`clone()`)**      | Non           | Partiel          | Non         |
+| Dépendance externe   | Binaire libvips embarqué | Aucune        | Binaire système  | Cairo natif |
+| Déjà dans le projet  | **Oui (upload WebP)**    | Non           | Non              | Non         |
 
-**Sharp** est déjà au cœur du pipeline d'optimisation (redimensionnement + WebP). Son support du *streaming* permet de **forker le pipeline** via `clone()` : l'image n'est téléchargée de S3 **qu'une fois**, et l'extraction couleur (vignette 50×50 RAW) tourne **en parallèle** de la conversion WebP — aucun téléchargement ni surcoût mémoire supplémentaire.
+**Sharp** est déjà au cœur du pipeline d'optimisation (redimensionnement + WebP). Son support du _streaming_ permet de **forker le pipeline** via `clone()` : l'image n'est téléchargée de S3 **qu'une fois**, et l'extraction couleur (vignette 50×50 RAW) tourne **en parallèle** de la conversion WebP - aucun téléchargement ni surcoût mémoire supplémentaire.
 
 ### 9.5 Recommandation
 
@@ -603,7 +603,7 @@ Frontend (Next.js)
   └── React Query → GET /photos/colors  &  GET /photos/colors/:cellId (paginé)
 ```
 
-> Choix de conception clé : toute la **science des couleurs** vit dans un module **pur partagé** (`packages/shared/src/color.ts`), sans I/O — utilisable identiquement par l'API (classement à l'ingestion) et le web (rendu des pastilles). Une seule source de vérité.
+> Choix de conception clé : toute la **science des couleurs** vit dans un module **pur partagé** (`packages/shared/src/color.ts`), sans I/O - utilisable identiquement par l'API (classement à l'ingestion) et le web (rendu des pastilles). Une seule source de vérité.
 
 ---
 
@@ -611,23 +611,23 @@ Frontend (Next.js)
 
 ### 10.1 Synthèse des choix validés par la veille
 
-| Domaine              | Technologie retenue     | Statut veille     | Alternatives à surveiller        |
-| -------------------- | ----------------------- | ----------------- | -------------------------------- |
-| Frontend framework   | Next.js 16 (App Router) | Standard 2025     | Remix (croissance)               |
-| CSS                  | Tailwind CSS v4         | Standard 2025     | —                                |
-| Composants UI        | shadcn/ui + Radix       | Standard 2025     | —                                |
-| State serveur client | TanStack Query v5       | Standard 2025     | —                                |
-| Backend framework    | NestJS                  | Standard 2025     | Hono (à surveiller pour 2026)    |
-| ORM                  | TypeORM                 | Stable            | Drizzle ORM (évolution probable) |
-| Validation           | Zod                     | Standard 2025     | Valibot (plus léger)             |
-| Base de données      | PostgreSQL 15-alpine    | Stable (17 = montée possible) | PostgreSQL 17                |
-| Cache                | Redis (`redis:alpine`)  | Épingler une version (cf. §6.3) | redis:7.2-alpine BSD / 8.x AGPLv3 |
-| Hachage MDP          | Argon2id                | OWASP #1          | —                                |
-| Authentification     | JWT + HTTP-only cookies | OWASP recommended | Passkeys (FIDO2, futur)          |
-| Logs                 | Pino + Loki             | Standard          | OpenTelemetry (tendance)         |
-| Métriques            | Prometheus + Grafana    | Standard          | OpenTelemetry Collector          |
-| Orchestration        | Docker Swarm            | Projet solo       | Kubernetes (entreprise)          |
-| Killer feature       | OKLab + k-means + Sharp | Recommandé        | CIELAB / median-cut (alternatives écartées) |
+| Domaine              | Technologie retenue     | Statut veille                   | Alternatives à surveiller                   |
+| -------------------- | ----------------------- | ------------------------------- | ------------------------------------------- |
+| Frontend framework   | Next.js 16 (App Router) | Standard 2025                   | Remix (croissance)                          |
+| CSS                  | Tailwind CSS v4         | Standard 2025                   | -                                           |
+| Composants UI        | shadcn/ui + Radix       | Standard 2025                   | -                                           |
+| State serveur client | TanStack Query v5       | Standard 2025                   | -                                           |
+| Backend framework    | NestJS                  | Standard 2025                   | Hono (à surveiller pour 2026)               |
+| ORM                  | TypeORM                 | Stable                          | Drizzle ORM (évolution probable)            |
+| Validation           | Zod                     | Standard 2025                   | Valibot (plus léger)                        |
+| Base de données      | PostgreSQL 15-alpine    | Stable (17 = montée possible)   | PostgreSQL 17                               |
+| Cache                | Redis (`redis:alpine`)  | Épingler une version (cf. §6.3) | redis:7.2-alpine BSD / 8.x AGPLv3           |
+| Hachage MDP          | Argon2id                | OWASP #1                        | -                                           |
+| Authentification     | JWT + HTTP-only cookies | OWASP recommended               | Passkeys (FIDO2, futur)                     |
+| Logs                 | Pino + Loki             | Standard                        | OpenTelemetry (tendance)                    |
+| Métriques            | Prometheus + Grafana    | Standard                        | OpenTelemetry Collector                     |
+| Orchestration        | Docker Swarm            | Projet solo                     | Kubernetes (entreprise)                     |
+| Killer feature       | OKLab + k-means + Sharp | Recommandé                      | CIELAB / median-cut (alternatives écartées) |
 
 ### 10.2 Points de vigilance réglementaires
 
@@ -650,23 +650,23 @@ Frontend (Next.js)
 
 ## 11. Sources
 
-| Ref | Document                                                                                                                                                                                       | Type                     | URL / Localisation                                                                                                                                                 |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Ref | Document                                                                                                                                                                                                      | Type                     | URL / Localisation                                                                                                                                                                                                 |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | S1  | Documentations officielles des technologies (NestJS, Next.js, React, PostgreSQL, Redis, Docker, Prometheus, Grafana, Loki, Turborepo, Bun, Radix UI, TanStack, Zod, Pino, TypeORM, Sharp, CSS Color Module 4) | Primaire                 | docs.nestjs.com, nextjs.org/docs, react.dev, postgresql.org/docs, redis.io/docs, docs.docker.com, prometheus.io/docs, grafana.com/docs, turborepo.dev, bun.sh/docs, sharp.pixelplumbing.com, w3.org/TR/css-color-4 |
-| S2  | State of JavaScript 2024                                                                                                                                                                       | Enquête communautaire    | stateofjs.com/2024                                                                                                                                                 |
-| S3  | Stack Overflow Developer Survey 2024                                                                                                                                                           | Enquête communautaire    | survey.stackoverflow.co/2024                                                                                                                                       |
-| S4  | npm Trends — comparatifs de téléchargements                                                                                                                                                    | Statistiques             | npmtrends.com                                                                                                                                                      |
-| S5  | GitHub — dépôts officiels (stars, issues, releases)                                                                                                                                            | Indicateur communautaire | github.com                                                                                                                                                         |
-| S6  | TechEmpower Framework Benchmarks Round 22                                                                                                                                                      | Benchmark indépendant    | techempower.com/benchmarks                                                                                                                                         |
-| S7  | OWASP Top 10 2021, OWASP API Security Top 10 2023, OWASP Password Storage Cheat Sheet, OWASP Authentication Cheat Sheet                                                                        | Standard sécurité        | owasp.org                                                                                                                                                          |
-| S8  | RFC 7519 — JSON Web Token (JWT)                                                                                                                                                                | Standard IETF            | datatracker.ietf.org/doc/html/rfc7519                                                                                                                              |
-| S9  | Règlement (UE) 2016/679 du 27 avril 2016 — RGPD                                                                                                                                                | Texte législatif EU      | eur-lex.europa.eu                                                                                                                                                  |
-| S10 | Règlement (UE) 2024/1689 du 13 juin 2024 — IA Act                                                                                                                                              | Texte législatif EU      | eur-lex.europa.eu                                                                                                                                                  |
-| S11 | Clarifying Lawful Overseas Use of Data Act (H.R.4943, 2018)                                                                                                                                    | Loi fédérale US          | congress.gov                                                                                                                                                       |
-| S12 | Référentiel Général d'Amélioration de l'Accessibilité v4.1 (RGAA)                                                                                                                              | Standard national        | accessibilite.numerique.gouv.fr                                                                                                                                    |
-| S13 | Tests pratiques et expérimentations assistées par IA (Claude Sonnet, GitHub Copilot)                                                                                                           | Expérimentation          | N/A                                                                                                                                                                |
-| S14 | Björn Ottosson — « A perceptual color space for image processing » (OKLab, 2020)                                                                                                               | Article de référence     | bottosson.github.io/posts/oklab                                                                                                                                    |
+| S2  | State of JavaScript 2024                                                                                                                                                                                      | Enquête communautaire    | stateofjs.com/2024                                                                                                                                                                                                 |
+| S3  | Stack Overflow Developer Survey 2024                                                                                                                                                                          | Enquête communautaire    | survey.stackoverflow.co/2024                                                                                                                                                                                       |
+| S4  | npm Trends - comparatifs de téléchargements                                                                                                                                                                   | Statistiques             | npmtrends.com                                                                                                                                                                                                      |
+| S5  | GitHub - dépôts officiels (stars, issues, releases)                                                                                                                                                           | Indicateur communautaire | github.com                                                                                                                                                                                                         |
+| S6  | TechEmpower Framework Benchmarks Round 22                                                                                                                                                                     | Benchmark indépendant    | techempower.com/benchmarks                                                                                                                                                                                         |
+| S7  | OWASP Top 10 2021, OWASP API Security Top 10 2023, OWASP Password Storage Cheat Sheet, OWASP Authentication Cheat Sheet                                                                                       | Standard sécurité        | owasp.org                                                                                                                                                                                                          |
+| S8  | RFC 7519 - JSON Web Token (JWT)                                                                                                                                                                               | Standard IETF            | datatracker.ietf.org/doc/html/rfc7519                                                                                                                                                                              |
+| S9  | Règlement (UE) 2016/679 du 27 avril 2016 - RGPD                                                                                                                                                               | Texte législatif EU      | eur-lex.europa.eu                                                                                                                                                                                                  |
+| S10 | Règlement (UE) 2024/1689 du 13 juin 2024 - IA Act                                                                                                                                                             | Texte législatif EU      | eur-lex.europa.eu                                                                                                                                                                                                  |
+| S11 | Clarifying Lawful Overseas Use of Data Act (H.R.4943, 2018)                                                                                                                                                   | Loi fédérale US          | congress.gov                                                                                                                                                                                                       |
+| S12 | Référentiel Général d'Amélioration de l'Accessibilité v4.1 (RGAA)                                                                                                                                             | Standard national        | accessibilite.numerique.gouv.fr                                                                                                                                                                                    |
+| S13 | Tests pratiques et expérimentations assistées par IA (Claude Sonnet, GitHub Copilot)                                                                                                                          | Expérimentation          | N/A                                                                                                                                                                                                                |
+| S14 | Björn Ottosson - « A perceptual color space for image processing » (OKLab, 2020)                                                                                                                              | Article de référence     | bottosson.github.io/posts/oklab                                                                                                                                                                                    |
 
 ---
 
-_Dossier rédigé dans le cadre du passage de la certification Expert en Informatique et Systèmes d'Information — 3W Academy — Bloc de Compétences 1 (BC1)._
+_Dossier rédigé dans le cadre du passage de la certification Expert en Informatique et Systèmes d'Information - 3W Academy - Bloc de Compétences 1 (BC1)._

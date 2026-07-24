@@ -1,4 +1,4 @@
-# Note dev — Interfaces NestJS & injection de dépendances
+# Note dev - Interfaces NestJS & injection de dépendances
 
 ## Le principe
 
@@ -8,7 +8,7 @@ L'intérêt principal ici : pouvoir swapper l'implémentation sans toucher au co
 
 ---
 
-## IStorage — Module Storage
+## IStorage - Module Storage
 
 ### 1. L'interface
 
@@ -27,59 +27,59 @@ export interface IStorage {
 ```typescript
 // apps/api/src/storage/s3.service.ts
 
-import { Injectable } from '@nestjs/common';
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { IStorage } from './interfaces/storage.interface';
+import { Injectable } from "@nestjs/common";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { IStorage } from "./interfaces/storage.interface";
 
 @Injectable()
 export class S3Service implements IStorage {
-  private readonly client = new S3Client({ region: 'eu-west-3' });
+  private readonly client = new S3Client({ region: "eu-west-3" });
   private readonly bucket = process.env.AWS_S3_BUCKET;
 
   async upload(file: Buffer, key: string, mimetype: string): Promise<string> {
-    await this.client.send(new PutObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
-      Body: file,
-      ContentType: mimetype,
-    }));
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: file,
+        ContentType: mimetype,
+      }),
+    );
     return `https://${process.env.CLOUDFRONT_DOMAIN}/${key}`;
   }
 
   async delete(key: string): Promise<void> {
-    await this.client.send(new DeleteObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
-    }));
+    await this.client.send(
+      new DeleteObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      }),
+    );
   }
 
   async getSignedUrl(key: string, expiresIn = 3600): Promise<string> {
-    return getSignedUrl(
-      this.client,
-      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
-      { expiresIn }
-    );
+    return getSignedUrl(this.client, new GetObjectCommand({ Bucket: this.bucket, Key: key }), { expiresIn });
   }
 }
 ```
 
-### 3. Le module — on déclare qui joue le rôle de IStorage
+### 3. Le module - on déclare qui joue le rôle de IStorage
 
 ```typescript
 // apps/api/src/storage/storage.module.ts
 
-import { Module } from '@nestjs/common';
-import { S3Service } from './s3.service';
+import { Module } from "@nestjs/common";
+import { S3Service } from "./s3.service";
 
 @Module({
   providers: [
     {
-      provide: 'IStorage',
+      provide: "IStorage",
       useClass: S3Service,
     },
   ],
-  exports: ['IStorage'],
+  exports: ["IStorage"],
 })
 export class StorageModule {}
 ```
@@ -89,14 +89,12 @@ export class StorageModule {}
 ```typescript
 // apps/api/src/photos/photos.service.ts
 
-import { Injectable, Inject } from '@nestjs/common';
-import { IStorage } from '../storage/interfaces/storage.interface';
+import { Injectable, Inject } from "@nestjs/common";
+import { IStorage } from "../storage/interfaces/storage.interface";
 
 @Injectable()
 export class PhotosService {
-  constructor(
-    @Inject('IStorage') private readonly storage: IStorage,
-  ) {}
+  constructor(@Inject("IStorage") private readonly storage: IStorage) {}
 
   async uploadPhoto(file: Express.Multer.File, userId: string) {
     const key = `photos/${userId}/${Date.now()}-${file.originalname}`;
@@ -113,7 +111,7 @@ export class PhotosService {
 
 ---
 
-## Alternative simple — injecter S3Service directement
+## Alternative simple - injecter S3Service directement
 
 Si tu ne veux pas gérer l'interface et le token, tu peux injecter `S3Service` directement. C'est plus simple et suffisant si tu ne prévois pas de changer de provider.
 
@@ -135,16 +133,18 @@ export class StorageModule {}
 ```
 
 **Quand choisir l'interface :**
+
 - Tu veux pouvoir mocker le storage dans les tests unitaires
 - Tu envisages de changer de provider (S3 → R2, S3 → local en dev)
 
 **Quand injecter directement :**
+
 - Tu es sûr de rester sur S3
 - Tu veux aller vite
 
 ---
 
-## IPhotoService — si AlbumModule en a besoin
+## IPhotoService - si AlbumModule en a besoin
 
 Même principe si tu veux que `AlbumModule` dépende d'un contrat plutôt que directement de `PhotosService` :
 
@@ -163,11 +163,11 @@ export interface IPhotoService {
   providers: [
     PhotosService,
     {
-      provide: 'IPhotoService',
+      provide: "IPhotoService",
       useClass: PhotosService,
     },
   ],
-  exports: ['IPhotoService'],
+  exports: ["IPhotoService"],
 })
 export class PhotosModule {}
 ```
@@ -176,10 +176,8 @@ export class PhotosModule {}
 // albums.service.ts
 @Injectable()
 export class AlbumsService {
-  constructor(
-    @Inject('IPhotoService') private readonly photoService: IPhotoService,
-  ) {}
+  constructor(@Inject("IPhotoService") private readonly photoService: IPhotoService) {}
 }
 ```
 
-> Si `AlbumsService` n'a besoin que de `PhotosService` et que tu ne prévois pas d'alternative, injecte directement `PhotosService` — c'est plus pragmatique.
+> Si `AlbumsService` n'a besoin que de `PhotosService` et que tu ne prévois pas d'alternative, injecte directement `PhotosService` - c'est plus pragmatique.

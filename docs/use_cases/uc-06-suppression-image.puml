@@ -1,6 +1,6 @@
-@startuml UC-06 — Suppression d'une image
+@startuml UC-06 - Suppression d'une image
 
-title UC-06 — Suppression d'une image
+title UC-06 - Suppression d'une image
 
 left to right direction
 
@@ -25,7 +25,7 @@ skinparam note {
 
 actor "Utilisateur\nauthentifié" as User
 
-rectangle "Kroma — Gestion des photos" {
+rectangle "Kroma - Gestion des photos" {
 
   usecase "Supprimer une image" as UC_Delete
 

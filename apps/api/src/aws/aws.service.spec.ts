@@ -153,14 +153,14 @@ describe('AwsService', () => {
     });
   });
 
-  describe('createMultipartUpload — fallback extension', () => {
+  describe('createMultipartUpload - fallback extension', () => {
     it('retourne une clé avec extension .bin pour un content-type inconnu', async () => {
       const result = await service.createMultipartUpload('video/mp4');
       expect(result.key).toMatch(/\.bin$/);
     });
   });
 
-  describe('createMultipartUpload — UploadId absent', () => {
+  describe('createMultipartUpload - UploadId absent', () => {
     it("lève une erreur si S3 ne retourne pas d'UploadId", async () => {
       const { S3Client } = require('@aws-sdk/client-s3');
       S3Client.mockImplementationOnce(() => ({
@@ -176,7 +176,7 @@ describe('AwsService', () => {
     });
   });
 
-  describe('listParts — Parts absent dans la réponse S3', () => {
+  describe('listParts - Parts absent dans la réponse S3', () => {
     it('retourne un tableau vide si S3 ne renvoie pas de Parts', async () => {
       const { S3Client } = require('@aws-sdk/client-s3');
       S3Client.mockImplementationOnce(() => ({

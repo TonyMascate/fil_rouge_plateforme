@@ -1,4 +1,4 @@
-# ADR-014 — Logging structuré : Pino + nestjs-pino
+# ADR-014 - Logging structuré : Pino + nestjs-pino
 
 - **Statut :** Accepté
 - **Date :** 2025-03-13
@@ -14,14 +14,14 @@ Mon API NestJS doit produire des logs exploitables pour le débogage et l'observ
 
 ## Options considérées
 
-| Critère                        | Pino (nestjs-pino)            | Winston                       | Bunyan                        | console.log natif             |
-|--------------------------------|-------------------------------|-------------------------------|-------------------------------|-------------------------------|
-| Format JSON natif              | Oui                           | Oui (avec transports)         | Oui                           | Non                           |
-| Performance                    | Excellente (la plus rapide)   | Bonne                         | Bonne                         | Très bonne                    |
-| Logs HTTP automatiques         | Oui (pino-http)               | Via morgan                    | Manuelle                      | Manuelle                      |
-| Intégration NestJS             | Via `nestjs-pino` (officieux) | Via logger custom             | Via logger custom             | Native (mais pas structuré)   |
-| Compatibilité Loki             | Excellente (JSON natif)       | Bonne                         | Bonne                         | Mauvaise                      |
-| Pretty print développement     | Via `pino-pretty`             | Oui (colorize)                | Via `bunyan` CLI              | Natif                         |
+| Critère                    | Pino (nestjs-pino)            | Winston               | Bunyan            | console.log natif           |
+| -------------------------- | ----------------------------- | --------------------- | ----------------- | --------------------------- |
+| Format JSON natif          | Oui                           | Oui (avec transports) | Oui               | Non                         |
+| Performance                | Excellente (la plus rapide)   | Bonne                 | Bonne             | Très bonne                  |
+| Logs HTTP automatiques     | Oui (pino-http)               | Via morgan            | Manuelle          | Manuelle                    |
+| Intégration NestJS         | Via `nestjs-pino` (officieux) | Via logger custom     | Via logger custom | Native (mais pas structuré) |
+| Compatibilité Loki         | Excellente (JSON natif)       | Bonne                 | Bonne             | Mauvaise                    |
+| Pretty print développement | Via `pino-pretty`             | Oui (colorize)        | Via `bunyan` CLI  | Natif                       |
 
 ---
 
@@ -37,7 +37,7 @@ Mon API NestJS doit produire des logs exploitables pour le débogage et l'observ
 
 2. **Logs HTTP désactivés volontairement (`autoLogging: false`) :** Les logs automatiques par requête HTTP sont désactivés pour éviter le bruit dans les logs (chaque requête loggée = volume important, peu utile en production). Seuls les événements métier explicitement loggés via `this.logger.log()` sont émis : connexion d'un utilisateur, traitement d'une photo, erreurs. Les sérialiseurs sont configurés pour ne logguer que `method`, `url` et `statusCode` si `autoLogging` est réactivé.
 
-3. **Format JSON en production :** Les logs JSON produits par Pino sont directement parsables par Promtail (agent de collecte Loki). Loki indexe les labels extraits du JSON (service, level) — la corrélation avec les métriques Prometheus est facilitée (voir ADR-005).
+3. **Format JSON en production :** Les logs JSON produits par Pino sont directement parsables par Promtail (agent de collecte Loki). Loki indexe les labels extraits du JSON (service, level) - la corrélation avec les métriques Prometheus est facilitée (voir ADR-005).
 
 4. **`pino-pretty` en développement :** En local, les logs JSON bruts sont peu lisibles. `pino-pretty` les formate de façon colorée et humainement lisible, sans impacter le comportement en production.
 
@@ -50,12 +50,14 @@ Mon API NestJS doit produire des logs exploitables pour le débogage et l'observ
 ## Conséquences
 
 **Positives :**
+
 - Logs JSON exploitables directement par Loki (via Promtail) sans parsing supplémentaire.
 - Impact minimal sur les performances de l'API.
 - Corrélation des logs par requête via `reqId`.
 - Développement confortable avec `pino-pretty`.
 
 **Négatives / Risques :**
-- `nestjs-pino` est un package communautaire (non officiel NestJS) — dépendance au mainteneur.
-- Les logs JSON bruts en production nécessitent un outil de visualisation (Grafana/Loki) pour être exploitables — pas de lecture directe dans le terminal en prod.
+
+- `nestjs-pino` est un package communautaire (non officiel NestJS) - dépendance au mainteneur.
+- Les logs JSON bruts en production nécessitent un outil de visualisation (Grafana/Loki) pour être exploitables - pas de lecture directe dans le terminal en prod.
 - La configuration des sérialiseurs (pour masquer les données sensibles comme les mots de passe dans les logs) est manuelle.

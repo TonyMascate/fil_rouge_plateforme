@@ -1,6 +1,6 @@
 # Cartographie du Système d'Information
 
-**Projet :** Fil Rouge — Plateforme de gestion de photos et albums
+**Projet :** Fil Rouge - Plateforme de gestion de photos et albums
 **Auteur :** Tony Mascate
 **Date :** Janvier 2026
 
@@ -14,8 +14,8 @@ l'analyse de risques et l'accessibilité.
 
 1. [Niveau métier](#1-niveau-métier)
 2. [Niveau fonctionnel](#2-niveau-fonctionnel)
-3. [Niveau applicatif — Diagramme de composants](#3-niveau-applicatif--diagramme-de-composants)
-4. [Niveau infrastructure — Diagramme de déploiement](#4-niveau-infrastructure--diagramme-de-déploiement)
+3. [Niveau applicatif - Diagramme de composants](#3-niveau-applicatif--diagramme-de-composants)
+4. [Niveau infrastructure - Diagramme de déploiement](#4-niveau-infrastructure--diagramme-de-déploiement)
 5. [Analyse de risques](#5-analyse-de-risques)
 6. [Accessibilité](#6-accessibilité)
 
@@ -24,7 +24,7 @@ l'analyse de risques et l'accessibilité.
 ## 1. Niveau métier
 
 > **Objectif :** représenter les **acteurs** et les **processus métier** du système, indépendamment de
-> toute technologie — _qui_ fait _quoi_.
+> toute technologie - _qui_ fait _quoi_.
 
 ### 1.1 Acteurs
 
@@ -33,7 +33,7 @@ l'analyse de risques et l'accessibilité.
 | **Visiteur**       | Internaute non authentifié : peut créer un compte, se connecter, ou consulter une ressource partagée via un lien public.                                                                                                 |
 | **Utilisateur**    | Compte authentifié : gère ses photos, ses albums, ses partages et explore sa bibliothèque par la couleur.                                                                                                                |
 | **Membre d'album** | Utilisateur avec qui un album a été partagé (album collaboratif) : consulte l'album partagé.                                                                                                                             |
-| **Administrateur** | Rôle `ADMIN` : supervision de la plateforme via les tableaux de bord Grafana. Dans l'API, le rôle ne protège aujourd'hui qu'un endpoint de contrôle — il n'ouvre **aucun** accès élargi aux ressources des utilisateurs. |
+| **Administrateur** | Rôle `ADMIN` : supervision de la plateforme via les tableaux de bord Grafana. Dans l'API, le rôle ne protège aujourd'hui qu'un endpoint de contrôle - il n'ouvre **aucun** accès élargi aux ressources des utilisateurs. |
 
 ### 1.2 Processus métier
 
@@ -51,7 +51,7 @@ flowchart TD
         P4["Explorer par la couleur<br/>(exploration chromatique)"]
         P5["Partager<br/>(lien public, album collaboratif)"]
         P6["Superviser la plateforme<br/>(tableaux de bord Grafana)"]
-        P7["Supprimer son compte<br/>(RGPD — droit à l'effacement)"]
+        P7["Supprimer son compte<br/>(RGPD - droit à l'effacement)"]
     end
 
     V --> P1
@@ -71,7 +71,7 @@ flowchart TD
 
 > **Lecture :** le trait plein correspond aux processus outillés dans la plateforme. Le trait
 > **pointillé** marque un processus **cible, non implémenté à ce jour** : la suppression de compte
-> (droit à l'effacement RGPD) n'expose aucune route côté API — seules les photos, albums et
+> (droit à l'effacement RGPD) n'expose aucune route côté API - seules les photos, albums et
 > adhésions d'album sont supprimables. C'est l'écart de conformité principal identifié sur le projet.
 
 Ces processus se déclinent en cas d'utilisation détaillés (diagrammes UML), disponibles dans
@@ -114,107 +114,23 @@ flowchart LR
 
 ---
 
-## 3. Niveau applicatif — Diagramme de composants
+## 3. Niveau applicatif - Diagramme de composants
 
 > **Objectif :** représenter les **composants logiciels** qui réalisent les blocs fonctionnels et leurs interactions.
 
-**Diagramme 1 — Architecture applicative**
+**Diagramme 1a - Composants du Frontend (Next.js)**
 
-```mermaid
-graph LR
-  Browser["Navigateur"]
+![alt text](image.png)
 
-  subgraph Frontend["Frontend — Next.js 16"]
-    Proxy["Proxy (middleware)\nvérif. JWT + refresh"]
-    AuthUI["UI Auth"]
-    GalleryUI["UI Galerie"]
-    AlbumUI["UI Albums"]
-    ExploreUI["UI Exploration chromatique"]
-    ShareUI["UI Partage public"]
-  end
+**Diagramme 1b - Composants de l'API (NestJS)**
 
-  subgraph API["API — NestJS"]
-    AuthMod["Auth\n(JWT + RBAC/ownership)"]
-    UserMod["Users"]
-    PhotoMod["Photos\n(upload, quota, couleurs)"]
-    AlbumMod["Albums\n(+ membres)"]
-    ShareMod["Partage public\n(lien révocable)"]
-    AwsMod["AWS\n(S3 + CloudFront)"]
-    Worker["Worker BullMQ\n(Sharp : WebP + couleur)"]
-  end
+> **Diagramme source (PlantUML) : [`composants-api.puml`](composants-api.puml)**
 
-  subgraph Data["Données"]
-    PgBouncer["PgBouncer"]
-    PostgreSQL[("PostgreSQL")]
-    Redis[("Redis\nfile BullMQ · session upload · cache atlas")]
-  end
+![alt text](image-1.png)
 
-  subgraph AWS["AWS"]
-    S3[("S3")]
-    CloudFront["CloudFront"]
-  end
+**Diagramme 2 - Observabilité**
 
-  %% Le navigateur consomme l'API en direct (React Query, sous-domaine api.)
-  Browser -->|"HTTPS — pages"| Frontend
-  Browser -->|"REST"| AuthMod
-  Browser -->|"REST"| UserMod
-  Browser -->|"REST"| PhotoMod
-  Browser -->|"REST"| AlbumMod
-  Browser -->|"CDN — URL signée"| CloudFront
-
-  %% Le serveur Next.js n'appelle l'API que sur ces deux flux
-  Proxy -->|"refresh de session"| AuthMod
-  ShareUI -->|"rendu serveur du lien"| ShareMod
-
-  AuthMod -->|"cookie JWT"| Browser
-  AuthMod -->|"inscription"| UserMod
-  AuthMod --> PgBouncer
-  UserMod --> PgBouncer
-  PhotoMod --> PgBouncer
-  PhotoMod --> AwsMod
-  PhotoMod -->|"session upload · cache atlas"| Redis
-  PhotoMod -->|"enqueue"| Redis
-  AlbumMod --> PgBouncer
-  AlbumMod --> AwsMod
-  ShareMod --> PgBouncer
-  ShareMod --> AwsMod
-
-  Redis -->|"dequeue"| Worker
-  Worker --> AwsMod
-  Worker -->|"statut, palette, cellules"| PgBouncer
-  Worker -->|"invalide le cache atlas"| Redis
-
-  AwsMod -->|"AWS SDK"| S3
-  S3 --- CloudFront
-  PgBouncer --> PostgreSQL
-```
-
-**Diagramme 2 — Observabilité**
-
-```mermaid
-graph LR
-  subgraph App["Conteneurs du VPS"]
-    API["API NestJS"]
-    Autres["Autres conteneurs\n(frontend, postgres, redis, caddy,\nstack observabilité…)"]
-  end
-
-  subgraph Obs["Stack observabilité"]
-    Promtail["Promtail\n(socket Docker :\ntous les conteneurs)"]
-    cAdvisor["cAdvisor"]
-    Prometheus["Prometheus"]
-    Loki["Loki"]
-    Grafana["Grafana"]
-  end
-
-  API -->|"logs JSON (Pino)"| Promtail
-  Autres -->|"logs stdout"| Promtail
-  App -.->|"CPU / RAM / réseau des conteneurs"| cAdvisor
-  Promtail -->|"push"| Loki
-  Prometheus -->|"scrape métriques applicatives"| API
-  Prometheus -->|"scrape métriques conteneurs"| cAdvisor
-  Loki --> Grafana
-  Prometheus --> Grafana
-```
+![alt text](image-2.png)
 
 ### Interactions clés
 
@@ -235,9 +151,9 @@ graph LR
 
 ---
 
-## 4. Niveau infrastructure — Diagramme de déploiement
+## 4. Niveau infrastructure - Diagramme de déploiement
 
-> **Objectif :** représenter l'infrastructure physique — où tourne quoi et comment ça communique.
+> **Objectif :** représenter l'infrastructure physique - où tourne quoi et comment ça communique.
 
 ```mermaid
 graph TB
@@ -245,13 +161,13 @@ graph TB
     DevMachine["Machine locale\n(Linux dual-boot)"]
   end
 
-  subgraph CICD["CI/CD — GitHub"]
+  subgraph CICD["CI/CD - GitHub"]
     GHActions["GitHub Actions\n(build, test, push)"]
     GHCR["ghcr.io\n(Container Registry)"]
     GHActions -->|"docker push"| GHCR
   end
 
-  subgraph VPS["VPS — Docker Swarm (Linux)"]
+  subgraph VPS["VPS - Docker Swarm (Linux)"]
     direction TB
 
     subgraph FrontendSvc["Service : frontend (2 réplicas)"]
@@ -321,22 +237,22 @@ graph TB
 | Service            | Port exposé | Protocole | Accessible depuis                           |
 | ------------------ | ----------- | --------- | ------------------------------------------- |
 | Caddy              | :80 / :443  | HTTP(S)   | Internet (seuls ports publiés par le stack) |
-| Next.js (frontend) | :3000       | HTTP      | Caddy — `fil-rouge-plateforme.com`          |
-| NestJS (API)       | :3000       | HTTP      | Caddy — `api.fil-rouge-plateforme.com`      |
+| Next.js (frontend) | :3000       | HTTP      | Caddy - `fil-rouge-plateforme.com`          |
+| NestJS (API)       | :3000       | HTTP      | Caddy - `api.fil-rouge-plateforme.com`      |
 | PgBouncer          | :5432       | TCP       | Réseau interne Swarm                        |
 | PostgreSQL         | :5432       | TCP       | PgBouncer uniquement                        |
 | Redis              | :6379       | TCP       | Réseau interne Swarm                        |
 | cAdvisor           | :8080       | HTTP      | Prometheus uniquement                       |
-| Prometheus         | :9090       | HTTP      | Caddy — `prom.fil-rouge-plateforme.com`     |
-| Grafana            | :3000       | HTTP      | Caddy — `monitor.fil-rouge-plateforme.com`  |
+| Prometheus         | :9090       | HTTP      | Caddy - `prom.fil-rouge-plateforme.com`     |
+| Grafana            | :3000       | HTTP      | Caddy - `monitor.fil-rouge-plateforme.com`  |
 | Loki               | :3100       | HTTP      | Promtail uniquement                         |
 
 ### Points critiques identifiés
 
 | Point                  | Description                         | Risque                                              |
 | ---------------------- | ----------------------------------- | --------------------------------------------------- |
-| PostgreSQL single node | Pas de réplication lecture/écriture | SPOF — panne = indisponibilité BDD                  |
-| Redis single node      | Pas de cluster Redis                | SPOF — panne = cache perdu                          |
+| PostgreSQL single node | Pas de réplication lecture/écriture | SPOF - panne = indisponibilité BDD                  |
+| Redis single node      | Pas de cluster Redis                | SPOF - panne = cache perdu                          |
 | VPS unique             | Un seul serveur physique            | Indisponibilité totale si panne matérielle          |
 | S3 / CloudFront (AWS)  | Service US soumis au Cloud Act      | Données photos exposables aux autorités américaines |
 
@@ -344,13 +260,13 @@ graph TB
 
 ## 5. Analyse de risques
 
-> **Méthode :** EBIOS Risk Manager (ANSSI) — version simplifiée (Ateliers 1, 2, 3 et 5)
+> **Méthode :** EBIOS Risk Manager (ANSSI) - version simplifiée (Ateliers 1, 2, 3 et 5)
 > Probabilité : 1 (faible) → 3 (élevée) · Impact : 1 (faible) → 3 (critique)
 > Score brut = Probabilité × Impact · Seuils : 1-2 🟢 · 3-4 🟡 · 6-9 🔴
 
 ---
 
-### Atelier 1 — Cadrage et valeurs métier
+### Atelier 1 - Cadrage et valeurs métier
 
 #### Valeurs essentielles
 
@@ -374,7 +290,7 @@ graph TB
 
 ---
 
-### Atelier 2 — Sources de risque
+### Atelier 2 - Sources de risque
 
 | Source de risque             | Motivation                            | Capacité | Type de menace                           |
 | ---------------------------- | ------------------------------------- | -------- | ---------------------------------------- |
@@ -386,7 +302,7 @@ graph TB
 
 ---
 
-### Atelier 3 — Scénarios de risque
+### Atelier 3 - Scénarios de risque
 
 > Probabilité et impact évalués **avant mitigation** · Score résiduel **après mitigation**
 > Échelle : 1 (faible) → 3 (élevé) · Score = Probabilité × Impact
@@ -400,7 +316,7 @@ graph TB
 | R5  | VPS           | Indisponibilité totale (panne matérielle)  | Panne matérielle       |   2   |   3    |   **6**    | Rolling updates Swarm, snapshot VPS régulier, supervision Grafana (métriques)         |     **3**      |
 | R6  | Redis         | Indisponibilité (SPOF)                     | Panne matérielle       |   2   |   2    |   **4**    | Restart policy Swarm, graceful degradation (cache miss → DB)                          |     **2**      |
 | R7  | API NestJS    | Injection SQL                              | Hacker externe         |   1   |   3    |   **3**    | TypeORM (requêtes paramétrées), validation Zod sur toutes les entrées                 |     **1**      |
-| R8  | S3 / AWS      | Cloud Act — accès données par autorités US | Fournisseur défaillant |   1   |   2    |   **2**    | Région EU (eu-west-3 Paris), aucune donnée personnelle stockée sur S3                 |     **1**      |
+| R8  | S3 / AWS      | Cloud Act - accès données par autorités US | Fournisseur défaillant |   1   |   2    |   **2**    | Région EU (eu-west-3 Paris), aucune donnée personnelle stockée sur S3                 |     **1**      |
 | R9  | Logs (Loki)   | Fuite de données sensibles dans les logs   | Erreur humaine         |   1   |   2    |   **2**    | Pino sans MDP ni token ; email loggé uniquement à la connexion (audit intentionnel)   |     **1**      |
 | R10 | Images Docker | Supply chain attack                        | Hacker externe         |   1   |   2    |   **2**    | Build CI contrôlé, ghcr.io privé, GITHUB_TOKEN éphémère                               |     **1**      |
 
@@ -412,9 +328,9 @@ sont placés selon leur cotation brute. La couleur de la case indique la critici
 
 | Probabilité ↓ \ Impact → | Faible (1) | Moyen (2)                                                            | Critique (3)                                                             |
 | ------------------------ | ---------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| **Élevée (3)**           | 🟢 _(3)_ — | 🔴 _(6)_ —                                                           | 🔴 _(9)_ **R1** Brute force · **R2** Panne PostgreSQL                    |
-| **Moyenne (2)**          | 🟢 _(2)_ — | 🟡 _(4)_ **R6** Redis SPOF                                           | 🔴 _(6)_ **R3** Accès photos · **R4** Vol token XSS · **R5** Indispo VPS |
-| **Faible (1)**           | 🟢 _(1)_ — | 🟢 _(2)_ **R8** Cloud Act · **R9** Fuite logs · **R10** Supply chain | 🟡 _(3)_ **R7** Injection SQL                                            |
+| **Élevée (3)**           | 🟢 _(3)_ - | 🔴 _(6)_ -                                                           | 🔴 _(9)_ **R1** Brute force · **R2** Panne PostgreSQL                    |
+| **Moyenne (2)**          | 🟢 _(2)_ - | 🟡 _(4)_ **R6** Redis SPOF                                           | 🔴 _(6)_ **R3** Accès photos · **R4** Vol token XSS · **R5** Indispo VPS |
+| **Faible (1)**           | 🟢 _(1)_ - | 🟢 _(2)_ **R8** Cloud Act · **R9** Fuite logs · **R10** Supply chain | 🟡 _(3)_ **R7** Injection SQL                                            |
 
 > Lecture : les risques **R1 à R5** (haut-droite) sont les plus critiques avant mitigation et
 > concentrent l'effort de traitement (voir le tableau de traitement EBIOS ci-dessous). Après
@@ -422,7 +338,7 @@ sont placés selon leur cotation brute. La couleur de la case indique la critici
 
 ---
 
-### Atelier 5 — Traitement du risque
+### Atelier 5 - Traitement du risque
 
 | #   | Stratégie              | Actions concrètes                                                                                   | Responsable  | Délai         |
 | --- | ---------------------- | --------------------------------------------------------------------------------------------------- | ------------ | ------------- |
@@ -439,8 +355,8 @@ sont placés selon leur cotation brute. La couleur de la case indique la critici
 
 #### Risques résiduels acceptés
 
-- **R2 — PostgreSQL SPOF (score résiduel 6) :** La réplication primaire/secondaire dépasse la charge d'un projet solo. Mitigation retenue : backup quotidien automatisé + supervision Grafana (règle d'alerte à configurer). Risque accepté en connaissance de cause.
-- **R5 — VPS unique (score résiduel 3) :** Un VPS de failover n'est pas justifié économiquement à cette échelle. Le restart automatique Docker Swarm couvre les pannes applicatives.
+- **R2 - PostgreSQL SPOF (score résiduel 6) :** La réplication primaire/secondaire dépasse la charge d'un projet solo. Mitigation retenue : backup quotidien automatisé + supervision Grafana (règle d'alerte à configurer). Risque accepté en connaissance de cause.
+- **R5 - VPS unique (score résiduel 3) :** Un VPS de failover n'est pas justifié économiquement à cette échelle. Le restart automatique Docker Swarm couvre les pannes applicatives.
 - **Pas de WAF :** Le rate limiting applicatif (Throttler NestJS) et le pare-feu réseau du VPS constituent la protection en place. Risque accepté.
 
 ---
@@ -455,7 +371,7 @@ sont placés selon leur cotation brute. La couleur de la case indique la critici
 | Technologie                   | Bénéfice accessibilité                                                                                                                                       |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Radix UI** (base shadcn/ui) | Implémente nativement tous les patterns ARIA : focus management, keyboard navigation, rôles ARIA corrects sur tous les composants (Dialog, Select, Tooltip…) |
-| **Next.js (App Router, RSC)** | Génère du HTML sémantique côté serveur — favorable aux lecteurs d'écran et au référencement                                                                  |
+| **Next.js (App Router, RSC)** | Génère du HTML sémantique côté serveur - favorable aux lecteurs d'écran et au référencement                                                                  |
 | **Tailwind CSS v4**           | Utilitaires de contraste intégrés, respect des ratios WCAG via les classes de couleur                                                                        |
 | **HTML sémantique**           | Landmarks HTML5 (`<header>`, `<nav>`, `<main>`, `<footer>`) utilisés dans tous les layouts                                                                   |
 
@@ -463,24 +379,24 @@ sont placés selon leur cotation brute. La couleur de la case indique la critici
 
 | Critère WCAG                       | Principe       | Application dans le projet                                                                      |
 | ---------------------------------- | -------------- | ----------------------------------------------------------------------------------------------- |
-| 1.1.1 — Contenu non textuel        | Perceptible    | Attribut `alt` descriptif sur toutes les vignettes photos ; `alt=""` sur les images décoratives |
-| 1.4.3 — Contraste (minimum)        | Perceptible    | Ratio 4.5:1 minimum pour le texte normal, 3:1 pour le grand texte (vérifié via extensions web)  |
-| 1.4.1 — Utilisation de la couleur  | Perceptible    | Statuts et informations non transmis uniquement par la couleur (icône + texte + couleur)        |
-| 2.1.1 — Clavier                    | Opérable       | Navigation Tab/Entrée/Échap fonctionnelle sur tous les composants Radix UI                      |
-| 2.4.3 — Ordre du focus             | Opérable       | Ordre de tabulation suit le flux de lecture visuel                                              |
-| 2.4.7 — Focus visible              | Opérable       | Outline visible sur l'élément actif (non supprimé)                                              |
-| 3.1.1 — Langue de la page          | Understandable | `lang="fr"` défini sur le `<html>`                                                              |
-| 3.3.1 — Identification des erreurs | Understandable | Messages d'erreur Zod localisés et associés aux champs via `react-hook-form`                    |
-| 4.1.2 — Nom, rôle, valeur          | Robuste        | Rôles ARIA natifs via Radix UI sur tous les composants interactifs                              |
+| 1.1.1 - Contenu non textuel        | Perceptible    | Attribut `alt` descriptif sur toutes les vignettes photos ; `alt=""` sur les images décoratives |
+| 1.4.3 - Contraste (minimum)        | Perceptible    | Ratio 4.5:1 minimum pour le texte normal, 3:1 pour le grand texte (vérifié via extensions web)  |
+| 1.4.1 - Utilisation de la couleur  | Perceptible    | Statuts et informations non transmis uniquement par la couleur (icône + texte + couleur)        |
+| 2.1.1 - Clavier                    | Opérable       | Navigation Tab/Entrée/Échap fonctionnelle sur tous les composants Radix UI                      |
+| 2.4.3 - Ordre du focus             | Opérable       | Ordre de tabulation suit le flux de lecture visuel                                              |
+| 2.4.7 - Focus visible              | Opérable       | Outline visible sur l'élément actif (non supprimé)                                              |
+| 3.1.1 - Langue de la page          | Understandable | `lang="fr"` défini sur le `<html>`                                                              |
+| 3.3.1 - Identification des erreurs | Understandable | Messages d'erreur Zod localisés et associés aux champs via `react-hook-form`                    |
+| 4.1.2 - Nom, rôle, valeur          | Robuste        | Rôles ARIA natifs via Radix UI sur tous les composants interactifs                              |
 
-### 6.3 Point de vigilance — Exploration chromatique (killer feature)
+### 6.3 Point de vigilance - Exploration chromatique (killer feature)
 
 L'exploration chromatique repose sur un nuancier (atlas fixe de cases colorées, chaque case = une cellule de couleur). Ce type d'interface, fondé sur la couleur, pose des défis d'accessibilité spécifiques :
 
 | Limitation                                    | Impact                                    | Mitigation                                                                                                                          |
 | --------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Identification par la seule couleur           | Utilisateurs daltoniens                   | Nom de la teinte + nombre de photos exposés en infobulle et `aria-label` sur chaque case (en place) ; étiquette visible à compléter |
-| Cases non vocalisées par les lecteurs d'écran | Utilisateurs malvoyants                   | `aria-label` « {nom de teinte} — N photos » sur chaque case ; alternative textuelle de la répartition à compléter                   |
+| Cases non vocalisées par les lecteurs d'écran | Utilisateurs malvoyants                   | `aria-label` « {nom de teinte} - N photos » sur chaque case ; alternative textuelle de la répartition à compléter                   |
 | Navigation à la souris (clic sur une case)    | Utilisateurs moteurs / navigation clavier | Cases rendues comme `<button>` focalisables et activables au clavier (Tab + Entrée)                                                 |
 
 > **Note :** L'accessibilité complète de l'exploration chromatique représente une contrainte significative (interface intrinsèquement visuelle). Le niveau AA sur cet écran sera atteint partiellement, avec les alternatives textuelles comme priorité.
@@ -496,4 +412,4 @@ L'exploration chromatique repose sur un nuancier (atlas fixe de cases colorées,
 
 ---
 
-_Document rédigé dans le cadre du Fil Rouge — certification Expert en Informatique et Systèmes d'Information, 3W Academy._
+_Document rédigé dans le cadre du Fil Rouge - certification Expert en Informatique et Systèmes d'Information, 3W Academy._

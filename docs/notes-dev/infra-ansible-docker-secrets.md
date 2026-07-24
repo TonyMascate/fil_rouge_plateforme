@@ -1,4 +1,4 @@
-# Infrastructure Ansible & Docker Secrets — Note de soutenance
+# Infrastructure Ansible & Docker Secrets - Note de soutenance
 
 ## 1. Contexte et problème initial
 
@@ -20,17 +20,18 @@ docker stack deploy --with-registry-auth -c stack.yml mon-app
 
 Ce pattern (surnommé "bloc Ninja" pour sa discrétion) était fonctionnel mais présentait plusieurs faiblesses :
 
-| Problème | Impact |
-|---|---|
-| Les secrets sont interpolés dans le script shell | Risque d'apparition dans les logs si l'interpolation échoue |
-| Un seul "mega-secret" opaque | Si une valeur change, on écrase tout le blob |
-| `docker stack deploy` avec `${VAR}` non résolues si l'export échoue | Deploy silencieusement cassé |
-| Job `migrate` parse `ENV_PROD` avec `grep '^DB_USER='` | Fragile, casse si la valeur contient des caractères spéciaux |
-| Le `.env` peut être reconstitué depuis les logs d'exécution | Surface d'attaque plus large |
+| Problème                                                            | Impact                                                       |
+| ------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Les secrets sont interpolés dans le script shell                    | Risque d'apparition dans les logs si l'interpolation échoue  |
+| Un seul "mega-secret" opaque                                        | Si une valeur change, on écrase tout le blob                 |
+| `docker stack deploy` avec `${VAR}` non résolues si l'export échoue | Deploy silencieusement cassé                                 |
+| Job `migrate` parse `ENV_PROD` avec `grep '^DB_USER='`              | Fragile, casse si la valeur contient des caractères spéciaux |
+| Le `.env` peut être reconstitué depuis les logs d'exécution         | Surface d'attaque plus large                                 |
 
 ### Objectif
 
 Passer à une architecture où :
+
 - Les valeurs sensibles ne transitent **jamais en clair** dans des scripts shell
 - Chaque secret est **identifié individuellement** (rotation sans tout casser)
 - Les conteneurs accèdent aux secrets via un **mécanisme chiffré natif Docker**
@@ -75,9 +76,9 @@ Passer à une architecture où :
 
 ### Le raft Swarm : qu'est-ce que c'est concrètement ?
 
-**Raft** est un algorithme de consensus — une façon pour plusieurs machines de se mettre d'accord sur une valeur même si l'une d'elles tombe. Docker Swarm l'utilise pour que les managers du cluster partagent un état commun : quels services tournent, combien de replicas, et les secrets.
+**Raft** est un algorithme de consensus - une façon pour plusieurs machines de se mettre d'accord sur une valeur même si l'une d'elles tombe. Docker Swarm l'utilise pour que les managers du cluster partagent un état commun : quels services tournent, combien de replicas, et les secrets.
 
-Cet état partagé s'appelle le **raft log** — c'est une base de données distribuée embarquée directement dans Docker, sans dépendance externe. Sur le disque du serveur, elle se trouve dans `/var/lib/docker/swarm/raft/` et son contenu est chiffré AES-256.
+Cet état partagé s'appelle le **raft log** - c'est une base de données distribuée embarquée directement dans Docker, sans dépendance externe. Sur le disque du serveur, elle se trouve dans `/var/lib/docker/swarm/raft/` et son contenu est chiffré AES-256.
 
 ```
 Manager (109.123.247.178)
@@ -86,22 +87,22 @@ Manager (109.123.247.178)
         └── wal-xxx.db  ← chiffré AES-256, illisible sans la clé Swarm
 ```
 
-Quand tu exécutes `docker secret create db_password -`, la valeur est chiffrée avant d'être écrite dans ce fichier. Quand un conteneur démarre et demande le secret, Docker le déchiffre **en mémoire** et le monte en tmpfs — la valeur en clair n'existe qu'en RAM, jamais sur le disque.
+Quand tu exécutes `docker secret create db_password -`, la valeur est chiffrée avant d'être écrite dans ce fichier. Quand un conteneur démarre et demande le secret, Docker le déchiffre **en mémoire** et le monte en tmpfs - la valeur en clair n'existe qu'en RAM, jamais sur le disque.
 
-**Avec plusieurs managers** (3 recommandés en prod), Raft garantit que si un manager tombe, les autres ont la même copie chiffrée et le cluster continue de fonctionner. La règle : il faut une majorité (2 managers sur 3) pour valider une écriture — c'est ce qu'on appelle le **quorum**. Avec un seul manager (notre cas actuel), il n'y a pas de quorum à maintenir, mais c'est un point unique de défaillance.
+**Avec plusieurs managers** (3 recommandés en prod), Raft garantit que si un manager tombe, les autres ont la même copie chiffrée et le cluster continue de fonctionner. La règle : il faut une majorité (2 managers sur 3) pour valider une écriture - c'est ce qu'on appelle le **quorum**. Avec un seul manager (notre cas actuel), il n'y a pas de quorum à maintenir, mais c'est un point unique de défaillance.
 
-**Pour la soutenance** : *"les secrets sont stockés dans le raft Swarm, qui est la base de données distribuée et chiffrée native de Docker. Pas de base externe à sécuriser, pas de service tiers — Docker gère seul la cohérence et le chiffrement."*
+**Pour la soutenance** : _"les secrets sont stockés dans le raft Swarm, qui est la base de données distribuée et chiffrée native de Docker. Pas de base externe à sécuriser, pas de service tiers - Docker gère seul la cohérence et le chiffrement."_
 
 ### Comparaison avec un fichier `.env` sur le serveur
 
-| Critère | `.env` sur le serveur | Docker Secrets |
-|---|---|---|
-| Stockage | Fichier texte clair sur le disque | Chiffré AES dans le raft Swarm |
-| Visibilité `docker inspect` | Oui (si `--env-file`) | Non |
-| Accessible depuis l'hôte | Oui | Non (tmpfs dans le conteneur) |
-| Risque de commit accidentel | Élevé | Nul (rien dans le repo) |
-| Granularité | Tout-ou-rien | Par secret individuel |
-| Rotation | Remplacer tout le fichier | Créer une nouvelle version versionnée |
+| Critère                     | `.env` sur le serveur             | Docker Secrets                        |
+| --------------------------- | --------------------------------- | ------------------------------------- |
+| Stockage                    | Fichier texte clair sur le disque | Chiffré AES dans le raft Swarm        |
+| Visibilité `docker inspect` | Oui (si `--env-file`)             | Non                                   |
+| Accessible depuis l'hôte    | Oui                               | Non (tmpfs dans le conteneur)         |
+| Risque de commit accidentel | Élevé                             | Nul (rien dans le repo)               |
+| Granularité                 | Tout-ou-rien                      | Par secret individuel                 |
+| Rotation                    | Remplacer tout le fichier         | Créer une nouvelle version versionnée |
 
 ---
 
@@ -110,11 +111,13 @@ Quand tu exécutes `docker secret create db_password -`, la valeur est chiffrée
 ### Pourquoi Ansible plutôt qu'un simple script bash ?
 
 Un script bash de provisioning fonctionne une fois mais :
+
 - N'est pas **idempotent** (relancer casse des choses)
 - Difficile à **tester** et à **maintenir**
 - Ne gère pas les erreurs proprement
 
 Ansible garantit l'**idempotence** : chaque tâche vérifie l'état cible avant d'agir. Relancer `playbook-provision.yml` sur un serveur déjà configuré ne change rien. C'est crucial pour :
+
 - Reprendre après une interruption
 - Ajouter un nœud sans toucher aux existants
 - Débugger en rejouant une tâche isolée
@@ -134,7 +137,7 @@ infra/
     └── swarm/               → init cluster + réseau overlay
 ```
 
-### Rôle `common` — Durcissement
+### Rôle `common` - Durcissement
 
 Ce rôle transforme un VPS vierge (accessible en root par mot de passe) en serveur durci :
 
@@ -143,13 +146,13 @@ Ce rôle transforme un VPS vierge (accessible en root par mot de passe) en serve
 3. **Firewall UFW** : politique "deny all" par défaut, uniquement les ports 22, 80, 443 ouverts sur internet. Les ports Swarm internes (2377, 7946, 4789) sont restreints au sous-réseau privé entre nœuds.
 4. **fail2ban** : bannit automatiquement les IPs qui multiplient les tentatives SSH.
 
-### Rôle `swarm` — Cluster Swarm
+### Rôle `swarm` - Cluster Swarm
 
 Initialise Docker Swarm avec `--advertise-addr` pointant sur l'IP privée (trafic interne entre nœuds sur le réseau LAN de l'hébergeur, pas sur internet). Crée le réseau overlay `mon-app_app-net` utilisé par tous les services.
 
 **Idempotence** : la tâche vérifie `docker info --format '{{.Swarm.LocalNodeState}}'`. Si le résultat est `active`, l'init est skippée.
 
-### Playbook `playbook-secrets.yml` — Cœur du système
+### Playbook `playbook-secrets.yml` - Cœur du système
 
 ```yaml
 - name: Créer les secrets (idempotent)
@@ -158,7 +161,8 @@ Initialise Docker Swarm avec `--advertise-addr` pointant sur l'IP privée (trafi
 ```
 
 Points clés :
-- Les valeurs arrivent via `-e db_password=$DB_PASSWORD` depuis GitHub Actions — elles ne sont jamais écrites dans un fichier
+
+- Les valeurs arrivent via `-e db_password=$DB_PASSWORD` depuis GitHub Actions - elles ne sont jamais écrites dans un fichier
 - `no_log: true` empêche Ansible d'afficher les valeurs même en mode verbose
 - `printf '%s'` évite l'interprétation des caractères spéciaux (contrairement à `echo`)
 - `already exists` dans stderr est ignoré : idempotent, relancer ne casse rien
@@ -175,6 +179,7 @@ Docker Swarm permet de passer des env vars au conteneur via `stack.yml`. Mais ce
 ### Convention `_FILE`
 
 La convention `<NOM>_FILE` est un standard Docker (utilisé par les images officielles postgres, mysql, etc.) :
+
 - `DB_PASSWORD_FILE=/run/secrets/db_password` → la variable `_FILE` pointe vers le fichier secret
 - `DB_PASSWORD` → la valeur en clair pour le dev local
 
@@ -186,7 +191,7 @@ export function readSecret(name: string): string | undefined {
   const filePath = process.env[`${name}_FILE`];
   if (filePath) {
     try {
-      return readFileSync(filePath, 'utf8').trim();
+      return readFileSync(filePath, "utf8").trim();
     } catch {
       return undefined;
     }
@@ -217,6 +222,7 @@ loadSecrets(); // ← avant NestFactory.create()
 ```
 
 **Ordre d'exécution garanti** :
+
 1. Docker injecte `DB_PASSWORD_FILE=/run/secrets/db_password` dans le process (avant tout JS)
 2. `loadSecrets()` lit le fichier et pose `DB_PASSWORD` dans `process.env`
 3. `NestFactory.create()` initialise les modules, ConfigService trouve les valeurs
@@ -235,7 +241,7 @@ async function runMigrations() {
       await dataSource.destroy();
       return;
     } catch {
-      if (attempt === MAX_ATTEMPTS) throw new Error('DB unreachable after 30 attempts');
+      if (attempt === MAX_ATTEMPTS) throw new Error("DB unreachable after 30 attempts");
       await new Promise((resolve) => setTimeout(resolve, 2000));
     }
   }
@@ -254,12 +260,12 @@ Next.js 16 fournit `instrumentation.ts`, un hook officiel qui tourne une seule f
 // apps/web/instrumentation.ts
 export async function register() {
   const secrets = {
-    JWT_ACCESS_SECRET: '/run/secrets/jwt_access_secret',
-    JWT_REFRESH_SECRET: '/run/secrets/jwt_refresh_secret',
+    JWT_ACCESS_SECRET: "/run/secrets/jwt_access_secret",
+    JWT_REFRESH_SECRET: "/run/secrets/jwt_refresh_secret",
   };
   for (const [name, filePath] of Object.entries(secrets)) {
     try {
-      process.env[name] = readFileSync(filePath, 'utf8').trim();
+      process.env[name] = readFileSync(filePath, "utf8").trim();
     } catch {
       // Mode dev : fichier absent, la var est déjà dans .env
     }
@@ -299,16 +305,16 @@ conteneur démarre :
 
 ### Séparation des responsabilités
 
-| Tâche | Outil | Fréquence | Où ça tourne |
-|---|---|---|---|
-| Provisionner OS + durcissement | Ansible | Rare (nouveau serveur) | Dev machine ou CI manuel → VPS |
-| Installer Docker | Ansible | Rare | idem |
-| Init cluster Swarm | Ansible | Rare | idem |
-| Créer/vérifier Docker Secrets | Ansible | À chaque deploy | Runner GitHub → manager |
-| Build + push image | GitHub Actions | À chaque push | Runner GitHub |
-| Copier stack.yml + configs | GitHub Actions (scp) | À chaque push | Runner GitHub → VPS |
-| `docker stack deploy` | GitHub Actions (ssh) | À chaque push | Runner GitHub → VPS |
-| Migrations DB | TypeScript (main.ts) | À chaque démarrage de conteneur | Dans le conteneur |
+| Tâche                          | Outil                | Fréquence                       | Où ça tourne                   |
+| ------------------------------ | -------------------- | ------------------------------- | ------------------------------ |
+| Provisionner OS + durcissement | Ansible              | Rare (nouveau serveur)          | Dev machine ou CI manuel → VPS |
+| Installer Docker               | Ansible              | Rare                            | idem                           |
+| Init cluster Swarm             | Ansible              | Rare                            | idem                           |
+| Créer/vérifier Docker Secrets  | Ansible              | À chaque deploy                 | Runner GitHub → manager        |
+| Build + push image             | GitHub Actions       | À chaque push                   | Runner GitHub                  |
+| Copier stack.yml + configs     | GitHub Actions (scp) | À chaque push                   | Runner GitHub → VPS            |
+| `docker stack deploy`          | GitHub Actions (ssh) | À chaque push                   | Runner GitHub → VPS            |
+| Migrations DB                  | TypeScript (main.ts) | À chaque démarrage de conteneur | Dans le conteneur              |
 
 ---
 
@@ -357,7 +363,7 @@ Pour le trafic inter-nœuds Swarm (ports 2377, 7946, 4789), activer le réseau p
 
 ## 8. Rotation d'un secret
 
-Les Docker Secrets sont **immuables** — on ne peut pas modifier la valeur d'un secret existant. Le pattern de rotation :
+Les Docker Secrets sont **immuables** - on ne peut pas modifier la valeur d'un secret existant. Le pattern de rotation :
 
 ```bash
 # 1. Mettre à jour la valeur dans GitHub Secrets (interface web GitHub)
@@ -378,25 +384,25 @@ docker secret rm db_password
 
 ---
 
-## 9. Retour d'expérience — problèmes rencontrés en déploiement réel
+## 9. Retour d'expérience - problèmes rencontrés en déploiement réel
 
 Cette section documente les problèmes concrets rencontrés lors du premier déploiement sur un VPS vierge. Chaque problème illustre une nuance réelle de l'écosystème Docker Swarm / Ansible.
 
 ---
 
-### 9.1 — `ansible_user` dans l'inventory prend la priorité sur `--user`
+### 9.1 - `ansible_user` dans l'inventory prend la priorité sur `--user`
 
 **Symptôme :** Le premier playbook (lancé en `root` via `--user root`) se connectait quand même en `deploy`, qui n'existait pas encore → échec SSH.
 
 **Cause :** Dans Ansible, `ansible_user` défini dans `[all:vars]` de l'inventory a une priorité **plus haute** que le flag `--user` en ligne de commande. C'est contre-intuitif mais documenté.
 
-**Solution :** Sortir `ansible_user` de l'inventory et le mettre dans `ansible.cfg` comme `remote_user = deploy`. `ansible.cfg` a la priorité la plus basse — les extra-vars (`-e ansible_user=root`) peuvent alors le surcharger. Le workflow `infra.yml` passe `-e "ansible_user=${{ inputs.remote_user }}"`.
+**Solution :** Sortir `ansible_user` de l'inventory et le mettre dans `ansible.cfg` comme `remote_user = deploy`. `ansible.cfg` a la priorité la plus basse - les extra-vars (`-e ansible_user=root`) peuvent alors le surcharger. Le workflow `infra.yml` passe `-e "ansible_user=${{ inputs.remote_user }}"`.
 
 ---
 
-### 9.2 — La clé publique SSH n'existe pas sur le runner GitHub
+### 9.2 - La clé publique SSH n'existe pas sur le runner GitHub
 
-**Symptôme :** Le rôle `common` utilise `authorized_key: key: "{{ lookup('file', '~/.ssh/id_deploy.pub') }}"` pour déposer la clé publique sur le VPS. Mais le runner GitHub n'a que la clé privée (stockée dans `SSH_PRIVATE_KEY`) — la clé publique n'existe pas.
+**Symptôme :** Le rôle `common` utilise `authorized_key: key: "{{ lookup('file', '~/.ssh/id_deploy.pub') }}"` pour déposer la clé publique sur le VPS. Mais le runner GitHub n'a que la clé privée (stockée dans `SSH_PRIVATE_KEY`) - la clé publique n'existe pas.
 
 **Cause :** On stocke uniquement la clé privée dans GitHub Secrets (c'est la pratique normale). Le module Ansible `authorized_key` a besoin de lire le fichier `.pub` localement.
 
@@ -417,7 +423,7 @@ Cette section documente les problèmes concrets rencontrés lors du premier dép
 
 ---
 
-### 9.3 — Le nom de nœud Docker Swarm ≠ le nom Ansible
+### 9.3 - Le nom de nœud Docker Swarm ≠ le nom Ansible
 
 **Symptôme :** La tâche `docker node update --label-add type=manager manager-1` échouait avec `node manager-1 not found`.
 
@@ -434,11 +440,11 @@ Cette section documente les problèmes concrets rencontrés lors du premier dép
 
 ---
 
-### 9.4 — edoburu/pgbouncer ne supporte pas la convention `_FILE`
+### 9.4 - edoburu/pgbouncer ne supporte pas la convention `_FILE`
 
 **Symptôme :** pgbouncer démarrait (1/1) mais l'API ne pouvait pas s'y connecter. Les logs pgbouncer montraient `password authentication failed for user "postgres"`.
 
-**Cause :** On avait configuré pgbouncer avec `DB_USER_FILE` et `DB_PASSWORD_FILE` (convention Docker Secrets standard). Mais l'image `edoburu/pgbouncer` dans sa version courante n'implémente pas cette convention pour `DB_PASSWORD_FILE` — elle utilise un mot de passe vide par défaut, que postgres refuse.
+**Cause :** On avait configuré pgbouncer avec `DB_USER_FILE` et `DB_PASSWORD_FILE` (convention Docker Secrets standard). Mais l'image `edoburu/pgbouncer` dans sa version courante n'implémente pas cette convention pour `DB_PASSWORD_FILE` - elle utilise un mot de passe vide par défaut, que postgres refuse.
 
 ```
 pgbouncer → postgres avec user=postgres, password="" → rejeté
@@ -451,11 +457,13 @@ pgbouncer → postgres avec user=postgres, password="" → rejeté
 ```
 
 Ce secret est généré dynamiquement par Ansible dans `playbook-secrets.yml` :
+
 ```yaml
 - { name: "pgbouncer_userlist", value: '"{{ db_user }}" "{{ db_password }}"' }
 ```
 
 Et monté dans pgbouncer avec :
+
 ```yaml
 secrets:
   - source: pgbouncer_userlist
@@ -469,7 +477,7 @@ environment:
 
 ---
 
-### 9.5 — Déploiements concurrents sur le même stack
+### 9.5 - Déploiements concurrents sur le même stack
 
 **Symptôme :** Quand `stack.yml` change, `api.yml` et `web.yml` se déclenchent tous les deux. Leurs jobs `deploy` exécutent `docker stack deploy` simultanément → `update out of sequence` et `prune operation is already running`.
 
@@ -488,13 +496,14 @@ deploy:
 
 ---
 
-### 9.6 — Image Docker avec hardlinks incompatibles avec overlayfs
+### 9.6 - Image Docker avec hardlinks incompatibles avec overlayfs
 
 **Symptôme :** `docker pull` échouait sur le serveur avec `failed to extract layer ... link ... no such file or directory`.
 
-**Cause :** L'image API contient des hardlinks dans `node_modules` (créés par bun ou turborepo). La couche de snapshot overlayfs attendait que le fichier source soit déjà présent avant de créer le lien — mais l'ordre d'extraction ne le garantissait pas. Le cache containerd était dans un état incohérent.
+**Cause :** L'image API contient des hardlinks dans `node_modules` (créés par bun ou turborepo). La couche de snapshot overlayfs attendait que le fichier source soit déjà présent avant de créer le lien - mais l'ordre d'extraction ne le garantissait pas. Le cache containerd était dans un état incohérent.
 
 **Solution :** Nettoyer le cache Docker sur le serveur et relancer le déploiement :
+
 ```bash
 docker system prune -f
 docker stack deploy --with-registry-auth -c /var/www/html/fil_rouge/stack.yml mon-app
