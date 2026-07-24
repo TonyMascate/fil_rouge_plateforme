@@ -1,0 +1,70 @@
+@startuml diagramme-composants-api
+' ─────────────────────────────────────────────────────────────────────────────
+' Kroma - Diagramme de composants UML 2 de l'API (apps/api, NestJS)
+' Vue d'ensemble : un composant par module NestJS + les briques d'infra.
+' Le PhotoModule est détaillé (service, file BullMQ, worker Sharp).
+' Rendu : kroki.io (type=plantuml) ou extension PlantUML VS Code.
+' ─────────────────────────────────────────────────────────────────────────────
+title Kroma - Modules de l'API (NestJS)
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam defaultTextAlignment center
+skinparam nodesep 30
+skinparam ranksep 55
+skinparam component {
+  BackgroundColor #EAF2FB
+  BorderColor #2C5A8C
+  FontColor #1a1a1a
+}
+skinparam node {
+  BackgroundColor #EAF2FB
+  BorderColor #2C5A8C
+}
+
+component "Prometheus" as Prometheus
+
+package "API (NestJS)" {
+  component "AuthModule" as Auth
+  component "UsersModule" as Users
+  component "AlbumModule" as Album
+  component "AwsModule" as Aws
+  component "RedisModule" as RedisM
+  component "MetricsModule" as Metrics
+
+  package "PhotoModule" {
+    component "PhotoService" as Photo
+    component "BullMQ" as BullMQ <<file de messages>>
+    component "PhotoProcessor\n(worker Sharp)" as Worker
+  }
+}
+
+node "PostgreSQL" as PG
+node "Redis" as Redis
+node "Stockage S3\n+ CloudFront" as S3
+
+' ── Pipeline de traitement des photos ──
+Photo  ..> BullMQ
+Worker ..> BullMQ
+
+' ── Dépendances entre modules ──
+Auth   ..> Users
+Photo  ..> Aws
+Worker ..> Aws
+Album  ..> Aws
+Photo  ..> Album
+Photo  ..> RedisM
+Worker ..> RedisM
+
+' ── Accès à l'infrastructure ──
+Auth   ..> PG
+Users  ..> PG
+Photo  ..> PG
+Album  ..> PG
+Worker ..> PG
+BullMQ ..> Redis
+RedisM ..> Redis
+Aws    ..> S3
+Prometheus ..> Metrics
+
+@enduml

@@ -207,7 +207,7 @@ export class PhotoService {
   async deletePhoto(id: string, userId: string): Promise<void> {
     const photo = await this.findOwnedOrThrow(id, userId);
     // On supprime la ligne DB d'abord : si l'appel S3 échoue ensuite, on aura un objet
-    // orphelin dans le bucket — mais plus aucune référence côté app, donc aucun 404
+    // orphelin dans le bucket - mais plus aucune référence côté app, donc aucun 404
     // utilisateur. Le cas inverse (S3 supprimé puis DB qui échoue) laisserait une ligne
     // pointant vers un objet inexistant, plus problématique.
     await this.photoRepo.delete(photo.id);

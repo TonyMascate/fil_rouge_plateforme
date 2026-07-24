@@ -1,6 +1,6 @@
-# Benchmark Concurrentiel — Plateformes de gestion de photos
+# Benchmark Concurrentiel - Plateformes de gestion de photos
 
-**Projet :** Fil Rouge — Plateforme de gestion de photos et albums
+**Projet :** Fil Rouge - Plateforme de gestion de photos et albums
 **Auteur :** Tony Mascate
 **Date :** Janvier 2025
 
@@ -8,14 +8,14 @@
 
 ## 1. Solutions analysées
 
-| #   | Solution                | Type                     | Cible                |
-| --- | ----------------------- | ------------------------ | -------------------- |
-| 1   | **Google Photos**       | SaaS, cloud Google       | Grand public         |
-| 2   | **Apple iCloud Photos** | SaaS, écosystème Apple   | Utilisateurs Apple   |
-| 3   | **Amazon Photos**       | SaaS, cloud Amazon       | Abonnés Prime        |
-| 4   | **Flickr** ⚠️            | SaaS, communautaire      | Photographes amateurs/pros — réseau social photo, pas un concurrent direct |
-| 5   | **Immich**              | Open-source, self-hosted | Tech-savvy, privacy  |
-| 6   | **Nextcloud Photos**    | Open-source, self-hosted | Entreprises, privacy |
+| #   | Solution                | Type                     | Cible                                                                      |
+| --- | ----------------------- | ------------------------ | -------------------------------------------------------------------------- |
+| 1   | **Google Photos**       | SaaS, cloud Google       | Grand public                                                               |
+| 2   | **Apple iCloud Photos** | SaaS, écosystème Apple   | Utilisateurs Apple                                                         |
+| 3   | **Amazon Photos**       | SaaS, cloud Amazon       | Abonnés Prime                                                              |
+| 4   | **Flickr**              | SaaS, communautaire      | Photographes amateurs/pros - réseau social photo, pas un concurrent direct |
+| 5   | **Immich**              | Open-source, self-hosted | Tech-savvy, privacy                                                        |
+| 6   | **Nextcloud Photos**    | Open-source, self-hosted | Entreprises, privacy                                                       |
 
 ---
 
@@ -92,7 +92,7 @@
 
 ---
 
-## 3. Tableau récapitulatif — Score global
+## 3. Tableau récapitulatif - Score global
 
 Notation de 1 à 5 par domaine.
 
@@ -112,15 +112,15 @@ Notation de 1 à 5 par domaine.
 
 ## 4. Identification des gaps de marché
 
-### Gap 1 — Organisation visuelle libre (non linéaire)
+### Gap 1 - Organisation visuelle libre (non linéaire)
 
 **Toutes les solutions existantes** organisent les photos de manière chronologique ou par album traditionnel. Aucune ne propose une entrée **par la couleur**, transverse aux dates et aux albums.
 
-→ **Mon point fort :** l'exploration chromatique — un nuancier (atlas de couleurs) où chaque photo est rangée selon sa palette extraite en espace perceptuel OKLab. L'utilisateur parcourt sa bibliothèque par ambiance colorielle, une dimension absente des plateformes concurrentes.
+→ **Mon point fort :** l'exploration chromatique - un nuancier (atlas de couleurs) où chaque photo est rangée selon sa palette extraite en espace perceptuel OKLab. L'utilisateur parcourt sa bibliothèque par ambiance colorielle, une dimension absente des plateformes concurrentes.
 
 ---
 
-### Gap 2 — Privacy-first avec UX moderne
+### Gap 2 - Privacy-first avec UX moderne
 
 Les solutions self-hosted (Immich, Nextcloud) offrent la confidentialité mais avec une UX technique et peu accessible. Les solutions grand public (Google, Apple) ont une belle UX mais aspirent les données vers des serveurs soumis au Cloud américain.
 
@@ -149,8 +149,8 @@ Les solutions self-hosted (Immich, Nextcloud) offrent la confidentialité mais a
                    UX technique / complexe
 ```
 
-Notre plateforme occupe le quadrant **Self-hosted + UX moderne** — actuellement vide sur le marché grand public.
+Notre plateforme occupe le quadrant **Self-hosted + UX moderne** - actuellement vide sur le marché grand public.
 
 ---
 
-_Document rédigé dans le cadre du Fil Rouge — certification Expert en Informatique et Systèmes d'Information, 3W Academy._
+_Document rédigé dans le cadre du Fil Rouge - certification Expert en Informatique et Systèmes d'Information, 3W Academy._

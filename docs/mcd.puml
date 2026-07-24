@@ -1,6 +1,6 @@
 @startuml mcd
 ' ─────────────────────────────────────────────────────────────────────────────
-' Kroma — MCD (Modèle Conceptuel de Données, méthode Merise)
+' Kroma - MCD (Modèle Conceptuel de Données, méthode Merise)
 ' Entités (rectangles, identifiant souligné) + associations (nœuds «assoc»),
 ' traits SANS embout, cardinalités Merise (0,1)/(1,1)/(0,n)/(1,n).
 ' Nommage conceptuel : l'identifiant reprend le nom de l'entité (id_users,

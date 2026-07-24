@@ -18,7 +18,7 @@ export class QuotaResponseDto extends createZodDto(QuotaResponseSchema) {}
 export class ShareResponseDto extends createZodDto(ShareResponseSchema) {}
 
 // Schemas avec dates → redéfinis localement avec z.string() pour Swagger
-// (z.date() non représentable en JSON Schema — bug ouvert nestjs-zod#184)
+// (z.date() non représentable en JSON Schema - bug ouvert nestjs-zod#184)
 const PhotoListResponseSwaggerSchema = z.object({
   items: z.array(
     z.object({

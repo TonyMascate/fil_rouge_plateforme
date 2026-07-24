@@ -1,0 +1,55 @@
+@startuml diagramme-composants-observabilite
+' ─────────────────────────────────────────────────────────────────────────────
+' Kroma - Diagramme de composants UML 2 de l'observabilité (métriques + logs)
+' Même parti-pris que les diagrammes API et frontend : composants + paquetages,
+' reliés uniquement par des dépendances (traits pointillés), sans label.
+' Sémantique : dépendance UML « A utilise/requiert B », PAS un flux de données.
+' Pour les collectes en pull (Prometheus scrape, Grafana interroge, cAdvisor et
+' Promtail lisent les conteneurs), la flèche va du consommateur vers sa source :
+' la donnée circule donc à CONTRE-SENS de la flèche. Seul Promtail ..> Loki est
+' un push (Promtail dépend de l'API de Loki) : là, la donnée suit le sens de la
+' flèche. Ne pas lire les flèches comme un flux uniforme.
+' Rendu : kroki.io (type=plantuml) ou extension PlantUML VS Code.
+' ─────────────────────────────────────────────────────────────────────────────
+title Kroma - Observabilité (métriques + logs)
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam defaultTextAlignment center
+skinparam nodesep 30
+skinparam ranksep 55
+skinparam component {
+  BackgroundColor #EAF2FB
+  BorderColor #2C5A8C
+  FontColor #1a1a1a
+}
+
+package "Conteneurs supervisés (VPS)" {
+  component "API Kroma\n(NestJS)" as Api <<expose /metrics + logs Pino>>
+  component "Autres conteneurs\n(frontend, PostgreSQL,\nRedis, Caddy…)" as Others <<conteneurs Swarm>>
+}
+
+package "Stack d'observabilité" {
+  component "cAdvisor" as Cadvisor <<métriques conteneurs>>
+  component "Promtail" as Promtail <<collecte de logs>>
+  component "Prometheus" as Prometheus <<métriques (pull)>>
+  component "Loki" as Loki <<stockage logs>>
+  component "Grafana" as Grafana <<visualisation>>
+}
+
+' ── Métriques ──
+Prometheus ..> Api
+Prometheus ..> Cadvisor
+Cadvisor ..> Api
+Cadvisor ..> Others
+
+' ── Logs (Promtail lit le socket Docker, pousse vers Loki) ──
+Promtail ..> Api
+Promtail ..> Others
+Promtail ..> Loki
+
+' ── Visualisation unifiée ──
+Grafana ..> Prometheus
+Grafana ..> Loki
+
+@enduml

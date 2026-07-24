@@ -1,6 +1,6 @@
-@startuml UC-05 — Ajout d'une image dans un album
+@startuml UC-05 - Ajout d'une image dans un album
 
-title UC-05 — Ajout d'une image dans un album
+title UC-05 - Ajout d'une image dans un album
 
 left to right direction
 
@@ -25,7 +25,7 @@ skinparam note {
 
 actor "Utilisateur\nauthentifié" as User
 
-rectangle "Kroma — Albums" {
+rectangle "Kroma - Albums" {
 
   usecase "Ajouter une image\ndans un album" as UC_Add
   usecase "Retirer une image\nd'un album" as UC_Remove

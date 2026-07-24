@@ -1,6 +1,6 @@
 # Personas - Plateforme de gestion de photos
 
-**Projet :** Fil Rouge — Plateforme de gestion de photos et albums
+**Projet :** Fil Rouge - Plateforme de gestion de photos et albums
 **Auteur :** Tony Mascate
 **Date :** Avril 2026
 
@@ -11,7 +11,7 @@
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  👤 Léa Martin                                              │
-│  28 ans — Chargée de communication, Lyon                   │
+│  28 ans - Chargée de communication, Lyon                   │
 │  Utilisatrice : iPhone, MacBook                             │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -55,12 +55,12 @@ Elle n'est pas du tout technique Tant que ça marche, elle ne cherche pas à com
 
 ---
 
-## Persona 2 — Le photographe amateur passionné
+## Persona 2 - Le photographe amateur passionné
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  👤 Maxime Renard                                           │
-│  24 ans — Étudiant en design, Bordeaux                      │
+│  24 ans - Étudiant en design, Bordeaux                      │
 │  Matériel : Sony Alpha 7C, stockage NAS 4 To                │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -85,7 +85,7 @@ Il partage ensuite ses meilleures sélections sous forme d'albums sur une galeri
 | Frustration                            | Détail                                                                                    |
 | -------------------------------------- | ----------------------------------------------------------------------------------------- |
 | Tri entièrement manuel                 | Crée des dossiers à la main, renomme les fichiers un par un                               |
-| Aucune vision globale colorimétrique   | Lightroom trie par date, par note, par couleur de flag — pas par dominante colorimétrique |
+| Aucune vision globale colorimétrique   | Lightroom trie par date, par note, par couleur de flag - pas par dominante colorimétrique |
 | Rupture entre travail et partage       | Son organisation locale ne se reflète pas dans la galerie partagée                        |
 | Outils trop complexes ou trop basiques | Lightroom est puissant mais lourd ; Google Photos est simple mais aveugle à sa logique    |
 
@@ -105,7 +105,7 @@ Il partage ensuite ses meilleures sélections sous forme d'albums sur une galeri
 
 ## Synthèse
 
-|                             | Léa — Particulier            | Maxime — Photographe amateur    |
+|                             | Léa - Particulier            | Maxime - Photographe amateur    |
 | --------------------------- | ---------------------------- | ------------------------------- |
 | **Motivation principale**   | Simplicité + confidentialité | Organisation colorimétrique     |
 | **Killer feature utilisée** | Albums + partage             | Exploration chromatique         |
@@ -116,4 +116,4 @@ Il partage ensuite ses meilleures sélections sous forme d'albums sur une galeri
 
 ---
 
-_Document rédigé dans le cadre du Fil Rouge — certification Expert en Informatique et Systèmes d'Information, 3W Academy._
+_Document rédigé dans le cadre du Fil Rouge - certification Expert en Informatique et Systèmes d'Information, 3W Academy._

@@ -1,4 +1,4 @@
-# ADR-009 — Monorepo & Build System : Turborepo + Bun
+# ADR-009 - Monorepo & Build System : Turborepo + Bun
 
 - **Statut :** Accepté
 - **Date :** 2025-03-13
@@ -16,24 +16,24 @@ Mon projet comprend deux applications (`apps/api`, `apps/web`) et un package par
 
 ### Orchestrateur de build monorepo
 
-| Critère                        | Turborepo                     | Nx                            | Lerna                         | Scripts npm workspaces seuls  |
-|--------------------------------|-------------------------------|-------------------------------|-------------------------------|-------------------------------|
-| Courbe d'apprentissage         | Faible                        | Élevée                        | Moyenne                       | Nulle                         |
-| Cache de build                 | Local + remote (Vercel)       | Local + remote (Nx Cloud)     | Limité                        | Non                           |
-| Parallélisation des tâches     | Automatique (DAG)             | Automatique                   | Manuel                        | Non                           |
-| Intégration Docker             | `turbo prune` (natif)         | Nécessite config              | Manuel                        | Manuel                        |
-| Configuration                  | `turbo.json` (minimal)        | `nx.json` + `project.json`    | `lerna.json`                  | `package.json` workspaces     |
-| Taille du tooling              | Légère                        | Lourde                        | Moyenne                       | Nulle                         |
+| Critère                    | Turborepo               | Nx                         | Lerna        | Scripts npm workspaces seuls |
+| -------------------------- | ----------------------- | -------------------------- | ------------ | ---------------------------- |
+| Courbe d'apprentissage     | Faible                  | Élevée                     | Moyenne      | Nulle                        |
+| Cache de build             | Local + remote (Vercel) | Local + remote (Nx Cloud)  | Limité       | Non                          |
+| Parallélisation des tâches | Automatique (DAG)       | Automatique                | Manuel       | Non                          |
+| Intégration Docker         | `turbo prune` (natif)   | Nécessite config           | Manuel       | Manuel                       |
+| Configuration              | `turbo.json` (minimal)  | `nx.json` + `project.json` | `lerna.json` | `package.json` workspaces    |
+| Taille du tooling          | Légère                  | Lourde                     | Moyenne      | Nulle                        |
 
 ### Package manager / Runtime
 
-| Critère                        | Bun                           | npm                           | pnpm                          | Yarn                          |
-|--------------------------------|-------------------------------|-------------------------------|-------------------------------|-------------------------------|
-| Vitesse d'installation         | Très rapide (natif)           | Lente                         | Rapide                        | Rapide                        |
-| Runtime JS                     | Oui (remplace Node)           | Non                           | Non                           | Non                           |
-| Compatibilité Node.js          | Haute (>95%)                  | Native                        | Native                        | Native                        |
-| Workspaces monorepo            | Oui                           | Oui                           | Oui (symlinks)                | Oui                           |
-| Exécution de scripts           | Rapide (built-in)             | Via node                      | Via node                      | Via node                      |
+| Critère                | Bun                 | npm      | pnpm           | Yarn     |
+| ---------------------- | ------------------- | -------- | -------------- | -------- |
+| Vitesse d'installation | Très rapide (natif) | Lente    | Rapide         | Rapide   |
+| Runtime JS             | Oui (remplace Node) | Non      | Non            | Non      |
+| Compatibilité Node.js  | Haute (>95%)        | Native   | Native         | Native   |
+| Workspaces monorepo    | Oui                 | Oui      | Oui (symlinks) | Oui      |
+| Exécution de scripts   | Rapide (built-in)   | Via node | Via node       | Via node |
 
 ---
 
@@ -45,7 +45,7 @@ Mon projet comprend deux applications (`apps/api`, `apps/web`) et un package par
 
 ## Justification
 
-1. **Turborepo pour l'orchestration des tâches :** Turborepo analyse le graphe de dépendances entre les packages (`turbo.json`) et parallélise automatiquement les tâches (build, test, lint). Si `packages/shared` n'a pas changé, son build est servi depuis le cache — les CI sont plus rapides.
+1. **Turborepo pour l'orchestration des tâches :** Turborepo analyse le graphe de dépendances entre les packages (`turbo.json`) et parallélise automatiquement les tâches (build, test, lint). Si `packages/shared` n'a pas changé, son build est servi depuis le cache - les CI sont plus rapides.
 
 2. **`turbo prune` pour Docker :** La commande `turbo prune --scope=api --docker` génère un sous-ensemble minimal du monorepo nécessaire pour construire uniquement l'API. Les images Docker n'embarquent pas le code du frontend ou des packages inutiles. Cela réduit la taille des images et accélère les rebuilds.
 
@@ -73,12 +73,14 @@ Mon projet comprend deux applications (`apps/api`, `apps/web`) et un package par
 ## Conséquences
 
 **Positives :**
+
 - Builds plus rapides en CI grâce au cache Turborepo.
 - Images Docker optimisées grâce à `turbo prune`.
 - Installation des dépendances rapide avec Bun.
 - Package partagé (`@repo/shared`) accessible par front et back sans publication npm.
 
 **Négatives / Risques :**
-- Bun est encore moins mature que Node.js — des incompatibilités peuvent apparaître avec certains packages natifs.
-- Le cache Turborepo remote (Vercel) n'est pas configuré — le cache est local uniquement, pas partagé entre CI runners.
+
+- Bun est encore moins mature que Node.js - des incompatibilités peuvent apparaître avec certains packages natifs.
+- Le cache Turborepo remote (Vercel) n'est pas configuré - le cache est local uniquement, pas partagé entre CI runners.
 - La gestion des dépendances croisées entre workspaces nécessite une attention particulière (éviter les cycles de dépendances).

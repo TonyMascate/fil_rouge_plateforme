@@ -1,6 +1,6 @@
-@startuml UC-02 — Upload d'une image
+@startuml UC-02 - Upload d'une image
 
-title UC-02 — Upload d'une image
+title UC-02 - Upload d'une image
 
 left to right direction
 
@@ -25,7 +25,7 @@ skinparam note {
 
 actor "Utilisateur\nauthentifié" as User
 
-rectangle "Kroma — Upload" {
+rectangle "Kroma - Upload" {
 
   usecase "Uploader une image" as UC_Upload
   usecase "Annuler l'upload\nen cours" as UC_Abort

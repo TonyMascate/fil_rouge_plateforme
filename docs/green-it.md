@@ -1,8 +1,8 @@
 # Note de veille technologique & Green IT
 
-**Projet :** Fil Rouge — Plateforme de gestion de photos et albums (Kroma)
+**Projet :** Fil Rouge - Plateforme de gestion de photos et albums (Kroma)
 **Auteur :** Tony Mascate
-**Date :** Juin 2026 _(mise à jour — alignée sur la stack réellement déployée)_
+**Date :** Juin 2026 _(mise à jour - alignée sur la stack réellement déployée)_
 
 > **Sujet :** choix d'infrastructure sous l'angle conjoint de la performance et de l'éco-responsabilité.
 > L'éco-conception n'est pas traitée comme une rubrique isolée mais comme un **critère de sélection
@@ -15,6 +15,7 @@
 ### 1.1 Caddy (reverse proxy)
 
 **Caractéristiques principales :**
+
 - Point d'entrée unique du système, devant le frontend Next.js et l'API NestJS.
 - Gestion **automatique** du HTTPS via Let's Encrypt (provisionnement et renouvellement des certificats).
 - Configuration déclarative et minimale (Caddyfile).
@@ -52,7 +53,7 @@ refactoring progressif plutôt qu'une reconstruction.
 optimisation automatique des images (WebP/AVIF, redimensionnement, lazy loading), découpage du code.
 
 **Intérêt pour le Green IT :** moins de JavaScript transmis et exécuté côté client (les RSC ne sont
-pas hydratés), images plus légères, moins de données transférées sur le réseau — donc moins d'énergie
+pas hydratés), images plus légères, moins de données transférées sur le réseau - donc moins d'énergie
 côté serveur **et** côté terminal de l'utilisateur.
 
 ### 1.5 Docker & Docker Swarm (conteneurisation et orchestration)
@@ -75,7 +76,7 @@ de l'orchestration pour un résultat équivalent à cette échelle.
   consommée côté base.
 - **Redis + BullMQ :** cache partagé (moins de requêtes redondantes vers PostgreSQL) et traitement
   d'image **asynchrone** (lissage de la charge CPU au lieu de pics synchrones).
-- **Amazon S3 + CloudFront :** stockage et diffusion des images via CDN (région UE, Paris) — la mise
+- **Amazon S3 + CloudFront :** stockage et diffusion des images via CDN (région UE, Paris) - la mise
   en cache CDN évite de re-servir et de recalculer les images à chaque consultation.
 - **Prometheus + Loki + Grafana :** observabilité légère (Loki indexe par labels, pas en full-text
   comme ELK → pas de JVM, empreinte mémoire et stockage réduits, voir ADR-005).
@@ -84,14 +85,14 @@ de l'orchestration pour un résultat équivalent à cette échelle.
 
 ## 2. Analyse sous l'angle de la performance
 
-| Brique | Levier de performance |
-| --- | --- |
-| Caddy | Routage rapide, TLS centralisé, configuration simple |
-| Bun + NestJS | Exécution JS rapide, backend structuré et scalable |
-| Next.js (RSC) | Pré-rendu serveur, images et scripts optimisés, bundle client réduit |
-| Redis + BullMQ | Cache des réponses fréquentes, traitement d'image hors du cycle requête |
-| S3 + CloudFront | Diffusion des images en périphérie (CDN), déchargement de l'API |
-| Docker Swarm | Faible overhead, scaling horizontal par ajout de réplicas |
+| Brique          | Levier de performance                                                   |
+| --------------- | ----------------------------------------------------------------------- |
+| Caddy           | Routage rapide, TLS centralisé, configuration simple                    |
+| Bun + NestJS    | Exécution JS rapide, backend structuré et scalable                      |
+| Next.js (RSC)   | Pré-rendu serveur, images et scripts optimisés, bundle client réduit    |
+| Redis + BullMQ  | Cache des réponses fréquentes, traitement d'image hors du cycle requête |
+| S3 + CloudFront | Diffusion des images en périphérie (CDN), déchargement de l'API         |
+| Docker Swarm    | Faible overhead, scaling horizontal par ajout de réplicas               |
 
 ---
 
@@ -120,10 +121,10 @@ La démarche actuelle est **qualitative** (choix de briques sobres). L'axe d'év
 - Instrumenter l'empreinte carbone des traitements (ex. `CodeCarbon` sur le worker d'optimisation) et
   exposer la métrique dans Grafana.
 - Définir une **alerte de consommation énergétique** (ex. seuil de CPU soutenu sur le cluster) dans
-  l'observabilité Grafana existante (règle d'alerte à ajouter — non encore configurée).
+  l'observabilité Grafana existante (règle d'alerte à ajouter - non encore configurée).
 - Suivre des indicateurs de sobriété : poids moyen des pages, octets transférés par session, taux de
   hits CDN (moins de recalculs = moins d'énergie).
 
 ---
 
-_Document rédigé dans le cadre du Fil Rouge — certification Expert en Informatique et Systèmes d'Information, 3W Academy._
+_Document rédigé dans le cadre du Fil Rouge - certification Expert en Informatique et Systèmes d'Information, 3W Academy._

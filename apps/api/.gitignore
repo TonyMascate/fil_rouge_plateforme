@@ -43,7 +43,7 @@ lerna-debug.log*
 .env.production.local
 .env.local
 
-# Clés de signature CloudFront — NE JAMAIS committer (la clé privée est un secret)
+# Clés de signature CloudFront - NE JAMAIS committer (la clé privée est un secret)
 .cloudfront-keys/
 *.pem
 

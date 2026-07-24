@@ -1,5 +1,5 @@
 /**
- * Tests E2E — couche HTTP (Supertest)
+ * Tests E2E - couche HTTP (Supertest)
  *
  * Vérifie le routage, la validation des DTOs (ZodValidationPipe) et les
  * cookies posés par les réponses. Les services métier sont tous mockés ;
@@ -11,7 +11,7 @@
  * csrf.guard.spec.ts (tests unitaires).
  *
  * JwtAuthGuard et RolesGuard sont remplacés par des valeurs simples via
- * overrideGuard().useValue() — les vraies logiques sont testées dans leurs
+ * overrideGuard().useValue() - les vraies logiques sont testées dans leurs
  * spec unitaires respectives.
  */
 
@@ -140,7 +140,7 @@ describe('API (e2e)', () => {
   // ─── AppController ──────────────────────────────────────────────────────────
 
   describe('GET /', () => {
-    it('200 — retourne le message de bienvenue', async () => {
+    it('200 - retourne le message de bienvenue', async () => {
       const res = await request(app.getHttpServer()).get('/');
       expect(res.status).toBe(200);
       expect(res.text).toBe('Hellooo World!');
@@ -150,7 +150,7 @@ describe('API (e2e)', () => {
   // ─── AuthController ─────────────────────────────────────────────────────────
 
   describe('POST /auth/register', () => {
-    it("201 — crée l'utilisateur et pose les cookies d'auth", async () => {
+    it("201 - crée l'utilisateur et pose les cookies d'auth", async () => {
       const res = await request(app.getHttpServer())
         .post('/auth/register')
         .send({ email: 'new@example.com', password: 'Password123!', firstName: 'Alice', lastName: 'Martin' });
@@ -164,14 +164,14 @@ describe('API (e2e)', () => {
       expect(cookies.some((cookie) => cookie.startsWith('refresh_token='))).toBe(true);
     });
 
-    it('400 — rejette un body sans email', async () => {
+    it('400 - rejette un body sans email', async () => {
       const res = await request(app.getHttpServer())
         .post('/auth/register')
         .send({ password: 'Password123!', firstName: 'Alice', lastName: 'Martin' });
       expect(res.status).toBe(400);
     });
 
-    it('400 — rejette un mot de passe trop court', async () => {
+    it('400 - rejette un mot de passe trop court', async () => {
       const res = await request(app.getHttpServer())
         .post('/auth/register')
         .send({ email: 'new@example.com', password: '123', firstName: 'Alice', lastName: 'Martin' });
@@ -180,7 +180,7 @@ describe('API (e2e)', () => {
   });
 
   describe('POST /auth/login', () => {
-    it('201 — retourne le user et pose les cookies si credentials valides', async () => {
+    it('201 - retourne le user et pose les cookies si credentials valides', async () => {
       mockAuthService.validateUser.mockResolvedValue(mockUser);
 
       const res = await request(app.getHttpServer())
@@ -194,7 +194,7 @@ describe('API (e2e)', () => {
       expect(cookies.some((cookie) => cookie.startsWith('access_token='))).toBe(true);
     });
 
-    it('401 — credentials invalides (validateUser retourne null)', async () => {
+    it('401 - credentials invalides (validateUser retourne null)', async () => {
       mockAuthService.validateUser.mockResolvedValue(null);
 
       // Password valide (passe la validation Zod) mais mock renvoie null → 401
@@ -205,7 +205,7 @@ describe('API (e2e)', () => {
       expect(res.status).toBe(401);
     });
 
-    it('400 — email malformé', async () => {
+    it('400 - email malformé', async () => {
       const res = await request(app.getHttpServer())
         .post('/auth/login')
         .send({ email: 'pas-un-email', password: 'Password123!' });
@@ -214,7 +214,7 @@ describe('API (e2e)', () => {
   });
 
   describe('POST /auth/logout', () => {
-    it('201 — retourne { message: "Logged out" } et efface les cookies', async () => {
+    it('201 - retourne { message: "Logged out" } et efface les cookies', async () => {
       const res = await request(app.getHttpServer()).post('/auth/logout');
 
       expect(res.status).toBe(201);
@@ -226,12 +226,12 @@ describe('API (e2e)', () => {
   });
 
   describe('POST /auth/refresh', () => {
-    it('401 — sans cookie refresh_token', async () => {
+    it('401 - sans cookie refresh_token', async () => {
       const res = await request(app.getHttpServer()).post('/auth/refresh');
       expect(res.status).toBe(401);
     });
 
-    it('201 — renouvelle les tokens si refresh_token présent', async () => {
+    it('201 - renouvelle les tokens si refresh_token présent', async () => {
       mockAuthService.refreshTokens.mockResolvedValue({ accessToken: 'new-at', refreshToken: 'new-rt' });
 
       const res = await request(app.getHttpServer()).post('/auth/refresh').set('Cookie', 'refresh_token=valid-token');
@@ -244,12 +244,12 @@ describe('API (e2e)', () => {
   // ─── UsersController ─────────────────────────────────────────────────────────
 
   describe('GET /users/profile', () => {
-    it('401 — sans access_token (JwtAuthGuard actif)', async () => {
+    it('401 - sans access_token (JwtAuthGuard actif)', async () => {
       const res = await request(app.getHttpServer()).get('/users/profile');
       expect(res.status).toBe(401);
     });
 
-    it('200 — retourne le profil avec un access_token valide', async () => {
+    it('200 - retourne le profil avec un access_token valide', async () => {
       const token = await jwtService.signAsync({ sub: 'user-uuid', role: 'user', email: 'test@example.com' });
 
       const res = await request(app.getHttpServer()).get('/users/profile').set('Cookie', `access_token=${token}`);
@@ -260,12 +260,12 @@ describe('API (e2e)', () => {
   });
 
   describe('GET /users/admin-only', () => {
-    it('401 — sans JWT', async () => {
+    it('401 - sans JWT', async () => {
       const res = await request(app.getHttpServer()).get('/users/admin-only');
       expect(res.status).toBe(401);
     });
 
-    it('401 — JWT valide mais rôle "user" insuffisant (RolesGuard)', async () => {
+    it('401 - JWT valide mais rôle "user" insuffisant (RolesGuard)', async () => {
       const token = await jwtService.signAsync({ sub: 'user-uuid', role: 'user', email: 'test@example.com' });
 
       const res = await request(app.getHttpServer()).get('/users/admin-only').set('Cookie', `access_token=${token}`);

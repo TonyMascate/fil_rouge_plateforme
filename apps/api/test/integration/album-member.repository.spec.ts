@@ -6,7 +6,7 @@ import { AlbumMember } from '@app/album/entities/album-member.entity';
 import { AlbumMemberRepository } from '@app/album/repositories/album-member.repository';
 import { setupIntegrationDatabase, teardownIntegrationDatabase, clearTables } from './db.helper';
 
-describe('AlbumMemberRepository — Intégration', () => {
+describe('AlbumMemberRepository - Intégration', () => {
   let dataSource: DataSource;
   let repo: AlbumMemberRepository;
   let userRepo: Repository<User>;

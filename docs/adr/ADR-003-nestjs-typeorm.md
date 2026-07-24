@@ -1,4 +1,4 @@
-# ADR-003 — Backend : NestJS + TypeORM
+# ADR-003 - Backend : NestJS + TypeORM
 
 - **Statut :** Accepté
 - **Date :** 2025-03-13
@@ -16,26 +16,26 @@ Mon application nécessite une API REST robuste capable de gérer l'authentifica
 
 ### Framework backend
 
-| Critère                    | NestJS (Node.js)              | Express.js (Node.js)          | Spring Boot (Java)            |
-|----------------------------|-------------------------------|-------------------------------|-------------------------------|
-| Architecture               | Modulaire, opinionnée         | Minimaliste, libre            | Modulaire, opinionnée         |
-| Courbe d'apprentissage     | Moyenne                       | Faible                        | Élevée                        |
-| TypeScript natif           | Oui                           | Possible mais pas natif       | Non (Java/Kotlin)             |
-| Injection de dépendances   | Intégrée                      | Non                           | Intégrée                      |
-| Écosystème (auth, cache…)  | Très riche (@nestjs/*)        | Via middlewares tiers         | Très riche                    |
-| Performance                | Bonne                         | Bonne                         | Excellente                    |
-| Cohérence stack avec Next.js | Forte (même langage TS et turbo repo)     | Forte                         | Faible (langages différents)  |
+| Critère                      | NestJS (Node.js)                      | Express.js (Node.js)    | Spring Boot (Java)           |
+| ---------------------------- | ------------------------------------- | ----------------------- | ---------------------------- |
+| Architecture                 | Modulaire, opinionnée                 | Minimaliste, libre      | Modulaire, opinionnée        |
+| Courbe d'apprentissage       | Moyenne                               | Faible                  | Élevée                       |
+| TypeScript natif             | Oui                                   | Possible mais pas natif | Non (Java/Kotlin)            |
+| Injection de dépendances     | Intégrée                              | Non                     | Intégrée                     |
+| Écosystème (auth, cache…)    | Très riche (@nestjs/\*)               | Via middlewares tiers   | Très riche                   |
+| Performance                  | Bonne                                 | Bonne                   | Excellente                   |
+| Cohérence stack avec Next.js | Forte (même langage TS et turbo repo) | Forte                   | Faible (langages différents) |
 
 ### ORM
 
-| Critère                    | TypeORM                       | Prisma                        | Sequelize                     |
-|----------------------------|-------------------------------|-------------------------------|-------------------------------|
-| Support PostgreSQL         | Excellent                     | Excellent                     | Bon                           |
-| Migrations                 | Intégrées                     | Intégrées                     | Intégrées                     |
-| Approche                   | Code-first (décorateurs)      | Schema-first (fichier .prisma)| Code-first                    |
-| Intégration NestJS         | Native (@nestjs/typeorm)      | Bonne (module communautaire)  | Moyenne                       |
-| Relations & transactions   | Complètes                     | Complètes                     | Complètes                     |
-| TypeScript                 | Bon                           | Excellent                     | Moyen                         |
+| Critère                  | TypeORM                  | Prisma                         | Sequelize  |
+| ------------------------ | ------------------------ | ------------------------------ | ---------- |
+| Support PostgreSQL       | Excellent                | Excellent                      | Bon        |
+| Migrations               | Intégrées                | Intégrées                      | Intégrées  |
+| Approche                 | Code-first (décorateurs) | Schema-first (fichier .prisma) | Code-first |
+| Intégration NestJS       | Native (@nestjs/typeorm) | Bonne (module communautaire)   | Moyenne    |
+| Relations & transactions | Complètes                | Complètes                      | Complètes  |
+| TypeScript               | Bon                      | Excellent                      | Moyen      |
 
 ---
 
@@ -72,11 +72,13 @@ Mon application nécessite une API REST robuste capable de gérer l'authentifica
 ## Conséquences
 
 **Positives :**
+
 - Code structuré et maintenable grâce à l'architecture modulaire de NestJS.
 - Un seul langage (TypeScript) sur toute la stack, réduisant la charge cognitive.
 - Migrations de base de données versionnées et reproductibles.
 - Documentation API auto-générée via Swagger.
 
 **Négatives / Risques :**
+
 - TypeORM est moins performant que Prisma sur les requêtes complexes et son typage est moins strict.
 - La couche d'abstraction de NestJS ajoute une légere surcouche par rapport à Express brut.

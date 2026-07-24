@@ -1,8 +1,8 @@
 # Diagrammes de flux et de séquence
 
-**Projet :** Fil Rouge — Plateforme de gestion de photos et albums (Kroma)
+**Projet :** Fil Rouge - Plateforme de gestion de photos et albums (Kroma)
 **Auteur :** Tony Mascate
-**Date :** Juin 2026 _(mise à jour — aligné sur l'architecture livrée)_
+**Date :** Juin 2026 _(mise à jour - aligné sur l'architecture livrée)_
 
 ---
 
@@ -18,7 +18,7 @@
 flowchart LR
     user["Utilisateur<br/>(navigateur)"]
 
-    subgraph swarm["VPS — Docker Swarm"]
+    subgraph swarm["VPS - Docker Swarm"]
         caddy["Caddy<br/>(reverse proxy, TLS)"]
         front["Next.js<br/>(frontend, RSC)"]
         api["NestJS<br/>(API REST)"]
@@ -51,7 +51,7 @@ URL signée) ; le traitement d'image est déporté hors du cycle requête/répon
 
 ---
 
-## 2. Diagramme de séquence — Upload d'une photo
+## 2. Diagramme de séquence - Upload d'une photo
 
 > Upload multipart résilient vers S3 (URLs pré-signées) + traitement asynchrone. La session d'upload
 > est attachée à l'utilisateur dans Redis (TTL 1 h) pour empêcher l'usurpation.
@@ -106,7 +106,7 @@ en cas d'échec du worker, le fichier brut est nettoyé et le statut passe à `F
 
 ---
 
-## 3. Diagramme de séquence — Exploration chromatique
+## 3. Diagramme de séquence - Exploration chromatique
 
 > À l'upload (section 2), une **palette** est extraite en espace perceptuel **OKLab** et chaque
 > couleur est classée dans un **atlas chromatique fixe** (cellules `color_cells`). L'exploration
@@ -137,13 +137,13 @@ sequenceDiagram
     U->>F: Clique sur une photo → modale détail
 ```
 
-**Note :** le nuancier (atlas fixe de 53 cellules) est **déterministe** — la même photo retombe
+**Note :** le nuancier (atlas fixe de 53 cellules) est **déterministe** - la même photo retombe
 toujours dans la même cellule, ce qui rend l'atlas **cacheable** (Redis, invalidé à l'upload et à la
 suppression) et la carte **stable**. Les URLs CloudFront ne sont signées que pour la page visible.
 
 ---
 
-## 4. Diagramme de séquence — Authentification (JWT + refresh)
+## 4. Diagramme de séquence - Authentification (JWT + refresh)
 
 ```mermaid
 sequenceDiagram
@@ -170,4 +170,4 @@ sequenceDiagram
 
 ---
 
-_Document rédigé dans le cadre du Fil Rouge — certification Expert en Informatique et Systèmes d'Information, 3W Academy._
+_Document rédigé dans le cadre du Fil Rouge - certification Expert en Informatique et Systèmes d'Information, 3W Academy._

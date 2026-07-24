@@ -7,7 +7,7 @@ import { AlbumPhoto } from '@app/album/entities/album-photo.entity';
 import { AlbumPhotoRepository } from '@app/album/repositories/album-photo.repository';
 import { setupIntegrationDatabase, teardownIntegrationDatabase, clearTables } from './db.helper';
 
-describe('AlbumPhotoRepository — Intégration', () => {
+describe('AlbumPhotoRepository - Intégration', () => {
   let dataSource: DataSource;
   let repo: AlbumPhotoRepository;
   let userRepo: Repository<User>;
@@ -105,7 +105,7 @@ describe('AlbumPhotoRepository — Intégration', () => {
       expect(result.get(album2.id)).toContain('a2.jpg');
     });
 
-    it('ordonne par added_at DESC — la photo la plus récente est la première cover', async () => {
+    it('ordonne par added_at DESC - la photo la plus récente est la première cover', async () => {
       const album = await albumRepo.save({ name: 'Ordered', userId: user.id });
       const older = await createPhoto('older.jpg');
       const newer = await createPhoto('newer.jpg');

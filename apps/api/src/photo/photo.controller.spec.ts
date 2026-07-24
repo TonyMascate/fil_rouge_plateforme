@@ -233,7 +233,7 @@ describe('PhotoController', () => {
     });
   });
 
-  describe('assertUploadOwner — accès refusé', () => {
+  describe('assertUploadOwner - accès refusé', () => {
     it("lève ApiException si l'uploadId n'appartient pas à l'utilisateur", async () => {
       mockRedisService.get.mockResolvedValue('other-user-uuid');
 

@@ -1,4 +1,4 @@
-# ADR-005 — Observabilité : Prometheus + Grafana + Loki
+# ADR-005 - Observabilité : Prometheus + Grafana + Loki
 
 - **Statut :** Accepté
 - **Date :** 2025-03-13
@@ -16,24 +16,24 @@ Mon application tourne sur Docker Swarm avec plusieurs réplicas de l'API et du 
 
 ### Métriques
 
-| Critère                    | Prometheus + Grafana         | Datadog                      | ELK (Elasticsearch + Kibana) |
-|----------------------------|------------------------------|------------------------------|------------------------------|
-| Coût                       | Gratuit (open source)        | Payant                       | Gratuit mais lourd           |
-| Modèle de collecte         | Pull (scrape les métriques)  | Push (agent)                 | Push (agent)                 |
-| Intégration Docker/Swarm   | Native (cAdvisor, node-exporter) | Via agent                | Via agent                    |
-| Dashboards                 | Grafana (très flexible)      | Intégrés                     | Kibana                       |
-| Alerting                   | Alertmanager                 | Intégré                      | Via plugin                   |
-| Consommation ressources    | Légère                       | Légère (cloud)               | Lourde (JVM)                 |
+| Critère                  | Prometheus + Grafana             | Datadog        | ELK (Elasticsearch + Kibana) |
+| ------------------------ | -------------------------------- | -------------- | ---------------------------- |
+| Coût                     | Gratuit (open source)            | Payant         | Gratuit mais lourd           |
+| Modèle de collecte       | Pull (scrape les métriques)      | Push (agent)   | Push (agent)                 |
+| Intégration Docker/Swarm | Native (cAdvisor, node-exporter) | Via agent      | Via agent                    |
+| Dashboards               | Grafana (très flexible)          | Intégrés       | Kibana                       |
+| Alerting                 | Alertmanager                     | Intégré        | Via plugin                   |
+| Consommation ressources  | Légère                           | Légère (cloud) | Lourde (JVM)                 |
 
 ### Logs
 
-| Critère                    | Loki + Grafana               | ELK (Elasticsearch + Logstash + Kibana) | Fichiers logs bruts          |
-|----------------------------|------------------------------|------------------------------------------|-----------------------------|
-| Coût                       | Gratuit (open source)        | Gratuit mais lourd                       | Gratuit                     |
-| Indexation                 | Labels uniquement (léger)    | Full-text (lourd)                        | Aucune                      |
-| Consommation ressources    | Faible                       | Élevée (JVM, stockage)                   | Aucune                      |
-| Recherche dans les logs    | Par labels + grep            | Full-text puissant                       | Manuelle (grep)             |
-| Dashboard unifié           | Oui (même Grafana)           | Kibana séparé                            | Non                         |
+| Critère                 | Loki + Grafana            | ELK (Elasticsearch + Logstash + Kibana) | Fichiers logs bruts |
+| ----------------------- | ------------------------- | --------------------------------------- | ------------------- |
+| Coût                    | Gratuit (open source)     | Gratuit mais lourd                      | Gratuit             |
+| Indexation              | Labels uniquement (léger) | Full-text (lourd)                       | Aucune              |
+| Consommation ressources | Faible                    | Élevée (JVM, stockage)                  | Aucune              |
+| Recherche dans les logs | Par labels + grep         | Full-text puissant                      | Manuelle (grep)     |
+| Dashboard unifié        | Oui (même Grafana)        | Kibana séparé                           | Non                 |
 
 ---
 
@@ -49,7 +49,7 @@ Mon application tourne sur Docker Swarm avec plusieurs réplicas de l'API et du 
 
 2. **Léger en ressources :** Contrairement à ELK qui nécessite une JVM et beaucoup de RAM, Prometheus et Loki sont légers. C'est important car mon projet tourne sur une infrastructure limitée.
 
-3. **Modèle pull de Prometheus :** Prometheus vient scraper les métriques exposées par mes services. Pas besoin d'installer un agent dans chaque conteneur — chaque service expose simplement un endpoint `/metrics`.
+3. **Modèle pull de Prometheus :** Prometheus vient scraper les métriques exposées par mes services. Pas besoin d'installer un agent dans chaque conteneur - chaque service expose simplement un endpoint `/metrics`.
 
 4. **Loki indexe par labels, pas par contenu :** Loki ne fait pas de full-text search sur les logs (contrairement à Elasticsearch). Il indexe uniquement les labels (nom du service, réplica, niveau de log). C'est beaucoup plus léger en stockage et suffisant pour mon besoin.
 
@@ -62,11 +62,13 @@ Mon application tourne sur Docker Swarm avec plusieurs réplicas de l'API et du 
 ## Conséquences
 
 **Positives :**
+
 - Visibilité complète sur l'état de mes services (métriques + logs).
 - Interface unique (Grafana) pour tout consulter.
 - Faible empreinte mémoire et CPU.
 - Possibilité de créer des dashboards personnalisés et des alertes.
 
 **Négatives / Risques :**
-- Prometheus ne garde pas les métriques indéfiniment (rétention par défaut de 15 jours) — suffisant pour un projet école.
-- Loki ne permet pas de recherche full-text dans les logs — il faut connaître les labels pour filtrer efficacement.
+
+- Prometheus ne garde pas les métriques indéfiniment (rétention par défaut de 15 jours) - suffisant pour un projet école.
+- Loki ne permet pas de recherche full-text dans les logs - il faut connaître les labels pour filtrer efficacement.

@@ -55,7 +55,7 @@ async function bootstrap() {
     const config = new DocumentBuilder()
       .setTitle('Fil Rouge API')
       .setVersion('1.0')
-      .setDescription('API de la plateforme Fil Rouge — auth par cookies HttpOnly + CSRF (X-XSRF-TOKEN)')
+      .setDescription('API de la plateforme Fil Rouge - auth par cookies HttpOnly + CSRF (X-XSRF-TOKEN)')
       .addCookieAuth('access_token')
       .build();
     const document = cleanupOpenApiDoc(SwaggerModule.createDocument(app, config));

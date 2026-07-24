@@ -9,7 +9,7 @@ import { setupIntegrationDatabase, teardownIntegrationDatabase, clearTables } fr
 
 const LIST_QUERY = { page: 1, limit: 20, order: 'desc' as const };
 
-describe('PhotoRepository — Intégration', () => {
+describe('PhotoRepository - Intégration', () => {
   let dataSource: DataSource;
   let photoRepository: PhotoRepository;
   let userRepo: Repository<User>;

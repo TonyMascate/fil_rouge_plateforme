@@ -1,13 +1,13 @@
-# Étude d'opportunité — Plateforme de gestion de photos
+# Étude d'opportunité - Plateforme de gestion de photos
 
-**Projet :** Fil Rouge — Plateforme de gestion de photos et albums (« Kroma »)
+**Projet :** Fil Rouge - Plateforme de gestion de photos et albums (« Kroma »)
 **Auteur :** Tony Mascate
 **Date :** Juin 2026
 **Version :** 1.0
 
 > Document de décision en amont du cadrage. Il répond à une seule question :
 > **faut-il lancer ce projet, et pourquoi ?** Le vocabulaire y est volontairement
-> non technique — le lecteur cible est un décideur, pas un développeur.
+> non technique - le lecteur cible est un décideur, pas un développeur.
 
 ---
 
@@ -20,7 +20,7 @@ Aujourd'hui, un particulier qui veut stocker et organiser ses photos n'a que deu
 
 Personne n'occupe le créneau **« respect de la vie privée + simplicité d'usage »**. Et aucune solution ne propose une **entrée par la couleur** : retrouver ses photos par teinte, indépendamment de la date ou de l'album (cf. [benchmark-concurrentiel.md](benchmark-concurrentiel.md)).
 
-En parallèle, ce projet sert de **fil rouge de certification** (Expert en Informatique et Systèmes d'Information, RNCP 40573, niveau 7) : il doit démontrer la maîtrise du cycle complet — conception, développement, infrastructure, sécurité, exploitation.
+En parallèle, ce projet sert de **fil rouge de certification** (Expert en Informatique et Systèmes d'Information, RNCP 40573, niveau 7) : il doit démontrer la maîtrise du cycle complet - conception, développement, infrastructure, sécurité, exploitation.
 
 ---
 
@@ -30,14 +30,14 @@ Deux profils types ont été identifiés (cf. [personas.md](personas.md)) :
 
 | Profil                                      | Besoin exprimé                                      | Frustration actuelle                                                      |
 | ------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------- |
-| **Léa, 28 ans** — particulier non technique | Retrouver, partager et conserver ses photos privées | Abonnement mensuel qui augmente, données confiées à des géants américains |
-| **Maxime, 24 ans** — photographe amateur    | Organiser ses photos par ambiance / couleur         | Aucun outil ne permet de naviguer par teinte, tri manuel chronophage      |
+| **Léa, 28 ans** - particulier non technique | Retrouver, partager et conserver ses photos privées | Abonnement mensuel qui augmente, données confiées à des géants américains |
+| **Maxime, 24 ans** - photographe amateur    | Organiser ses photos par ambiance / couleur         | Aucun outil ne permet de naviguer par teinte, tri manuel chronophage      |
 
 **Besoins prioritaires retenus :**
 
 1. Déposer et consulter ses photos simplement (galerie chronologique).
 2. Les organiser en albums et les partager (lien public ou album collaboratif).
-3. Les **retrouver par la couleur** — fonctionnalité différenciante absente du marché.
+3. Les **retrouver par la couleur** - fonctionnalité différenciante absente du marché.
 4. Garder ses données privées et hébergées en Europe.
 
 ---
@@ -70,9 +70,9 @@ L'objet du projet n'étant pas commercial mais démonstratif et personnel, le «
 | --------------------------------------------------------------------- | :----: | --------------------------------------------------------------------------------------------- |
 | **Conformité RGPD** (données photo = données personnelles)            | Élevé  | Hébergement EU obligatoire ; compromis assumé sur les binaires (S3 région Paris) à documenter |
 | **Dépendance à un fournisseur cloud** (Cloud Act sur AWS)             | Moyen  | Mitigé par région EU et absence de lien exploitable sans la base de métadonnées               |
-| **Développement solo** — un seul porteur                              | Élevé  | Goulot d'étranglement ; impose une priorisation stricte du périmètre                          |
+| **Développement solo** - un seul porteur                              | Élevé  | Goulot d'étranglement ; impose une priorisation stricte du périmètre                          |
 | **Ambition fonctionnelle** vs temps disponible                        | Moyen  | Risque de périmètre trop large ; arbitrage MVP nécessaire                                     |
-| **Adoption** — fonctionnalité couleur comprise par les utilisateurs ? | Faible | À valider par retours d'usage informels                                                       |
+| **Adoption** - fonctionnalité couleur comprise par les utilisateurs ? | Faible | À valider par retours d'usage informels                                                       |
 
 ---
 
@@ -89,7 +89,7 @@ L'objet du projet n'étant pas commercial mais démonstratif et personnel, le «
 
 **Conditions du Go :**
 
-- Périmètre cadré strictement par priorisation MoSCoW (Must Have d'abord) — voir [user-stories.md](user-stories.md).
+- Périmètre cadré strictement par priorisation MoSCoW (Must Have d'abord) - voir [user-stories.md](user-stories.md).
 - Conformité RGPD traitée dès la conception (hébergement EU, mitigation des binaires documentée).
 - Périmètre exclu / reporté explicitement acté dans la [note-de-cadrage.md](note-de-cadrage.md).
 
@@ -98,4 +98,4 @@ L'objet du projet n'étant pas commercial mais démonstratif et personnel, le «
 
 ---
 
-_Document rédigé dans le cadre du Fil Rouge — certification Expert en Informatique et Systèmes d'Information, 3W Academy._
+_Document rédigé dans le cadre du Fil Rouge - certification Expert en Informatique et Systèmes d'Information, 3W Academy._
